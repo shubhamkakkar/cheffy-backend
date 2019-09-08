@@ -1,0 +1,27 @@
+version: '2'
+
+services:
+  redis:
+    container_name: redis
+    image: redis
+    restart: always
+    command: redis-server
+    ports:
+      - "6379:6379"
+    networks:
+      - default
+  backend-api:
+    container_name: app
+    environment:
+      PORT: 9009
+    build: .
+    networks:
+      - default
+    links:
+      - redis:redis
+    ports:
+      - "9009:9009"
+    volumes:
+      - .:/var/www/app
+      - /var/www/app/node_modules
+    command: "npx pm2-runtime start ecosystem.config.js"
