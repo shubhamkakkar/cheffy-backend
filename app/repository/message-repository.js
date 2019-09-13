@@ -2,7 +2,7 @@
 
 const { Message,sequelize } = require('../models/index');
 
-exports.getMessages = async (id) => {
+exports.getMessagesByUserId = async (id) => {
     let messages = await Message.findAll({
         where: { userId: id }
     })
