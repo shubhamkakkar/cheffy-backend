@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/user-controler');
+const messageController = require('../controlers/message-controller');
 const authService = require("../services/auth");
 const facebookRouter = require("../routes/facebook");
 const creditCardRouter = require("../routes/card");
@@ -30,4 +31,9 @@ router.use('/facebook',facebookRouter);
 
 //Stripe
 router.use('/card',creditCardRouter);
+
+// Message module
+
+router.get('/messages/users', messageController.list);
+
 module.exports = router;
