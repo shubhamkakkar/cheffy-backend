@@ -7,7 +7,7 @@ var kue = require('../services/kue');
 
 var Queue = require('bull');
 
-let REDIS_URL = 'redis://h:p9328cb971adc11b5d1bf1c9ad6c89b473880f5d9deb3cd5c425ce4153d2641e3@ec2-3-222-186-102.compute-1.amazonaws.com:22839';
+let REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
 const queue = new Queue('DEMAND', REDIS_URL);
 

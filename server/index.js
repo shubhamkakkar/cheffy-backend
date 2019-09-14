@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const payService = require("../app/services/payment");
-const kue = require("kue");
 const cors = require('cors');
 const conf = require('../configs');
 var corsOptions = {
@@ -38,7 +37,6 @@ const order = require("../app/routes/order");
 const driver = require("../app/routes/driver");
 const customPlate = require("../app/routes/customPlate");
 
-app.use("/kue-api/", kue.app);
 app.use('/user', user);
 app.use('/plate', plate);
 app.use('/category', category);
