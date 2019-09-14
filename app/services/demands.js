@@ -7,7 +7,9 @@ var kue = require('../services/kue');
 
 var Queue = require('bull');
 
-const queue = new Queue('DEMAND', { redis: { port: 22839, host: 'ec2-3-222-186-102.compute-1.amazonaws.com', password: 'p9328cb971adc11b5d1bf1c9ad6c89b473880f5d9deb3cd5c425ce4153d2641e3'}});
+let REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+
+const queue = new Queue('DEMAND', REDIS_URL);
 
 queue.process('TEST_REDIS_QUEUE_AVAILABILITY', async function(job, done) {
   console.log('[REDIS] This is the availability test for REDIS');
