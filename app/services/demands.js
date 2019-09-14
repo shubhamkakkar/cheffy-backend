@@ -3,16 +3,25 @@ const DriverFinder = require('../services/driverFinder')
 const SEND_DELIVERIES_JOB  = "sendDelivery"
 const FAIL_TO_FIND_DRIVERS_JOB  = "failToFindDriver"
 
-// Start Redis worker
-var kue = require("kue");
-var Queue = kue.createQueue({
-  redis: {
-    port: 6379,
-    host: process.env.REDIS_HOST
-  }
+var kue = require('../services/kue');
+
+var Queue = require('bull');
+
+const queue = new Queue('DEMAND', { redis: { port: 22839, host: 'ec2-3-222-186-102.compute-1.amazonaws.com', password: 'p9328cb971adc11b5d1bf1c9ad6c89b473880f5d9deb3cd5c425ce4153d2641e3'}});
+
+queue.process('TEST_REDIS_QUEUE_AVAILABILITY', async function(job, done) {
+  console.log('[REDIS] This is the availability test for REDIS');
+  console.log('[REDIS] If you see this phrase multiple times everything for redis queue is fully operational.');
+  done();
 });
- 
-Queue.process(SEND_DELIVERIES_JOB, async function(job, done) {
+
+queue.add('TEST_REDIS_QUEUE_AVAILABILITY', {});
+
+setTimeout(() => {
+  queue.add('TEST_REDIS_QUEUE_AVAILABILITY', {});
+}, 5000)
+
+queue.process(SEND_DELIVERIES_JOB, async function(job, done) {
   let { data } = job;
   console.log(`DemandService received a OrderDelivery to find driver ${data}`)
   const driverFinder = new DriverFinder();
@@ -20,7 +29,7 @@ Queue.process(SEND_DELIVERIES_JOB, async function(job, done) {
   done();
 });
 
-Queue.process(FAIL_TO_FIND_DRIVERS_JOB, async function(job, done) {
+queue.process(FAIL_TO_FIND_DRIVERS_JOB, async function(job, done) {
   let { data } = job;
   console.log(`DemandService receive a message of driver not found ${data}`)
   repositoryOrderDelivery.updateStatus(data.orderDeliveryId,'driver_not_found')

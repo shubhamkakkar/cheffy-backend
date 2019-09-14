@@ -1,19 +1,13 @@
 require('dotenv').config({  
   path: process.env.NODE_ENV === "test" ? ".env.testing" : ".env"
 })
-var kue = require("kue");
-var Queue = kue.createQueue({
-  redis: {
-    port: 6379,
-    host: process.env.REDIS_HOST
-  }
-});
+
+var Queue = require('bull');
+
+const queue = new Queue('DEFAULT', { redis: { port: 22839, host: 'ec2-3-222-186-102.compute-1.amazonaws.com', password: 'p9328cb971adc11b5d1bf1c9ad6c89b473880f5d9deb3cd5c425ce4153d2641e3'}});
 
 let scheduleJob = data => {
-  Queue.createJob(data.jobName, data.params)
-    .attempts(3)
-    .delay(data.time - Date.now()) // relative to now.
-    .save();
+  queue.add(data.jobName, data.params, { delay: data.time  - Date.now() });
 };
 
 module.exports = {
