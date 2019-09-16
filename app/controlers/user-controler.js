@@ -34,7 +34,7 @@ exports.create = async (req, res, next) => {
 
   if (existUser) {
     payload.status = HttpStatus.CONFLICT;
-    res.status(payload.status).send({ message: 'error when registering', status: HttpStatus.CONFLICT});
+    res.status(payload.status).send({ message: 'error when registering: e-mail is already in use', status: HttpStatus.CONFLICT});
     return 0;
   }
 
@@ -250,7 +250,7 @@ exports.verifyPhone = async (req, res, next) => {
 
   const existUser = await User.findOne({ where: { id: token_return.id } });
   if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'error when registering', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.CONFLICT).send({ message: 'error when registering: user not found', status: HttpStatus.CONFLICT});
     return 0;
   }
   if (req.body.country_code == null || req.body.country_code == '' || req.body.country_code == undefined) {
@@ -269,7 +269,7 @@ exports.verifyPhone = async (req, res, next) => {
   let phone = req.body.country_code + req.body.phone_no;
 
   if (phone === null && phone === '' && phone === undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'error when registering', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.CONFLICT).send({ message: 'error when registering: phone not found', status: HttpStatus.CONFLICT});
     return 0;
   }
 
@@ -465,7 +465,7 @@ exports.put = async (req, res, next) => {
 
     const existUser = await User.findOne({ where: { id: token_return.id } });
     if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'error when registering', status: HttpStatus.CONFLICT});
+      res.status(HttpStatus.CONFLICT).send({ message: 'error when registering: user not found', status: HttpStatus.CONFLICT});
       return 0;
     }
 

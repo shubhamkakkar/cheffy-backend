@@ -1,3 +1,4 @@
+
 'use strict';
 const Sequelize = require('sequelize');
 const {sequelize,OrderItem, ShippingAddress,PlateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
@@ -84,7 +85,8 @@ exports.updateReceiptImage = async (data) => {
 }
 
 exports.listNear = async (data) => {
-  let { latitude, longitude, radiusMiles } = data;
+  let { latitude, longitude, radius } = data;
+  
   let query = `SELECT 
                 P.userId, 
                 ( 3959 * acos( cos( radians(${latitude}) ) * cos( radians( location_lat ) ) * cos( radians( location_lon ) - radians(${longitude}) ) + sin( radians(${latitude}) ) * sin(radians(location_lat)) ) ) AS distance,
@@ -100,7 +102,9 @@ exports.listNear = async (data) => {
               LEFT JOIN Plates as P on U.id = userId 
               LEFT JOIN (SELECT plateId, url FROM PlateImages group by plateId ) as pimage on pimage.plateId = P.id
               WHERE U.id = P.userId and U.user_type = 'chef' 
-              HAVING distance < ${radiusMiles} ORDER BY distance LIMIT 0 , 20;`;
+              ORDER BY distance LIMIT 0 , 20;`;
+//    Column distance not found
+//              HAVING distance < ${radiusMiles} ORDER BY distance LIMIT 0 , 20;`;
   try {
     const response = await ReceiptImage.sequelize.query(query, { raw: true });
     let resultado = JSON.stringify(response);
@@ -290,13 +294,13 @@ exports.getRelatedPlate = async (plateId) => {
               as:'user'
             }]
           },
-          {
-            model: User,
-            as:'chef',
-            include: [{
-              model: ShippingAddress
-            }]
-          }
+//          {
+//            model: User,
+//            as:'chef',
+//            include: [{
+//              model: ShippingAddress
+//            }]
+//          }
         ]
       };
     
@@ -482,4 +486,3 @@ exports.listPlates2 = async (data) => {
      return { message: "Fail to get Plate!", error: e };
   }
 }
-
