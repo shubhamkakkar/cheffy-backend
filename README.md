@@ -5,7 +5,7 @@ This repository hosts the Cheffy App Api.
 *Shortlink https://git.io/JeOjk*
 
 ## Table of Contents
- - [Introduction](#installation)
+ - [Introduction](#introduction)
     - [Requirements](#requirements)
  - [Available commands](#available-commands)
  - [Development](#development)
