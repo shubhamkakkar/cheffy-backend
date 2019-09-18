@@ -4,7 +4,8 @@
   "description": "",
   "main": "./bin/index.js",
   "scripts": {
-    "test": "NODE_ENV=test mocha 'test/**/*.spec.js' --timeout 10000 ",
+    "test": "NODE_ENV=test mocha 'test/**/*.spec.js' --timeout 10000",
+    "watch": "NODE_ENV=test mocha 'test/**/*.spec.js' --timeout 10000 -w",
     "start": "node ./bin/server.js",
     "dev": "nodemon ./bin/server.js"
   },
