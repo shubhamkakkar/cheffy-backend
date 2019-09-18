@@ -12,7 +12,7 @@ This repository hosts the Cheffy App Api.
 
 ## Introduction
 
-Locally Cheffy relies on a Redis instance a Mysql instance and a valid Node.js runtime, for more information to what you need for get up and running fast just scroll down for the requirements section.
+Locally Cheffy relies on a Redis instance a Mysql instance and a valid Node.js runtime, for more information for what you need to get up and running fast just scroll down for the requirements section.
 
 ### Requirements
 - Node.js >= 8
