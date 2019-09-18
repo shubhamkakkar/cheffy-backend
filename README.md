@@ -20,7 +20,7 @@ Locally Cheffy relies on a Redis instance a Mysql instance and a valid Node.js r
 - Redis
 - MySQL
 - Docker (Optional)
-> Docker is optional, if you would like to not make changes in your current environment docker is a good choice for you.
+> Docker is optional, if you like to make no further changes in your current environment docker is a good choice for you.
 
 ### Available Commands
 
