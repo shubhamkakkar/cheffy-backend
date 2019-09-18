@@ -35,5 +35,7 @@ router.use('/card',creditCardRouter);
 // Message module
 
 router.get('/messages/users', messageController.list);
+router.post('/messages/users/:to_userID', messageController.new);
+router.get('/messages/users/:to_userID', messageController.messages);
 
 module.exports = router;

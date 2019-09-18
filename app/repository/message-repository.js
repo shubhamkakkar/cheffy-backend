@@ -7,3 +7,7 @@ exports.getMessagesByUserId = async (id) => {
         where: { userId: id }
     })
 }
+
+exports.createConversation = async (data) => {
+    return await Message.create({...data});
+}
