@@ -16,7 +16,11 @@ exports.list = async (req, res, next) => {
 }
 
 exports.new = async (req, res, next) => {
-    const token_return = await authService.decodeToken(req.headers['x-access-token']);
+    let token = (req.headers['x-access-token'] != null) ? req.headers['x-access-token'] : 
+    res.set('data', null) && res.set('error', 'missing-token') && res.status(HttpStatus.UNAUTHORIZED)
+    .send();
+
+    const token_return = await authService.decodeToken(token);
     let newMessage = await repository.createConversation({
         from_userid: token_return.id,
         to_userid: req.params.to_userID,
@@ -28,5 +32,14 @@ exports.new = async (req, res, next) => {
 }
 
 exports.messages = async (req, res, next) => {
-    const token_return = await authService.decodeToken(req.headers['x-access-token']);
+    let token = (req.headers['x-access-token'] != null) ? req.headers['x-access-token'] : 
+    res.set('data', null) && res.set('error', 'missing-token') && res.status(HttpStatus.UNAUTHORIZED)
+    .send();
+
+    const token_return = await authService.decodeToken(token);
+    
+    let messages = await repository.getMessagesFromUser(token_return.id, req.params.to_userID);
+
+    res.set('data', JSON.stringify(messages));
+    return res.status(HttpStatus.ACCEPTED).send();
 }

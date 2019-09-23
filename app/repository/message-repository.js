@@ -13,6 +13,17 @@ exports.createConversation = async (data) => {
         let response = await Message.create({...data});
         return response;
     } catch (err) {
-        console.log(err);
+        return null;
+    }
+}
+
+exports.getMessagesFromUser = async (userId, to_userid) => {
+    try {
+        let response = await Message.findAll({
+            where: { userId, to_userid }
+        });
+        return response;
+    } catch (err) {
+        return null;
     }
 }
