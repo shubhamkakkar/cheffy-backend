@@ -4,10 +4,10 @@
   "description": "",
   "main": "./bin/index.js",
   "scripts": {
-    "test": "NODE_ENV=test mocha 'test/**/*.spec.js' --timeout 10000",
-    "watch": "NODE_ENV=test mocha 'test/**/*.spec.js' --timeout 10000 -w",
+    "test": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000",
+    "watch": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000 -w",
     "start": "node ./bin/server.js",
-    "dev": "nodemon ./bin/server.js"
+    "dev": "NODE_ENV=test nodemon ./bin/server.js"
   },
   "keywords": [],
   "author": "Filipe Machado",
@@ -22,7 +22,6 @@
     "jsonwebtoken": "^8.5.1",
     "md5": "^2.2.1",
     "moment": "^2.24.0",
-    "mysql2": "^1.6.5",
     "nodemailer": "^6.3.0",
     "nodemailer-express-handlebars": "^3.1.0",
     "querystring": "^0.2.0",
@@ -40,6 +39,7 @@
     "chai-http": "^4.3.0",
     "faker": "^4.1.0",
     "mocha": "^6.2.0",
+    "mysql2": "^1.7.0",
     "nodemon": "^1.18.9",
     "sequelize-cli": "^5.5.0",
     "sequelize-test-helpers": "^1.1.2",

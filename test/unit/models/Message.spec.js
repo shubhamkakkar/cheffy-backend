@@ -12,7 +12,6 @@ const {
     checkPropertyExists
 } = require('sequelize-test-helpers')
 
-const UserModel = require('../../../app/models/user');
 const MessageModel = require('../../../app/models/message');
 
 describe('app/models/message', () => {
@@ -33,8 +32,7 @@ describe('app/models/message', () => {
         })
 
         it('defined a belongsTo association with User', () => {
-            console.log(Model.belongsTo());
             expect(Model.belongsTo).to.have.been.calledWith(User)
         })
     })
-})
+});

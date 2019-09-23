@@ -9,5 +9,10 @@ exports.getMessagesByUserId = async (id) => {
 }
 
 exports.createConversation = async (data) => {
-    return await Message.create({...data});
+    try {
+        let response = await Message.create({...data});
+        return response;
+    } catch (err) {
+        console.log(err);
+    }
 }
