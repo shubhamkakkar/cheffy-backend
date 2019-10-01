@@ -1,3 +1,5 @@
+const { generateHash } = require('../../helpers/password');
+
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     name: DataTypes.STRING,
@@ -20,6 +22,13 @@ module.exports = (sequelize, DataTypes) => {
     user_ip: DataTypes.STRING,
     stripe_id: DataTypes.STRING
   });
+  
+  User.beforeCreate((user, options) => {
+    return generateHash(user.password).then(password => {
+      user.password = password;
+    });
+  });
+  
   User.associate = function(models) {
     User.hasMany(models.Plates)
     User.hasMany(models.OrderDelivery, {foreignKey: 'driverId'});    

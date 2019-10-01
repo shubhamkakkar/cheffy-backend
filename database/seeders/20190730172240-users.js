@@ -1,20 +1,29 @@
 'use strict';
 
+const { generateHash } = require('../../helpers/password');
+
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: async (queryInterface, Sequelize) => {
+    let password = await generateHash('12345678');
     return queryInterface.bulkInsert('Users', [
       {
-        name: "Filipe Machado",
-      	email: "filipwx7@gmail.com",
+        id: 15,
+        name: "Demo Username 1",
+      	email: "demo-1@cheffy.com",
       	user_type: "user",
-      	password: "12345678"
+        password: password,
+        createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
       },
       {
-        name: "Filipe Machado Carneiro",
-      	email: "filipwx8@gmail.com",
+        id: 16,
+        name: "Demo Username 2",
+      	email: "demo-2@cheffy.com",
         user_type: "chef",
-	      restaurant_name: "Filip's Cookies",
-      	password: "12345678"
+	      restaurant_name: "Restaurant's name",
+        password: password,
+        createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
       }
   ], {});
   },
