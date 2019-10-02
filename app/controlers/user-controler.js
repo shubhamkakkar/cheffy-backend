@@ -39,7 +39,6 @@ exports.create = async (req, res, next) => {
   }
 
   let full_data = req.body;
-  full_data.password = md5(full_data.password + global.SALT_KEY)
 
   if (full_data.user_type === 'chef') {
     if (full_data.restaurant_name === '' || full_data.restaurant_name === null || full_data.restaurant_name === undefined) {
@@ -201,47 +200,21 @@ exports.getUserBalanceHistory = async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send(JSON.parse(historyMock));
 }
 
-exports.getUser = async (request, response, next) => {
- // CSRF check
-  if (request.body.csrf_nonce === csrf_guid) {
-    var app_access_token = ['AA', app_id, app_secret].join('|');
-    var params = {
-      grant_type: 'authorization_code',
-      code: request.body.code,
-      access_token: app_access_token
-      //appsecret_proof: app_secret
-    };
-  
-    // exchange tokens
-    var token_exchange_url = token_exchange_base_url + '?' + Querystring.stringify(params);
-    Request.get({url: token_exchange_url, json: true}, function(err, resp, respBody) {
-      console.log(respBody);
-      var view = {
-        user_access_token: respBody.access_token,
-        expires_at: respBody.expires_at,
-        user_id: respBody.id,	
-      };
-      // get account details at /me endpoint
-      var me_endpoint_url = me_endpoint_base_url + '?access_token=' + respBody.access_token;
-      Request.get({url: me_endpoint_url, json:true }, function(err, resp, respBody) {
-        // send login_success.html
-        console.log(respBody);
-        if (respBody.phone) {
-          view.method = "SMS"
-          view.identity = respBody.phone.number;
-        } else if (respBody.email) {
-          view.method = "Email"
-          view.identity = respBody.email.address;
-        }
-        var html = Mustache.to_html(loadLoginSuccess(), view);
-        response.send(html);
-      });
+exports.getUser = async (req, res, next) => {
+  try {
+    const token_return = await authService.decodeToken(req.headers['x-access-token'])
+    const existUser = await User.findByPk(token_return.id, {
+      attributes: [ 'id', 'name', 'email', 'country_code', 'phone_no', 'auth_token', 'restaurant_name', 'location_lat', 'location_lon', 'user_type', 'imagePath', 'verification_code', 'verification_email_token', 'verification_email_status', 'verification_phone_token', 'verification_phone_status', 'status', 'user_ip', 'createdAt', 'updatedAt'],
+      // include: [
+      //   {
+      //     model: Favorites,
+      //     attributes: [ 'id', 'name' ]
+      //   }
+      // ]
     });
-  } 
-  else {
-    // login failed
-    response.writeHead(200, {'Content-Type': 'text/html'});
-    response.end("Something went wrong. :( ");
+    res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: existUser});
+  } catch (err) {
+    res.status(HttpStatus.BAD_REQUEST).send({ message: 'FAILED', data: err});
   }
 }
 
