@@ -14,6 +14,8 @@ require("../services/worker");
 const crypto = require('crypto');
 const walletRepository = require('../repository/wallet-repository');
 
+const bcrypt = require('bcrypt');
+
 
 
 exports.create = async (req, res, next) => {
@@ -388,15 +390,17 @@ exports.checkPhone = async (req, res, next) => {
 
 exports.authenticate = async (req, res, next) => {
   try {
+    const { password } = req.body;
+
     let customer
     var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
     let whereClause = {};
     
     if (reg.test(req.body.login)) {
-      whereClause = { email: req.body.login, password: md5(req.body.password + global.SALT_KEY) };
+      whereClause = { email: req.body.login };
     } else {
       const num_list = req.body.login.split(" ");
-      whereClause = { country_code: num_list[0], phone_no: num_list[1], password: md5(req.body.password + global.SALT_KEY) };
+      whereClause = { country_code: num_list[0], phone_no: num_list[1] };
     }
     
     customer = await User.findOne({ 
@@ -410,9 +414,16 @@ exports.authenticate = async (req, res, next) => {
 
     if (!customer) {
       res.status(HttpStatus.FORBIDDEN).send({
-        message: 'User or password is invalid!'
+        message: 'User does not exist in our records',
+        data: null
       });
       return 0;
+    }
+
+    let result = await bcrypt.compare(password, customer.password);
+    
+    if (!result) {
+      return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
     }
 
     const token = await authService.generateToken({
