@@ -7,7 +7,7 @@
     "test": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000",
     "watch": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000 -w",
     "start": "node ./bin/server.js",
-    "dev": "NODE_ENV=test nodemon ./bin/server.js",
+    "dev": "NODE_ENV=development nodemon ./bin/server.js",
     "migrate": "sequelize db:migrate"
   },
   "keywords": [],
