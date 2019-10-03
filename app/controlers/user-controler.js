@@ -34,7 +34,7 @@ exports.create = async (req, res, next) => {
 
   if (existUser) {
     payload.status = HttpStatus.CONFLICT;
-    res.status(HttpStatus.CONFLICT).send([{"message": "This email is correct?"}]);
+    res.status(HttpStatus.CONFLICT).send({ message: "E-Mail already in use!", status: HttpStatus.CONFLICT });
     return 0;
   }
 
