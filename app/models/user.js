@@ -23,12 +23,6 @@ module.exports = (sequelize, DataTypes) => {
     stripe_id: DataTypes.STRING
   });
   
-  User.beforeCreate((user, options) => {
-    return generateHash(user.password).then(password => {
-      user.password = password;
-    });
-  });
-  
   User.associate = function(models) {
     User.hasMany(models.Plates)
     User.hasMany(models.OrderDelivery, {foreignKey: 'driverId'});    

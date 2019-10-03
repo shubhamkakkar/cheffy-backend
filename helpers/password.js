@@ -11,5 +11,5 @@ async function generateHash(password) {
 }
 
 module.exports = {
-    generateHash
+  generateHash
 }

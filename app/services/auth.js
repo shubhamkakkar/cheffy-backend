@@ -2,7 +2,7 @@
 const jwt = require('jsonwebtoken');
 
 exports.generateToken = async (data) => {
-  return jwt.sign(data, global.SALT_KEY, { expiresIn: '24h' });
+  return jwt.sign(data, global.SALT_KEY, { expiresIn: '365d' });
 }
 
 exports.decodeToken = async (token) => {

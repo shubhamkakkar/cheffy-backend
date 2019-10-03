@@ -16,15 +16,13 @@ const walletRepository = require('../repository/wallet-repository');
 
 const bcrypt = require('bcrypt');
 
-
+const { generateHash } = require('../../helpers/password');
 
 exports.create = async (req, res, next) => {
   let payload = {};
 
   let contract = new ValidationContract();
-  contract.hasMinLen(req.body.name, 10, 'Your name should have more than 10 caracteres');
   contract.isEmail(req.body.email, 'This email is correct?');
-  contract.hasMinLen(req.body.password, 6, 'Password must be longer than 6 characters!');
   contract.isRequired(req.body.user_type, 'User type is required!');
 
   if (!contract.isValid()) {
@@ -51,7 +49,6 @@ exports.create = async (req, res, next) => {
 
   const user = await User.create({ ...full_data });
   let pass = (""+Math.random()).substring(2,6);
-  let name = user.name
   user.verification_email_token = pass;
   await user.save();
   let args = {
@@ -59,18 +56,17 @@ exports.create = async (req, res, next) => {
     time: 1000,
     params: {
       to: req.body.email,
-      from: "The Cheffy contact@oxigen.club",
-      replyTo: "contact@oxigen.club",
-      subject: `Welcome to The Cheffy ${name}!`,
+      from: "Cheffy contact@cheffy.com",
+      replyTo: "contact@cheffy.com",
+      subject: `Welcome to Cheffy!`,
       template: "welcome/welcome",
-      context: { token: pass, user: name }
+      context: { token: pass, user: ' One more step...' }
     }
   };
   kue.scheduleJob(args);
   const token = await authService.generateToken({
     id: user.id,
-    email: user.email,
-    name: user.name
+    email: user.email
   });
 
   const newuser = await User.findOne({
@@ -446,10 +442,10 @@ exports.authenticate = async (req, res, next) => {
 exports.put = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   try {
-
+    const { password } = req.body;
     const existUser = await User.findOne({ where: { id: token_return.id } });
     if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'error when registering: user not found', status: HttpStatus.CONFLICT});
+      res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
       return 0;
     }
 
@@ -460,6 +456,9 @@ exports.put = async (req, res, next) => {
     existUser.restaurant_name = req.body.restaurant_name || existUser.restaurant_name;
     existUser.location = req.body.location  || existUser.location;
     existUser.imagePath = req.body.image_path || existUser.imagePath;
+
+    (password) ? existUser.password = await generateHash(password) : null ;
+
     await existUser.save();
 
     res.status(200).send({
