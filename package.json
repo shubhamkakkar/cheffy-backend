@@ -1,6 +1,6 @@
 {
-  "name": "CheffyAPI",
-  "version": "1.0.2",
+  "name": "cheffyapi",
+  "version": "1.0.3",
   "description": "",
   "main": "./bin/index.js",
   "scripts": {
@@ -10,8 +10,8 @@
     "dev": "NODE_ENV=development nodemon ./bin/server.js",
     "migrate": "sequelize db:migrate"
   },
-  "keywords": [],
-  "author": "Filipe Machado",
+  "keywords": ["nodejs", "sequelize", "bcrypt", "jwt"],
+  "author": "Cheffy Team",
   "dependencies": {
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
