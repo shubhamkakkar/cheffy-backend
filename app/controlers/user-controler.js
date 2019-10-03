@@ -34,7 +34,7 @@ exports.create = async (req, res, next) => {
 
   if (existUser) {
     payload.status = HttpStatus.CONFLICT;
-    res.status(payload.status).send({ message: 'error when registering: e-mail is already in use', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.CONFLICT).send([{"message": "There is already an account associated with this email"}]);
     return 0;
   }
 
