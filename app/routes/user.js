@@ -8,6 +8,8 @@ const authService = require("../services/auth");
 const facebookRouter = require("../routes/facebook");
 const creditCardRouter = require("../routes/card");
 
+router.get('/dummy', controller.dummy);
+
 router.get('/', authService.authorize, controller.getUser);
 router.post('/', controller.create);
 router.post('/login', controller.authenticate);

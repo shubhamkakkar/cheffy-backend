@@ -10,7 +10,12 @@
     "dev": "NODE_ENV=development nodemon ./bin/server.js",
     "migrate": "sequelize db:migrate"
   },
-  "keywords": ["nodejs", "sequelize", "bcrypt", "jwt"],
+  "keywords": [
+    "nodejs",
+    "sequelize",
+    "bcrypt",
+    "jwt"
+  ],
   "author": "Cheffy Team",
   "dependencies": {
     "bcrypt": "^3.0.6",
