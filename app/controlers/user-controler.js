@@ -34,7 +34,7 @@ exports.create = async (req, res, next) => {
 
   if (existUser) {
     payload.status = HttpStatus.CONFLICT;
-    res.status(HttpStatus.CONFLICT).send([{"message": "There is already an account associated with this email"}]);
+    res.status(HttpStatus.CONFLICT).send([{"message": "This email is correct?"}]);
     return 0;
   }
 
