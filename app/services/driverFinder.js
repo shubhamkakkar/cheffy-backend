@@ -1,5 +1,5 @@
 const kue = require("../services/kue");
-const NotificationServices = require("./notification");
+const NotificationServices = require("./notification").sendPushNotification;
 const {User,DriverFinder, OrderDelivery} = require('../models/index')
 const userRepository = require('../repository/user-repository')
 const WAITING_TIME_FOR_ACCEPTANCE_INTERVAL=60*1000
@@ -78,7 +78,7 @@ function DriverFinderService(){
                 DriverFinder.destroy({ DriverFinder: { id: driverFinderList[0].id } });
                 // reschedule the watch
                 let driverid = driverFinderList[0].id;
-                NotificationServices.sendPushNotificationToUser(driverid,{type:"you_got_new_delivery"})
+                NotificationServices({ type: "you_got_new_delivery", userId: driverid })
                 console.log(`DemandService lets reschedule the watch for 60 sec`)
                 setTimeout(startWatchingOrderAcceptance(orderDeliveryId,WAITING_TIME_FOR_ACCEPTANCE_INTERVAL));
             }else{

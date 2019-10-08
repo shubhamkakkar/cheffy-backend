@@ -52,7 +52,6 @@ const change_data = async (id, data) => {
   return base;
 }
 
-// TODO: @Natan
 const post_process = async (user_data, shipping, user_basket, basket_content, confirmation, order_id) => {
   let cart_itens = basket_content.BasketItems.map( async ( elem ) => {
     let loc = await repository.userLocation(elem.plate.userId);
