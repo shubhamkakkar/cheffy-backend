@@ -6,7 +6,7 @@ const orderRepository = require("../repository/order-repository");
 const deliveryRepository = require("../repository/delivery-repository");
 const demandService = require('../services/demands');
 const authService = require("../services/auth");
-const NotificationServices = require('../services/notification');
+const NotificationServices = require('../services/notification').sendPushNotification;
 
 exports.list = async (req, res, next) => {
 
@@ -264,11 +264,11 @@ exports.completeDelivery = async (req, res, next) => {
       orderDelivery.save();
 
       //Notify the Cheff
-      new NotificationServices()
-      .sendPushNotificationToUser(orderDelivery.chefId,
+      NotificationServices(
         {
-          type:"delivery_complete",
-          orderId:orderDelivery.orderId
+          type: "delivery_complete",
+          userId: orderDelivery.chefId,
+          orderId: orderDelivery.orderId
         }
       );
 
@@ -304,11 +304,11 @@ exports.pickupDelivery = async (req, res, next) => {
       orderDelivery.save();
 
       //Notify the Cheff
-      new NotificationServices()
-      .sendPushNotificationToUser(orderDelivery.chefId,
+      NotificationServices(
         {
-          type:"delivery_complete",
-          orderId:orderDelivery.orderId
+          type: "delivery_complete",
+          userId: orderDelivery.chefId,
+          orderId: orderDelivery.orderId
         }
       );
       orderDelivery = await OrderDelivery.findByPk(parseInt(orderDeliveryId));

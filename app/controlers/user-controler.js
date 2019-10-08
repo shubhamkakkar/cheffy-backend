@@ -33,27 +33,27 @@ exports.dummy = async (req, res, next) => {
       ingred = full_data.ingredients;
       delete full_data.ingredients;
     }
-  
+
     if (full_data.images) {
       images = full_data.images;
       delete full_data.images;
     }
-  
+
     if (full_data.kitchen_images) {
       kitchen = full_data.kitchen_images;
       delete full_data.kitchen_images;
     }
-  
+
     if (full_data.receipt_images) {
       receipt = full_data.receipt_images;
       delete full_data.receipt_images;
     }
 
     full_data.categoryId = category.id;
-  
+
     let plate = await Plates.create({ ...full_data });
     let ingred_create, images_create, kitchen_create, receipt_create
-  
+
     if (ingred) {
       let ingred_data = []
       ingred.forEach(elem => {
@@ -62,7 +62,7 @@ exports.dummy = async (req, res, next) => {
       })
       ingred_create = await repository.createIngredient(ingred_data)
     }
-  
+
     if (images) {
       let images_data = []
       images.forEach(elem => {
@@ -71,7 +71,7 @@ exports.dummy = async (req, res, next) => {
       })
       images_create = await repository.createPlateImage(images_data)
     }
-  
+
     if (kitchen) {
       let kitchen_data = []
       kitchen.forEach(elem => {
@@ -80,7 +80,7 @@ exports.dummy = async (req, res, next) => {
       })
       kitchen_create = await repository.createKitchenImage(kitchen_data)
     }
-  
+
     if (receipt) {
       let receipt_data = []
       receipt.forEach(elem => {
@@ -184,7 +184,7 @@ exports.getUserBalance = async (req, res, next) => {
   let total = 0;
 
   if(datar.Wallet !== null || datar.Wallet.OrderItems !== null && datar.Wallet.OrderItems.lenght > 0){
-    
+
     total = total.reduce( function( prevVal, elem ) {
       return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
     }, 0 );
@@ -227,8 +227,8 @@ exports.getUserBalanceHistory = async (req, res, next) => {
   // res.status(HttpStatus.ACCEPTED).send(datar);
   let historyMock = `{
     "id": 4,
-    "name": "Natan Loterio",
-    "email": "natanloterio@gmail.com",
+    "name": "Demo user",
+    "email": "user@example.com",
     "location": "38.912373, -77.198436",
     "user_type": "chef",
     "verification_email_status": "verified",
@@ -266,7 +266,7 @@ exports.getUserBalanceHistory = async (req, res, next) => {
         {
           "date":"2019-08-04",
           "balance":20.0
-        }                
+        }
       ],
       "total": 40
     }
@@ -467,15 +467,15 @@ exports.authenticate = async (req, res, next) => {
     let customer
     var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
     let whereClause = {};
-    
+
     if (reg.test(req.body.login)) {
       whereClause = { email: req.body.login };
     } else {
       const num_list = req.body.login.split(" ");
       whereClause = { country_code: num_list[0], phone_no: num_list[1] };
     }
-    
-    customer = await User.findOne({ 
+
+    customer = await User.findOne({
       where: whereClause,
       include: [{
         model: ShippingAddress,
@@ -493,7 +493,7 @@ exports.authenticate = async (req, res, next) => {
     }
 
     let result = await bcrypt.compare(password, customer.password);
-    
+
     if (!result) {
       return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
     }
@@ -564,7 +564,7 @@ exports.getUserBalance = async (req, res, next) => {
       let payload = {};
       payload.status = HttpStatus.OK;
       payload.result = userWallet;
-      res.status(payload.status).send(payload);      
+      res.status(payload.status).send(payload);
     } catch (error) {
       res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
     }
@@ -594,7 +594,7 @@ exports.getUserBalanceHistory = async (req, res, next) => {
       let payload = {};
       payload.status = HttpStatus.OK;
       payload.result = userWallet;
-      res.status(payload.status).send(payload);      
+      res.status(payload.status).send(payload);
     } catch (error) {
       res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
     }
