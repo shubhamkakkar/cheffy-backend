@@ -1,10 +1,10 @@
 const category = [
-  {
-    id: '1',
-    name: 'Arabian',
-    description: 'Arabian food.',
-    url: 'https://images.fineartamerica.com/images-medium-large-5/turkish-arabian-food-kebab-aytacbicer.jpg'
-  },
+  // {
+  //   id: '1',
+  //   name: 'Arabian',
+  //   description: 'Arabian food.',
+  //   url: 'https://images.fineartamerica.com/images-medium-large-5/turkish-arabian-food-kebab-aytacbicer.jpg'
+  // },
   {
     id: '2',
     name: 'Japanese',
