@@ -10,5 +10,6 @@ router.post('/', controller.addCustomPlate);
 router.post('/pay', controller.payCustomPlate);
 router.post('/bid', controller.bidCustomPlate);
 router.get('/accept/bid/:id', controller.acceptCustomPlateBid);
+router.get('/getmodeltype', controller.getModelType);
 
 module.exports = router;

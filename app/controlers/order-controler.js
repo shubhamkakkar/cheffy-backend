@@ -424,3 +424,63 @@ exports.createOrderReview = async (req, res, next) => {
     });
   }
 };
+
+exports.getModelTypeOrders = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('orders');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeOrderItems = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('items');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeOrderPayments = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('payments');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeOrderTransactions = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('transactions');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeOrderWallets = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('wallets');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};

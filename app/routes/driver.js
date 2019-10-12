@@ -7,5 +7,6 @@ const authService = require("../services/auth");
 
 
 router.put('/position', controller.updateDriverPosition);
+router.get('/driver-finders/getmodeltype', controller.getModelTypeDriverFinders);
 
 module.exports = router;

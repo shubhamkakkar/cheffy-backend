@@ -8,7 +8,7 @@ const {
   ChefCertificate,
   User
 } = require("../models/index");
-
+const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.listAllDocs = async () => {
   const list_docs = await Documents.findAll({
@@ -50,3 +50,21 @@ exports.authenticateToken = async data => {
   });
   return res;
 };
+
+exports.getModelType = async (option) => {
+  let res = '';
+  if (option === 'chefLicenses') {
+    res = await getModelSQLTypesQuery('ChefLicenses');
+  } else if (option === 'chefCertificates') {
+    res = await getModelSQLTypesQuery('ChefCertificates');
+  } else if (option === 'kitchenImages') {
+    res = await getModelSQLTypesQuery('KitchenImages');
+  } else if (option === 'kitchenPhotos') {
+    res = await getModelSQLTypesQuery('KitchenPhotos');
+  } else if (option === 'profilePhotos') {
+    res = await getModelSQLTypesQuery('ProfilePhotos');
+  } else if (option === 'nidFrontSides') {
+    res = await getModelSQLTypesQuery('NIDFrontSides');
+  }
+  return res;
+}

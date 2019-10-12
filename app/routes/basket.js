@@ -10,5 +10,7 @@ router.post('/', authService.authorize, controller.addItem);
 router.get('/', authService.authorize, controller.list);
 router.get('/subtract/:id', authService.authorize, controller.subtractIten);
 router.get('/add/:id', authService.authorize, controller.sumIten);
+router.get('/getmodeltype', controller.getModelType);
+router.get('/items/getmodeltype', controller.getModelTypeItems);
 
 module.exports = router;

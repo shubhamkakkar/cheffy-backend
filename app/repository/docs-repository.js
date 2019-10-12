@@ -7,6 +7,7 @@ const {
   ChefLicense,
   ChefCertificate
 } = require("../models/index");
+const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.getUserDocs = async (state, data) => {
   if (state && data) {
@@ -234,4 +235,10 @@ exports.updateProfilePhoto = async (data) => {
     console.log("Error: ", e);
     return { message: "Fail to update Chef docs", error: e };
   }
+}
+
+exports.getModelType = async () => {
+  // const res = await getModelSQLTypes(User);
+  const res = await getModelSQLTypesQuery('Documents');
+  return res;
 }

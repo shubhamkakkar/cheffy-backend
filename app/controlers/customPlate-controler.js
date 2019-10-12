@@ -398,3 +398,15 @@ exports.payCustomPlate = async (req, res, next) => {
   });
   return 0;
 }
+
+exports.getModelType = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType();
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};

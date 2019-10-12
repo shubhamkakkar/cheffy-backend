@@ -36,7 +36,7 @@ exports.authenticate = async (req, res, next) => {
 exports.listAllDocs = async (req, res, next) => {
   try {
     const docs = await repository.listAllDocs();
-    res.status(HttpStatus.ACCEPTED).send( docs );
+    res.status(HttpStatus.ACCEPTED).send(docs);
     return 0;
   } catch (e) {
     res.status(HttpStatus.CONFLICT).send({
@@ -68,3 +68,75 @@ exports.checkDocs = async (req, res, next) => {
     return 0;
   }
 }
+
+exports.getModelTypeChefLicenses = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('chefLicenses');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeChefCertificates = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('chefCertificates');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeKitchenImages = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('kitchenImages');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeKitchenPhotos = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('kitchenPhotos');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeProfilePhotos = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('profilePhotos');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeNIDFrontSides = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('nidFrontSides');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
