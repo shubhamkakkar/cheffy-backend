@@ -20,7 +20,10 @@ const bcrypt = require('bcrypt');
 
 const { generateHash } = require('../../helpers/password');
 
+const categoryRepository = require('../repository/category-repository');
+
 const plates = require('../../resources/plates');
+const categories = require('../../resources/categories');
 
 exports.dummy = async (req, res, next) => {
   const category = await repositoryCategory.createCategory({ name: 'Dummy', description: 'Dummy category', url: '#' });
@@ -92,6 +95,14 @@ exports.dummy = async (req, res, next) => {
   }
 
   res.status(HttpStatus.ACCEPTED).send({ message: 'Plates are being created', status: HttpStatus.ACCEPTED });
+}
+
+exports.dummyCategories = async (req, res, next) => {
+  let category;
+  for (let i = 0; i < categories.length; i++) {
+    category = await categoryRepository.createCategory(categories[i]);
+  }
+  res.status(HttpStatus.ACCEPTED).send({ message: 'Categories are being created', status: HttpStatus.ACCEPTED });
 }
 
 exports.create = async (req, res, next) => {
