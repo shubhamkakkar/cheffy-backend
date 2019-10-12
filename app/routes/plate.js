@@ -17,5 +17,17 @@ router.get('/:id/related', controller.getRelatedPlates);
 router.get('/near', controller.listNear);
 router.get('/custom-plates', controller.customPlates);
 router.get('/custom-plate/:id', controller.customPlate);
-    
+router.get('/getmodeltype', controller.getModelTypePlates);
+router.get('/categories/getmodeltype', controller.getModelTypePlateCategories);
+router.get('/images/getmodeltype', controller.getModelTypePlateImages);
+router.get('/reviews/getmodeltype', controller.getModelTypePlateReviews);
+router.get('/custom-plates/getmodeltype', controller.getModelTypeCustomPlates);
+router.get('/custom-auction-bids/getmodeltype', controller.getModelTypeCustomPlateAuctionBids);
+router.get('/custom-auction/getmodeltype', controller.getModelTypeCustomPlateAuctions);
+router.get('/custom-images/getmodeltype', controller.getModelTypeCustomPlateImages);
+router.get('/custom-orders/getmodeltype', controller.getModelTypeCustomPlateOrders);
+router.get('/ingredients/getmodeltype', controller.getModelTypeIngredients);
+router.get('/receipt-images/getmodeltype', controller.getModelTypeReceiptImages);
+
+
 module.exports = router;

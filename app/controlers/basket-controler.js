@@ -110,7 +110,7 @@ exports.list = async (req, res, next) => {
     basket_delivery_fee += 0;
     basket_total += (basket_delivery_fee + parseFloat(value.total));
 
-    
+
   });
 
   let basket_return = {
@@ -213,3 +213,27 @@ exports.sumIten = async ( req, res, next) => {
   });
   res.status(HttpStatus.ACCEPTED).send(arrayNew);
 }
+
+exports.getModelType = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('baskets');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeItems = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('items');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};

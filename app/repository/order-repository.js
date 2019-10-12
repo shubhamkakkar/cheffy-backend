@@ -1,5 +1,6 @@
 'use strict';
 const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.getById = async (orderId) => {
     try {
@@ -88,7 +89,7 @@ exports.getUserOrders = async (data) => {
           as:'plate',
           include: [{
             model: User,
-            as:'chef'            
+            as:'chef'
           },
           {
             model: PlateImage
@@ -116,7 +117,7 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
           as:'plate',
           include: [{
             model: User,
-            as:'chef'            
+            as:'chef'
           },
           {
             model: PlateImage
@@ -229,4 +230,20 @@ exports.createOrderReview = async (review) => {
   return { message: "Fail to get Plate Reviews!", error: e };
 
   }
+}
+
+exports.getModelType = async (option) => {
+  let res = '';
+  if (option === 'orders') {
+    res = await getModelSQLTypesQuery('Orders');
+  } else if (option === 'items') {
+    res = await getModelSQLTypesQuery('OrderItems');
+  } else if (option === 'payments') {
+    res = await getModelSQLTypesQuery('OrderPayments');
+  } else if (option === 'transactions') {
+    res = await getModelSQLTypesQuery('Transactions');
+  } else if (option === 'wallets') {
+    res = await getModelSQLTypesQuery('Wallets');
+  }
+  return res;
 }

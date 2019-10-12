@@ -29,15 +29,15 @@ exports.create = async (req, res, next) => {
   const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (existUser.user_type !== 'chef') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true }).end();
     return 0;
   }
   if (existUser.verification_email_status !== 'verified') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Your email was not verified", error: true}).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Your email was not verified", error: true }).end();
     return 0;
   }
   if (existUser.verification_phone_status !== 'verified') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true}).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true }).end();
     return 0;
   }
   const validate_docs = await repositoryDocs.getUserDocs(existUser.id)
@@ -128,8 +128,8 @@ exports.list = async (req, res, next) => {
     retorno = await repository.listPlates2(req.query)
   } else {
     let data = req.query;
-    data.page=1;
-    data.pageSize=10;
+    data.page = 1;
+    data.pageSize = 10;
     retorno = await repository.listPlates2(data)
   }
   res.status(HttpStatus.ACCEPTED).send(retorno);
@@ -144,14 +144,14 @@ exports.edit = async (req, res, next) => {
   try {
     let existPlate = await repository.findPlate(req.params.id);
     if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
+      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT });
       return 0;
     }
     let newReceiptImages = existPlate.ReceiptImages;
 
     existPlate.name = req.body.name || existPlate.name;
     existPlate.description = req.body.description || existPlate.description;
-    existPlate.price = req.body.price  || existPlate.price;
+    existPlate.price = req.body.price || existPlate.price;
     existPlate.delivery_time = req.body.delivery_time || existPlate.delivery_time;
     existPlate.delivery_type = req.body.delivery_type || existPlate.delivery_type;
     await existPlate.save();
@@ -213,10 +213,10 @@ exports.getPlateReview = async (req, res, next) => {
 exports.getRelatedPlates = async (req, res, next) => {
   try {
     const relatedPlates = await repository.getRelatedPlate(req.params.id);
-    if(relatedPlates){
+    if (relatedPlates) {
       res.status(200).send(relatedPlates);
-    }else{
-      res.status(404).send({message:"Plate not found"});
+    } else {
+      res.status(404).send({ message: "Plate not found" });
     }
   } catch (e) {
     res.status(500).send({
@@ -285,4 +285,136 @@ exports.searchPlates = async (req, res, next) => {
     attributes: ["name", "description", "price", "delivery_time"]
   });
   res.status(200).send({ message: "Plates find!", param: req.params.text, data: list_plates });
+};
+
+exports.getModelTypePlates = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('plates');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypePlateCategories = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('plateCategories');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypePlateImages = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('plateImages');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeCustomPlates = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('customPlates');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeCustomPlateAuctionBids = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('customPlateAuctionBids');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeCustomPlateAuctions = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('customPlateAuctions');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeCustomPlateImages = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('customPlateImages');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeCustomPlateOrders = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('customPlateOrders');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypePlateReviews = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('plateReviews');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeIngredients = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('ingredients');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};
+
+exports.getModelTypeReceiptImages = async (req, res, next) => {
+  try {
+    const dataTypes = await repository.getModelType('receiptImages');
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
 };

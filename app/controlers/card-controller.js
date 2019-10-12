@@ -14,11 +14,11 @@ exports.listUserCards = async (req,res) => {
         if(user){
 
             if(!user.address || user.address.length == 0){
-                res.status(404).send({message:"User address not found"});     
+                res.status(404).send({message:"User address not found"});
             }
 
             if(!user.stripe_id){
-                res.status(404).send({message:"This user has no credit cards saved"});     
+                res.status(404).send({message:"This user has no credit cards saved"});
                 return;
             }
 
@@ -27,7 +27,7 @@ exports.listUserCards = async (req,res) => {
             res.status(200).send(creditCardList);
 
         }else{
-            res.status(404).send({message:"User not found"}); 
+            res.status(404).send({message:"User not found"});
         }
 
 
@@ -57,7 +57,7 @@ exports.addNewCard = async (req,res) => {
             res.status(HttpStatus.CONFLICT).send("Review card info").end();
             return 0;
           }
-        
+
 
         let card = {
             number:req.body.number,
@@ -71,21 +71,21 @@ exports.addNewCard = async (req,res) => {
         if(user){
 
             if(!user.address || user.address.length == 0){
-                res.status(404).send({message:"User address not found"});     
+                res.status(404).send({message:"User address not found"});
             }
 
             if(!user.stripe_id){
-                let stripeNewUser = await cardService.createUser(user,user.address[0]);    
-                user = await userRepository.saveStripeinfo(user.id,stripeNewUser);                
+                let stripeNewUser = await cardService.createUser(user,user.address[0]);
+                user = await userRepository.saveStripeinfo(user.id,stripeNewUser);
             }
 
-            let stripeNewCard = await cardService.createCard(user,user.address[0],card)          
+            let stripeNewCard = await cardService.createCard(user,user.address[0],card)
             let attachedCard = await cardService.attachUser(stripeNewCard.id,user.stripe_id);
 
             res.status(201).send(attachedCard);
 
         }else{
-            res.status(404).send({message:"User not found"}); 
+            res.status(404).send({message:"User not found"});
         }
 
 

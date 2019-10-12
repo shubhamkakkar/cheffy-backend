@@ -616,3 +616,15 @@ exports.getUserBalanceHistory = async (req, res, next) => {
     });
   }
 };
+
+exports.getModelType = async (req, res, next) => {
+  try {
+    const dataTypes = await userRepository.getModelType();
+    res.status(200).json(dataTypes);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to getting model types",
+      error: e
+    });
+  }
+};

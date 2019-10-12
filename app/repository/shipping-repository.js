@@ -1,5 +1,6 @@
 'use strict';
 const { ShippingAddress } = require("../models/index");
+const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.createAddress = async (data) => {
   try {
@@ -72,3 +73,9 @@ exports.listAddress = async (data) => {
     return { message: "Fail to get Address!", error: e };
   }
 };
+
+exports.getModelType = async () => {
+  // const res = await getModelSQLTypes(User);
+  const res = await getModelSQLTypesQuery('ShippingAddresses');
+  return res;
+}

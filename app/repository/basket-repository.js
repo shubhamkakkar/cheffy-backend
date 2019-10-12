@@ -1,5 +1,6 @@
 'use strict';
 const { Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder } = require('../models/index');
+const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.getUserBasket = async (data) => {
   const basket = await Basket.findOrCreate({
@@ -124,4 +125,14 @@ exports.listBasketCustom = async (data) => {
     console.log("Error: ", e);
     return { message: "Fail to get your Basket!", error: e };
   }
+}
+
+exports.getModelType = async (option) => {
+  let res = '';
+  if (option === 'items') {
+    res = await getModelSQLTypesQuery('BasketItems');
+  } else if (option === 'baskets') {
+    res = await getModelSQLTypesQuery('Baskets');
+  }
+  return res;
 }
