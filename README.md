@@ -6,7 +6,7 @@ This repository hosts the Cheffy App Api.
 
 ## Table of Contents
  - [Introduction](#introduction)
-    - [Requirements](#requirements)
+ - [Requirements](#requirements)
  - [Available commands](#available-commands)
  - [Development](#development)
 

@@ -17,6 +17,7 @@ router.get('/:id/related', controller.getRelatedPlates);
 router.get('/near', controller.listNear);
 router.get('/custom-plates', controller.customPlates);
 router.get('/custom-plate/:id', controller.customPlate);
+
 router.get('/getmodeltype', controller.getModelTypePlates);
 router.get('/categories/getmodeltype', controller.getModelTypePlateCategories);
 router.get('/images/getmodeltype', controller.getModelTypePlateImages);

@@ -112,7 +112,7 @@ exports.listNear = async (data) => {
     resultado = JSON.parse(resultado);
     return resultado[0];
   } catch (e) {
-    console.log("Error: ", e);
+    // console.log("Error: ", e);
     return { message: "Fail the plates", error: e };
   }
 }

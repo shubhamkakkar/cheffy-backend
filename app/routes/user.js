@@ -9,7 +9,6 @@ const facebookRouter = require("../routes/facebook");
 const creditCardRouter = require("../routes/card");
 
 router.get('/dummy', controller.dummy);
-router.get('/dummy-categories', controller.dummyCategories);
 
 router.get('/', authService.authorize, controller.getUser);
 router.post('/', controller.create);

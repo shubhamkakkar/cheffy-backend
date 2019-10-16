@@ -1,6 +1,7 @@
 'use strict'
 
 const app = require('../server/index');
+const ws = require('../app/repository/tracking-repository');
 const debug = require('debug');
 const http = require('http');
 
@@ -12,6 +13,9 @@ const server = http.createServer(app);
 server.listen(port);
 server.on('listening', onListening);
 console.log(`Server is currently running on port: ${port}`);
+console.log(`WebScoekt is currently running on port: ${process.env.PORT_WS }`);
+
+ws.initWSConnection(process.env.PORT_WS || '9002');
 
 function normalizePort(val) {
     const port = parseInt(val, 10);
