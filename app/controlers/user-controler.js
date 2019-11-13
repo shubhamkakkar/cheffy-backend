@@ -15,15 +15,12 @@ const Querystring  = require('querystring');
 require("../services/worker");
 const crypto = require('crypto');
 const walletRepository = require('../repository/wallet-repository');
-
+const driverAPI = require('../services/driverApi');
 const bcrypt = require('bcrypt');
 
 const { generateHash } = require('../../helpers/password');
 
-const categoryRepository = require('../repository/category-repository');
-
 const plates = require('../../resources/plates');
-const categories = require('../../resources/categories');
 
 exports.dummy = async (req, res, next) => {
   const category = await repositoryCategory.createCategory({ name: 'Dummy', description: 'Dummy category', url: '#' });
@@ -97,21 +94,16 @@ exports.dummy = async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send({ message: 'Plates are being created', status: HttpStatus.ACCEPTED });
 }
 
-exports.dummyCategories = async (req, res, next) => {
-  let category;
-  for (let i = 0; i < categories.length; i++) {
-    category = await categoryRepository.createCategory(categories[i]);
-  }
-  res.status(HttpStatus.ACCEPTED).send({ message: 'Categories are being created', status: HttpStatus.ACCEPTED });
-}
-
 exports.create = async (req, res, next) => {
   let payload = {};
 
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
   contract.isRequired(req.body.user_type, 'User type is required!');
+  contract.isRequired(req.body.password, 'User type is required!');
 
+  if (req.body.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
+  
   if (!contract.isValid()) {
     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
@@ -126,10 +118,23 @@ exports.create = async (req, res, next) => {
   }
 
   let full_data = req.body;
-
+  full_data.password = bcrypt.hashSync(full_data.password,bcrypt.genSaltSync(10));
   if (full_data.user_type === 'chef') {
     if (full_data.restaurant_name === '' || full_data.restaurant_name === null || full_data.restaurant_name === undefined) {
       res.status(HttpStatus.CONFLICT).send({ message: "You need to register the restaurant name" }).end();
+      return 0;
+    }
+  }
+
+  if (full_data.user_type === 'driver') {
+    try {
+      await driverAPI.createDriver({
+        name: full_data.name,
+        email: full_data.email,
+        vehicle: full_data.vehicle
+      });
+    } catch (err) {
+      res.status(HttpStatus.CONFLICT).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
       return 0;
     }
   }
@@ -139,18 +144,14 @@ exports.create = async (req, res, next) => {
   user.verification_email_token = pass;
   await user.save();
   let args = {
-    jobName: "sendEmail",
-    time: 1000,
-    params: {
-      to: req.body.email,
-      from: "Cheffy contact@cheffy.com",
-      replyTo: "contact@cheffy.com",
-      subject: `Welcome to Cheffy!`,
-      template: "welcome/welcome",
-      context: { token: pass, user: ' One more step...' }
-    }
+    to: req.body.email,
+    from: "Cheffy contact@cheffy.com",
+    replyTo: "contact@cheffy.com",
+    subject: `Welcome to Cheffy!`,
+    template: "welcome/welcome",
+    context: { token: pass, user: ' One more step...' }
   };
-  kue.scheduleJob(args);
+  mailer.sendMail(args);
   const token = await authService.generateToken({
     id: user.id,
     email: user.email
@@ -370,6 +371,16 @@ exports.resendEmailToken = async (req, res, next) => {
   existUser.verification_email_token = token;
   existUser.verification_email_status = 'pending';
   await existUser.save();
+  
+  let args = {
+    to: existUser.email,
+    from: "Cheffy contact@cheffy.com",
+    replyTo: "contact@cheffy.com",
+    subject: `Email Token`,
+    template: "forget/forgot",
+    context: { token, user: existUser.name }
+  };
+  mailer.sendMail(args);
   res.status(HttpStatus.ACCEPTED).send({
     message: "Congratulations, an email with verification code has been sent!",
     status: HttpStatus.ACCEPTED
@@ -613,18 +624,6 @@ exports.getUserBalanceHistory = async (req, res, next) => {
   } catch (e) {
     res.status(500).send({
       message: 'Failed to process your request'
-    });
-  }
-};
-
-exports.getModelType = async (req, res, next) => {
-  try {
-    const dataTypes = await userRepository.getModelType();
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
     });
   }
 };
