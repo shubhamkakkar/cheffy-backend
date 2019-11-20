@@ -5,9 +5,12 @@ const {
   NIDFrontSide,
   KitchenPhoto,
   ChefLicense,
-  ChefCertificate
+  ChefCertificate,
+  DriverLicenseFrontSide,
+  DriverVehicleRegistration,
 } = require("../models/index");
-const { getModelSQLTypesQuery } = require('../../helpers/model-type');
+
+const uploadService = require('../services/upload');
 
 exports.getUserDocs = async (state, data) => {
   if (state && data) {
@@ -66,6 +69,14 @@ exports.getUserDocs = async (state, data) => {
       {
         model: ProfilePhoto,
         attributes: ["description", "url", "state_type"]
+      },
+      {
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'name', 'url', 'state_type']
       }
     ],
     order: [["id", "DESC"]]
@@ -75,7 +86,7 @@ exports.getUserDocs = async (state, data) => {
 
 exports.getUserDoc = async (data) => {
   const existUserDoc = await Documents.findOne({
-    where: { id: data },
+    where: { userId: data },
     include: [
       {
         model: ChefLicense,
@@ -96,6 +107,78 @@ exports.getUserDoc = async (data) => {
       {
         model: ProfilePhoto,
         attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'name', 'url', 'state_type']
+      }
+    ]
+  });
+  return existUserDoc;
+};
+
+exports.getDriverDocs = async (state, data) => {
+  if (state && data) {
+    const existUserDocs = await Documents.findOne({
+      where: { userId: data },
+      include: [
+        {
+          model: ProfilePhoto,
+          attributes: ["description", "url", "state_type"]
+        },
+        {
+          model: DriverLicenseFrontSide,
+          attributes: ['id', 'name', 'url', 'state_type']
+        },
+        {
+          model: DriverVehicleRegistration,
+          attributes: ['id', 'name', 'url', 'state_type']
+        }
+      ],
+      order: [["id", "DESC"]]
+    });
+    return existUserDocs;
+  }
+  const existUserDocs = await Documents.findOne({
+    where: { userId: state },
+    include: [
+      {
+        model: ProfilePhoto,
+        attributes: ["description", "url", "state_type"]
+      },
+      {
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'name', 'url', 'state_type']
+      }
+    ],
+    order: [["id", "DESC"]]
+  });
+  return existUserDocs;
+};
+
+exports.getDriverDoc = async (data) => {
+  const existUserDoc = await Documents.findOne({
+    where: { userId: data },
+    include: [
+      {
+        model: ProfilePhoto,
+        attributes: ["description", "url", "state_type"]
+      },
+      {
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'name', 'url', 'state_type']
       }
     ]
   });
@@ -110,6 +193,7 @@ exports.createDoc = async (data) => {
 exports.updateDoc = async (data) => {
   try {
     const response = await Documents.findByPk(data.id)
+
     response.comment = data.comment || null
     response.state_type = data.state_type || null
     await response.save();
@@ -120,9 +204,10 @@ exports.updateDoc = async (data) => {
   }
 }
 
-exports.userUpdateDoc = async (data) => {
+exports.userUpdateDoc = async (documentId) => {
   try {
-    const response = await Documents.findByPk(data)
+    const response = await Documents.findByPk(documentId);
+
     response.state_type = 'pending'
     await response.save();
     return response;
@@ -132,19 +217,33 @@ exports.userUpdateDoc = async (data) => {
   }
 }
 
-exports.createChefLicense = async (id, data) => {
-  let payload = data;
-  payload.documentId = id;
-  let doc = await ChefLicense.create({ ...payload });
+exports.createChefLicense = async (documentId, data) => {
+  const { originalname, key } = data;
+
+  let doc = await ChefLicense.create({
+    description: originalname,
+    url: key,
+    documentId,
+  });
+
   return doc;
 }
 
-exports.updateChefLicense = async (data) => {
+exports.updateChefLicense = async (documentId, data) => {
   try {
-    const response = await ChefLicense.findByPk(data.id)
-    response.description = data.description || null
-    response.url = data.url || null
-    response.state_type = data.state_type || null
+    const { originalname, key, fieldname } = data;
+    const response = await ChefLicense.findOne({ where: { documentId } });
+    
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+
+    response.description = originalname;
+    response.url = key;
+    //response.state_type = data.state_type || null
     await response.save();
     return response;
   } catch (e) {
@@ -153,40 +252,32 @@ exports.updateChefLicense = async (data) => {
   }
 }
 
-exports.createChefCertificate = async (id, data) => {
-  let payload = data;
-  payload.documentId = id;
-  let doc = await ChefCertificate.create({ ...payload });
-  return doc;
-};
+exports.createChefCertificate = async (documentId, data) => {
+  const { originalname, key } = data;
 
-exports.updateChefCertificate = async (data) => {
-  try {
-    const response = await ChefCertificate.findByPk(data.id)
-    response.description = data.description || null
-    response.url = data.url || null
-    response.state_type = data.state_type || null
-    await response.save();
-    return response;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to update Chef docs", error: e };
-  }
-}
-
-exports.createKitchenPhoto = async (id, data) => {
-  let payload = data;
-  payload.documentId = id;
-  let doc = await KitchenPhoto.create({ ...payload });
+  let doc = await ChefCertificate.create({
+    description: originalname,
+    url: key,
+    documentId,
+  });
   return doc;
 };
 
-exports.updateKitchenPhoto = async (data) => {
+exports.updateChefCertificate = async (documentId, data) => {
   try {
-    const response = await KitchenPhoto.findByPk(data.id)
-    response.description = data.description || null
-    response.url = data.url || null
-    response.state_type = data.state_type || null
+    const { originalname, key, fieldname } = data;
+    const response = await ChefCertificate.findOne({ where: { documentId } });
+
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+    
+    response.description = originalname;
+    response.url = key;
+    //response.state_type = data.state_type || null
     await response.save();
     return response;
   } catch (e) {
@@ -195,19 +286,32 @@ exports.updateKitchenPhoto = async (data) => {
   }
 }
 
-exports.createNIDFrontSide = async (id, data) => {
-  let payload = data;
-  payload.documentId = id;
-  let doc = await NIDFrontSide.create({ ...payload });
+exports.createKitchenPhoto = async (documentId, data) => {
+  const { originalname, key} = data;
+
+  let doc = await KitchenPhoto.create({
+    description: originalname,
+    url: key,
+    documentId,
+  });
   return doc;
 };
 
-exports.updateNIDFrontSide = async (data) => {
+exports.updateKitchenPhoto = async (documentId, data) => {
   try {
-    const response = await NIDFrontSide.findByPk(data.id)
-    response.description = data.description || null
-    response.url = data.url || null
-    response.state_type = data.state_type || null
+    const { originalname, key, fieldname } = data;
+    const response = await KitchenPhoto.findOne({ where: { documentId } });
+
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+
+    response.description = originalname;
+    response.url = key;
+    //response.state_type = data.state_type || null
     await response.save();
     return response;
   } catch (e) {
@@ -216,19 +320,31 @@ exports.updateNIDFrontSide = async (data) => {
   }
 }
 
-exports.createProfilePhoto = async (id, data) => {
-  let payload = data;
-  payload.documentId = id;
-  let doc = await ProfilePhoto.create({ ...payload });
+exports.createNIDFrontSide = async (documentId, data) => {
+  const { originalname, key } = data;
+
+  let doc = await NIDFrontSide.create({
+    description: originalname,
+    url: key,
+    documentId,
+  });
   return doc;
 };
 
-exports.updateProfilePhoto = async (data) => {
+exports.updateNIDFrontSide = async (documentId, data) => {
   try {
-    const response = await ProfilePhoto.findByPk(data.id)
-    response.description = data.description || null
-    response.url = data.url || null
-    response.state_type = data.state_type || null
+    const { originalname, key, fieldname } = data;
+    const response = await NIDFrontSide.findOne({ where: { documentId } });
+
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+    response.description = originalname;
+    response.url = key;
+    //response.state_type = data.state_type || null
     await response.save();
     return response;
   } catch (e) {
@@ -237,8 +353,106 @@ exports.updateProfilePhoto = async (data) => {
   }
 }
 
-exports.getModelType = async () => {
-  // const res = await getModelSQLTypes(User);
-  const res = await getModelSQLTypesQuery('Documents');
-  return res;
+exports.createDriverLicense = async (documentId, data) => {
+  const { originalname, key } = data;
+
+  let doc = await DriverLicenseFrontSide.create({
+    documentId,
+    url: key,
+    name: originalname
+  });
+
+  return doc;
+};
+
+exports.updateDriverLicense = async (documentId, data) => {
+  try {
+    const { originalname, key, fieldname } = data;
+    const response = await DriverLicenseFrontSide.findOne({ where: { documentId } });
+
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+
+    response.name = originalname;
+    response.url = key;
+    //response.state_type = data.response || null
+    await response.save();
+    return response;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail to update Driver docs", error: e };
+  }
+};
+
+exports.createDriverVehicleLicense = async (documentId, data) => {
+  const { originalname, key } = data;
+
+  let doc = await DriverVehicleRegistration.create({
+    documentId,
+    url: key,
+    name: originalname
+  });
+
+  return doc;
+};
+
+exports.updateDriverVehicleRegistration = async (documentId, data) => {
+  try {
+    const { originalname, key, fieldname } = data;
+    const response = await DriverVehicleRegistration.findOne({ where: { documentId } });
+
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+
+    response.name = originalname;
+    response.url = key;
+    //response.state_type = data.response || null
+    await response.save();
+    return response;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail to update Driver docs", error: e };
+  }
+};
+
+exports.createProfilePhoto = async (documentId, data) => {
+  const { originalname, key } = data;
+
+  let doc = await ProfilePhoto.create({
+    description: originalname,
+    url: key,
+    documentId,
+  });
+  return doc;
+};
+
+exports.updateProfilePhoto = async (documentId, data) => {
+  try {
+    const { originalname, key, fieldname } = data;
+    const response = await ProfilePhoto.findOne({ where: { documentId } });
+
+    if (response)
+      await uploadService.deleteImage(fieldname, response.getDataValue('url'));
+    else {
+      await uploadService.deleteImage(fieldname, key);
+      return 0;
+    }
+
+    response.description = originalname;
+    response.url = key;
+    //response.state_type = data.response || null
+    await response.save();
+    return response;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail to update Chef docs", error: e };
+  }
 }

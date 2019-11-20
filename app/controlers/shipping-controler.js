@@ -19,7 +19,7 @@ exports.create = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
   const existAddress = await repository.checkExistAddress({
     userId: token_return.id,
-    lat: req.body.lat,
+    lat: req.body.lat, 
     lon: req.body.lon
   });
   if (existAddress) {
@@ -96,18 +96,6 @@ exports.edit = async (req, res, next) => {
     console.log("Error: ", e);
     res.status(500).send({
       message: 'Failed to process your request'
-    });
-  }
-};
-
-exports.getModelType = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType();
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
     });
   }
 };

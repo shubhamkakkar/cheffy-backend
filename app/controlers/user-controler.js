@@ -15,15 +15,12 @@ const Querystring  = require('querystring');
 require("../services/worker");
 const crypto = require('crypto');
 const walletRepository = require('../repository/wallet-repository');
-
+const driverAPI = require('../services/driverApi');
 const bcrypt = require('bcrypt');
 
 const { generateHash } = require('../../helpers/password');
 
-const categoryRepository = require('../repository/category-repository');
-
 const plates = require('../../resources/plates');
-const categories = require('../../resources/categories');
 
 exports.dummy = async (req, res, next) => {
   const category = await repositoryCategory.createCategory({ name: 'Dummy', description: 'Dummy category', url: '#' });
@@ -95,14 +92,6 @@ exports.dummy = async (req, res, next) => {
   }
 
   res.status(HttpStatus.ACCEPTED).send({ message: 'Plates are being created', status: HttpStatus.ACCEPTED });
-}
-
-exports.dummyCategories = async (req, res, next) => {
-  let category;
-  for (let i = 0; i < categories.length; i++) {
-    category = await categoryRepository.createCategory(categories[i]);
-  }
-  res.status(HttpStatus.ACCEPTED).send({ message: 'Categories are being created', status: HttpStatus.ACCEPTED });
 }
 
 exports.create = async (req, res, next) => {
@@ -382,6 +371,16 @@ exports.resendEmailToken = async (req, res, next) => {
   existUser.verification_email_token = token;
   existUser.verification_email_status = 'pending';
   await existUser.save();
+  
+  let args = {
+    to: existUser.email,
+    from: "Cheffy contact@cheffy.com",
+    replyTo: "contact@cheffy.com",
+    subject: `Email Token`,
+    template: "forget/forgot",
+    context: { token, user: existUser.name }
+  };
+  mailer.sendMail(args);
   res.status(HttpStatus.ACCEPTED).send({
     message: "Congratulations, an email with verification code has been sent!",
     status: HttpStatus.ACCEPTED
@@ -625,18 +624,6 @@ exports.getUserBalanceHistory = async (req, res, next) => {
   } catch (e) {
     res.status(500).send({
       message: 'Failed to process your request'
-    });
-  }
-};
-
-exports.getModelType = async (req, res, next) => {
-  try {
-    const dataTypes = await userRepository.getModelType();
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
     });
   }
 };

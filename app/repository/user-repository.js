@@ -1,5 +1,4 @@
 const {sequelize, User, ShippingAddress} = require('../models/index')
-const { getModelSQLTypes, getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.findDriversInsideArea = async (latitude,longitude,radiusMiles) => {
     let strQuery = "SELECT id, ( 3959 * acos( cos( radians("+latitude+") ) * cos( radians( CAST(SUBSTRING_INDEX(location, ',', 1) AS DECIMAL(10,6)) ) ) "+
@@ -27,7 +26,7 @@ exports.getUserById = async (userId) => {
     });
     if(user){
         try {
-            let userFavoritePlates = await getUserFavoritePlates(userId);
+            let userFavoritePlates = await getUserFavoritePlates(userId);            
             let userWithFavPlates = JSON.parse(JSON.stringify(user));
             userWithFavPlates.favorite_plates = JSON.parse(JSON.stringify(userFavoritePlates));
             return userWithFavPlates;
@@ -50,14 +49,8 @@ function getUserFavoritePlates(userID) {
                         inner join ( SELECT plate_id, count(plate_id) as total
                                         from OrderItems
                                         GROUP BY plate_id) c ON oi.plate_id = c.plate_id
-                        where oi.user_id = ${userID}
+                        where oi.user_id = ${userID}                                        
                         LIMIT 3`;
 
-    return sequelize.query(favoriteSQL,{raw:true,nest:true});
-}
-
-exports.getModelType = async (model) => {
-  // const res = await getModelSQLTypes(User);
-  const res = await getModelSQLTypesQuery('Users');
-  return res;
+    return sequelize.query(favoriteSQL,{raw:true,nest:true});        
 }

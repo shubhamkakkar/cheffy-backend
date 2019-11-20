@@ -2,7 +2,6 @@
 'use strict';
 const Sequelize = require('sequelize');
 const {sequelize,OrderItem, ShippingAddress,PlateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
-const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 const Op = Sequelize.Op;
 
 exports.createIngredient = async (data) => {
@@ -35,16 +34,6 @@ exports.createPlateImage = async (data) => {
   }
 }
 
-exports.updatePlateImage = async (data) => {
-  try {
-    const response = await PlateImage.bulkCreate(data, { updateOnDuplicate: ["name", "url"] });
-    return response;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to update ingredient", error: e };
-  }
-}
-
 exports.createKitchenImage = async (data) => {
   try {
     const response = await KitchenImage.bulkCreate(data);
@@ -52,16 +41,6 @@ exports.createKitchenImage = async (data) => {
   } catch (e) {
     console.log("Error: ", e);
     return { message: "Fail to save ingredient", error: e };
-  }
-}
-
-exports.updateKitchenImage = async (data) => {
-  try {
-    const response = await KitchenImage.bulkCreate(data, { updateOnDuplicate: ["name", "url"] });
-    return response;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to update ingredient", error: e };
   }
 }
 
@@ -75,35 +54,49 @@ exports.createReceiptImage = async (data) => {
   }
 }
 
-exports.updateReceiptImage = async (data) => {
-  try {
-    const response = await ReceiptImage.bulkCreate(data, { updateOnDuplicate: ["name", "url"] });
-    return response;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to update ingredient", error: e };
-  }
-}
-
 exports.listNear = async (data) => {
-  let { latitude, longitude, radius } = data;
+  let { latitude, longitude, radiusMiles } = data;
+  const globalRadiusMilies = parseFloat(3958,756);
+  const radiusCurrent = (radiusMiles) ? parseFloat(parseFloat(radiusMiles) / globalRadiusMilies) : parseFloat(0.00631);
 
-  let query = `SELECT
-                P.userId,
+  /*
+  let query = `SELECT 
+                P.userId, 
                 ( 3959 * acos( cos( radians(${latitude}) ) * cos( radians( location_lat ) ) * cos( radians( location_lon ) - radians(${longitude}) ) + sin( radians(${latitude}) ) * sin(radians(location_lat)) ) ) AS distance,
-                P.id AS plate_id,
-                P.delivery_type,
-                P.name,
+                P.id AS plate_id, 
+                P.delivery_type, 
+                P.name, 
                 pimage.url as imageURL,
-                P.price,
-                P.description,
+                P.price, 
+                P.description, 
                 P.delivery_time,
-                P.rating
-              FROM Users as U
-              LEFT JOIN Plates as P on U.id = userId
+                P.rating 
+              FROM Users as U 
+              LEFT JOIN Plates as P on U.id = userId 
               LEFT JOIN (SELECT plateId, url FROM PlateImages group by plateId ) as pimage on pimage.plateId = P.id
-              WHERE U.id = P.userId and U.user_type = 'chef'
+              WHERE U.id = P.userId and U.user_type = 'chef' 
               ORDER BY distance LIMIT 0 , 20;`;
+  */
+ let query = `
+  SELECT
+  P.id AS plate_id, 
+  P.delivery_type, 
+  P.name,
+  P.price,
+  pimage.url as imageURL,
+  P.description, 
+  P.delivery_time,
+  P.rating 
+  FROM Users as U
+  LEFT JOIN Plates as P on U.id = userId
+  LEFT JOIN (SELECT plateId, url FROM PlateImages group by plateId, url) as pimage on pimage.plateId = P.id
+  WHERE U.id = P.userId 
+  and U.user_type = 'chef'
+  and U.location_lat <= ${(parseFloat(latitude) + radiusCurrent)}
+  and U.location_lat >= ${(parseFloat(latitude) - radiusCurrent)}
+  and U.location_lon <= ${(parseFloat(longitude) + radiusCurrent)}
+  and U.location_lon >= ${(parseFloat(longitude) - radiusCurrent)}
+ `;
 //    Column distance not found
 //              HAVING distance < ${radiusMiles} ORDER BY distance LIMIT 0 , 20;`;
   try {
@@ -116,6 +109,33 @@ exports.listNear = async (data) => {
     return { message: "Fail the plates", error: e };
   }
 }
+
+exports.searchLatestPlates = async (data) => {
+  const { amount } = data;
+
+  const limit = (amount && (amount >= 1)) ? amount : 10;
+  let query = `
+    SELECT
+    P.id as plate_id,
+    P.delivery_type,
+    P.name,
+    P.price,
+    pimage.url as imageURL,
+    P.description, 
+    P.delivery_time,
+    P.rating 
+    FROM database_development.Plates as P 
+    LEFT JOIN (SELECT plateId, url FROM PlateImages group by plateId, url) as pimage on pimage.plateId = P.id
+    order by id desc limit ${limit}
+    `;
+  try {
+    const response = await ReceiptImage.sequelize.query(query, { raw: true });
+    return JSON.parse(JSON.stringify(response))[0]
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};
 
 exports.findPlate = async (data) => {
   try {
@@ -191,14 +211,14 @@ exports.getPlate = async (data) => {
             attributes: ['id', 'name'],
             as:'user'
           }]
-        },
+        },        
         {
           model: User,
           as: 'chef'
         }
-
+        
       ],
-      nested: true
+      nested: true 
     });
     return existPlate;
   } catch (e) {
@@ -304,7 +324,7 @@ exports.getRelatedPlate = async (plateId) => {
 //          }
         ]
       };
-
+    
       try {
         let relatedPlates = await Plates.findAll (options);
         return relatedPlates;
@@ -391,7 +411,7 @@ exports.getPlateReviewByPlateId = async (data,limit) => {
 
 
 exports.listPlates2 = async (data) => {
-
+  
   let { latitude, longitude, radiusMiles, newest } = data;
   let nearbyPlates = false;
   let options =   {
@@ -442,21 +462,21 @@ exports.listPlates2 = async (data) => {
 
   if(latitude && longitude && radiusMiles){
 
-    let query = `SELECT
-                  P.userId,
+    let query = `SELECT 
+                  P.userId, 
                   ( 3959 * acos( cos( radians(${latitude}) ) * cos( radians( location_lat ) ) * cos( radians( location_lon ) - radians(${longitude}) ) + sin( radians(${latitude}) ) * sin(radians(location_lat)) ) ) AS distance,
-                  P.id AS plate_id,
-                  P.delivery_type,
-                  P.name,
+                  P.id AS plate_id, 
+                  P.delivery_type, 
+                  P.name, 
                   pimage.url as imageURL,
-                  P.price,
-                  P.description,
+                  P.price, 
+                  P.description, 
                   P.delivery_time,
-                  P.rating
-                FROM Users as U
-                LEFT JOIN Plates as P on U.id = userId
+                  P.rating 
+                FROM Users as U 
+                LEFT JOIN Plates as P on U.id = userId 
                 LEFT JOIN (SELECT plateId, url FROM PlateImages group by plateId ) as pimage on pimage.plateId = P.id
-                WHERE U.id = P.userId and U.user_type = 'chef'
+                WHERE U.id = P.userId and U.user_type = 'chef' 
                 HAVING distance < ${radiusMiles} ORDER BY distance LIMIT 0 , 20;`;
     try {
       const response = await sequelize.query(query, { raw: true,type: sequelize.QueryTypes.SELECT });
@@ -488,32 +508,62 @@ exports.listPlates2 = async (data) => {
   }
 }
 
-exports.getModelType = async (option) => {
-  let res = '';
-  if (option === 'plates') {
-    res = await getModelSQLTypesQuery('Plates');
-  } else if (option === 'plateCategories') {
-    res = await getModelSQLTypesQuery('PlateCategories');
-  } else if (option === 'plateImages') {
-    res = await getModelSQLTypesQuery('PlateImages');
-  } else if (option === 'plateReviews') {
-    res = await getModelSQLTypesQuery('PlateReviews');
-  } else if (option === 'customPlates') {
-    res = await getModelSQLTypesQuery('CustomPlates');
-  } else if (option === 'customPlateAuctionBids') {
-    res = await getModelSQLTypesQuery('CustomPlateAuctionBids');
-  } else if (option === 'customPlateAuctions') {
-    res = await getModelSQLTypesQuery('CustomPlateAuctions');
-  } else if (option === 'customPlateImages') {
-    res = await getModelSQLTypesQuery('CustomPlateImages');
-  } else if (option === 'customPlateOrders') {
-    res = await getModelSQLTypesQuery('CustomPlateOrders');
-  } else if (option === 'plateReviews') {
-    res = await getModelSQLTypesQuery('PlateReviews');
-  } else if (option === 'ingredients') {
-    res = await getModelSQLTypesQuery('Ingredients');
-  } else if (option === 'receiptImages') {
-    res = await getModelSQLTypesQuery('ReceiptImages');
+exports.getChefPlates = async (data) => {
+  const { userId } = data;
+  let query = `
+  SELECT
+  P.id AS plate_id, 
+  P.delivery_type, 
+  P.name,
+  P.price,
+  pimage.url as imageURL,
+  P.description, 
+  P.delivery_time,
+  P.rating 
+  FROM Users as U
+  LEFT JOIN Plates as P on U.id = ${userId}
+  LEFT JOIN (SELECT plateId, url FROM PlateImages group by plateId, url) as pimage on pimage.plateId = P.id
+  WHERE U.id = P.userId 
+  and U.user_type = 'chef'
+  `;
+  try {
+    const response = await ReceiptImage.sequelize.query(query, { raw: true });
+    return JSON.parse(JSON.stringify(response))[0]
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
   }
-  return res;
-}
+};
+
+exports.deletePlateImage = async (data) => {
+  try {
+    await PlateImage.destroy({
+      where: { id: data }
+    });
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};
+
+exports.deleteReceiptImage = async (data) => {
+  try {
+    await ReceiptImage.destroy({
+      where: { id: data }
+    });
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};
+
+exports.deleteKitchenImage = async (data) => {
+  try {
+    await KitchenImage.destroy({
+      where: { id: data }
+    });
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};

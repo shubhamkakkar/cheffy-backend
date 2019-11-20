@@ -16,10 +16,6 @@ module.exports = {
           key: "id"
         }
       },
-      payment_id: {
-        allowNull: true,
-        type: Sequelize.STRING,
-      },
       amount: {
         allowNull: true,
         type: Sequelize.INTEGER,
@@ -42,7 +38,8 @@ module.exports = {
       },
       status: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM('created', 'declined', 'canceled', 'pending', 'aproved'),
+        defaultValue: "created",
       },
       receipt_url: {
         allowNull: true,
@@ -93,8 +90,9 @@ module.exports = {
         type: Sequelize.STRING,
       },
       paid: {
-        allowNull: true,
-        type: Sequelize.STRING,
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       },
       createdAt: {
         allowNull: false,

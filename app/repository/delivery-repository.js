@@ -1,7 +1,6 @@
 'use strict';
 
 const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
-const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 //TODO waiting OrderDelivey to be implemented
 exports.createOrderDelivery = async (orderId) => {
@@ -58,7 +57,7 @@ exports.getCompletedDeliveriesByUser = async (data) => {
           as:'plate',
           include: [{
             model: User,
-            as:'chef'
+            as:'chef'            
           },
           {
             model: PlateImage
@@ -81,9 +80,9 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     try {
       let deliveryId = parseInt(data);
 
-        let mainSQL = `SELECT
-                        o.id,
-                        o.basketId,
+        let mainSQL = `SELECT 
+                        o.id, 
+                        o.basketId, 
                         o.state_type,
                         o.shipping_fee,
                         o.order_total,
@@ -99,34 +98,34 @@ exports.getCompletedDeliveriesByUser = async (data) => {
                         s.lon as "shipping_address.lon",
                         null as "order_items"
                         FROM Orders o
-                        inner join ShippingAddresses s
+                        inner join ShippingAddresses s 
                         on(o.shippingId = s.id) where o.id = ${deliveryId}`;
-
-                        mainSQL = mainSQL.replace(/"/g, "`");
+ 
+                        mainSQL = mainSQL.replace(/"/g, "`");                        
           let returnMainSQL = await sequelize.query(mainSQL,{type: sequelize.QueryTypes.SELECT,nest: true});
-
+          
           let deliveryDetails;
 
           if(returnMainSQL){
             if(returnMainSQL.length > 0){
               console.log(JSON.stringify(returnMainSQL))
-
+              
               deliveryDetails = returnMainSQL[0];
               let shippingLat = deliveryDetails.shipping_address.lat;
               let shippingLong = deliveryDetails.shipping_address.lon;
 
               let chefAddressSQL = `
-                      SELECT
+                      SELECT 
                       od.id,
                       od.orderId,
                       p.userId as chefId,
                         u.name as chefName,
                         sh.id,sh.addressLine1,
-                        ( 3959 * acos( cos( radians(${shippingLat}) ) * cos( radians( sh.lat ) ) * cos( radians( sh.lon ) - radians(${shippingLong}) ) + sin( radians(${shippingLat}) ) * sin(radians(sh.lat)) ) ) AS distance,
-                        sh.addressLine2,
-                        sh.state,
-                        sh.zipCode,
-                        sh.lat,
+                        ( 3959 * acos( cos( radians(${shippingLat}) ) * cos( radians( sh.lat ) ) * cos( radians( sh.lon ) - radians(${shippingLong}) ) + sin( radians(${shippingLat}) ) * sin(radians(sh.lat)) ) ) AS distance, 
+                        sh.addressLine2, 
+                        sh.state, 
+                        sh.zipCode, 
+                        sh.lat, 
                         sh.lon FROM OrderDeliveries od
                     inner join OrderItems oi
                     on (od.orderId = oi.orderId)
@@ -136,19 +135,19 @@ exports.getCompletedDeliveriesByUser = async (data) => {
                     on (sh.userId = p.userId)
                     inner join Users u
                     on (p.userId = u.id)
-
+                    
                     where od.id = ${deliveryId}`;
 
               let retornoChef = await sequelize.query(chefAddressSQL,{type: sequelize.QueryTypes.SELECT,nest: true});
 
               if(retornoChef){
                 if(retornoChef.length > 0){
-                  console.log(JSON.stringify(retornoChef))
+                  console.log(JSON.stringify(retornoChef))                
                   deliveryDetails.pickup_addresses = retornoChef;
                 }
               }
               let orderId = retornoChef[0].orderId;
-              let orderItemsSQL = `SELECT
+              let orderItemsSQL = `SELECT 
                                       p.userId as chefId,
                                         u.name as chefName,
                                         oi.*
@@ -174,7 +173,7 @@ exports.getCompletedDeliveriesByUser = async (data) => {
 
               return returnMainSQL[0];
             }
-
+          
         }else{
           return false
         }
@@ -183,13 +182,5 @@ exports.getCompletedDeliveriesByUser = async (data) => {
         console.log(e)
         throw e;
       }
-
-  }
-
-  exports.getModelType = async (option) => {
-    let res = '';
-    if (option === 'orderDeliveries') {
-      res = await getModelSQLTypesQuery('OrderDeliveries');
-    }
-    return res;
+  
   }

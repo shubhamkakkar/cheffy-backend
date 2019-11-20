@@ -1,6 +1,5 @@
 'use strict';
 const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
-const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.getById = async (orderId) => {
     try {
@@ -89,7 +88,7 @@ exports.getUserOrders = async (data) => {
           as:'plate',
           include: [{
             model: User,
-            as:'chef'
+            as:'chef'            
           },
           {
             model: PlateImage
@@ -117,7 +116,7 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
           as:'plate',
           include: [{
             model: User,
-            as:'chef'
+            as:'chef'            
           },
           {
             model: PlateImage
@@ -160,8 +159,10 @@ exports.user = async (data) => {
 
 exports.userLocation = async (data) => {
   try {
-    const existUser = await User.findByPk(data, {
-      attributes: [ 'location' ],
+    const existUser = await ShippingAddress.findOne({
+      where: { userId: data }
+    }, {
+      attributes: [ 'addressLine1', 'addressLine2', 'state', 'city', 'zipCode' ],
     });
     return existUser;
   } catch (e) {
@@ -232,18 +233,22 @@ exports.createOrderReview = async (review) => {
   }
 }
 
-exports.getModelType = async (option) => {
-  let res = '';
-  if (option === 'orders') {
-    res = await getModelSQLTypesQuery('Orders');
-  } else if (option === 'items') {
-    res = await getModelSQLTypesQuery('OrderItems');
-  } else if (option === 'payments') {
-    res = await getModelSQLTypesQuery('OrderPayments');
-  } else if (option === 'transactions') {
-    res = await getModelSQLTypesQuery('Transactions');
-  } else if (option === 'wallets') {
-    res = await getModelSQLTypesQuery('Wallets');
+exports.getOrdersReadyDelivery = async (data) => {
+  try {
+    const orders_ready = await Order.findAll({
+      where: { state_type: 5 },
+      include: [
+        {
+          model: ShippingAddress,
+          as: 'shipping',
+          attributes: ['lat', 'lon']
+        }
+      ]
+    });
+    console.log(orders_ready);
+    return orders_ready;
+  } catch (e) {
+    console.log(e)
+    return { message: "Erro to return orders!", error: e}
   }
-  return res;
-}
+};

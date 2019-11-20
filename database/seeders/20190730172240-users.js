@@ -22,6 +22,8 @@ module.exports = {
         user_type: "chef",
 	      restaurant_name: "Restaurant's name",
         password: password,
+        location_lat: parseFloat(38.81212),
+        location_lon: parseFloat(-76.9669111),
         createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
         updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
       }

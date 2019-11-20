@@ -10,7 +10,7 @@ const repositoryOrder = require("../repository/order-repository");
 const authService = require('../services/auth');
 const paymentService = require("../services/payment");
 const helpers = require('./controler-helper');
-const { User } = require('../models/index');
+const { User, CustomPlateOrder } = require('../models/index');
 const TransactionsService = require("../services/transactions")
 
 function addDays() {
@@ -399,14 +399,22 @@ exports.payCustomPlate = async (req, res, next) => {
   return 0;
 }
 
-exports.getModelType = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType();
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
+exports.listCustomOrders = async (req, res, next) => {
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  const { userId } = req.params;
+  const existUser = await User.findOne({ where: { id: token_return.id } });
+  if (existUser == null || existUser.user_type !== 'chef' || existUser == undefined) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "There was a problem validating the data!",
+      error: true
     });
+    return 0;
   }
+
+  const retorno = await CustomPlateOrder.findAll({ where: { userId } });
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "Your custom order's",
+    data: retorno
+  });
+  return 0;
 };

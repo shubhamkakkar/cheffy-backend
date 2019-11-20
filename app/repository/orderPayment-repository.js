@@ -16,12 +16,16 @@ exports.user = async (data) => {
 }
 
 exports.getWallet = async (data) => {
-  const wallet = await Wallet.findOrCreate({
-    defaults: {
-      userId: data
-    },
-    where: { userId: data },
-    attributes: [ 'id' ]
-  });
-  return wallet;
+  try {
+    const wallet = await Wallet.findOrCreate({
+      defaults: {
+        userId: data
+      },
+      where: { userId: data },
+      attributes: [ 'id' ]
+    });
+    return wallet; 
+  } catch (error) {
+    return { message: 'There was a problem to save your data!', error: e}
+  }
 }

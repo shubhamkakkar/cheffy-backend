@@ -42,6 +42,22 @@ ValidationContract.prototype.isEmail = (value, message) => {
     });
 }
 
+ValidationContract.prototype.isAccountNumber = (value, message) => {
+  var reg = new RegExp(/^[0-9]{7,14}$/);
+  if (!reg.test(value))
+    errors.push({
+      message: message
+    });
+}
+
+ValidationContract.prototype.isTaxInformation = (value, message) => {
+  var taxArr = ['Tax0', 'Tax1', 'Tax2', 'Tax3'];
+  if (!taxArr.includes(value))
+    errors.push({
+      message: message
+    });
+}
+
 ValidationContract.prototype.errors = () => {
   return errors;
 }

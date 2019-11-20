@@ -1,7 +1,8 @@
 'use strict';
-const stripe = require('stripe')('sk_test_2888PDo1zMy6jXKzDGlvCxSY00KOOW8SPZ');
-stripe.setMaxNetworkRetries(3);
+const stripe = require('stripe')('sk_test_nHIOvozla47wdKe453nhTzQT009ddvBetD');
+const paypal = require('paypal-rest-sdk');
 
+stripe.setMaxNetworkRetries(3);
 
 exports.createSession = async (userID, list_itens, address) => {
 
@@ -92,7 +93,7 @@ exports.createCard = async (user, address, card) => {
 }
 
 exports.attachUser = async (card, user) => {
-  const card_req = await stripe.paymentMethods.attach(card, {customer: user});
+  const card_req = await stripe.paymentMethods.attach(card, { customer: user });
   return card_req;
 }
 
@@ -108,3 +109,100 @@ exports.confirmPayment = async (ammount, card, customer) => {
   });
   return paymentIntent;
 }
+
+//STRIPE METHOD
+/**
+  try {
+    //create user at strip system payment
+    const user_return = await paymentService.createUser(user_data, user_address);
+  } catch (e) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to create your payment data!',
+      data: e,
+      error: true
+    });
+    return 0;
+  }
+  try {
+    //create Card at Strip system payment
+    const card_return = await paymentService.createCard(user_data, user_address, req.body.card);
+  } catch (e) {
+    console.log("createCard: ", e)
+    let retorn = {
+      orderId: create_order.id,
+      payment_id: null,
+      amount: total_cart,
+      client_secret: null,
+      customer: e.raw.requestId,
+      payment_method: null,
+      status: e.raw.code,
+      receipt_url: null,
+      card_brand: null,
+      card_country: null,
+      card_exp_month: null,
+      card_exp_year: null,
+      card_fingerprint: null,
+      card_last: null,
+      network_status: null,
+      risk_level: null,
+      risk_score: null,
+      seller_message: e.raw.message,
+      type: e.raw.type,
+      paid: false,
+    }
+    await repositoryOrderPayment.create(retorn);
+    await repository.editState(create_order.id, 'declined')
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to validate your card!',
+      data: e,
+      error: true
+    });
+    return 0;
+  }
+
+  let user_card = await paymentService.attachUser(card_return.id, user_return.id);
+
+  try {
+    const confirm = await paymentService.confirmPayment(total_cart, user_card.id, user_return.id);
+  } catch (e) {
+    console.log("confirmPayment: ", e)
+    await repository.editState(create_order.id, 'declined')
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to confirm your payment!',
+      data: e,
+      error: true
+    });
+    return 0;
+  }
+ */
+
+/**
+ * if (create_orderPayment.status === 'succeeded' && create_orderPayment.type === 'authorized') {
+   await repository.editState(create_order.id, 'aproved')
+
+   let bulkTransactions = cart_itens.map(elem => (
+     {
+       identifier:'order_payment',
+       userId:elem.chef_id,
+       orderId:create_order.id,
+       orderPaymentId:create_orderPayment.id,
+       amount:elem.amount
+     }
+   ))
+
+   let transactionsService = new TransactionsService();
+   transactionsService.recordBulkCreditTransaction(bulkTransactions)
+
+   res.status(HttpStatus.ACCEPTED).send({
+     message: 'Your order was successfully paid!',
+     payment_return: create_orderPayment
+   });
+   return 0;
+ }
+ */
+
+exports.payPalConnection = async () => await paypal.configure({
+  'mode': 'sandbox',
+  'client_id': 'AX0rIM3otenMBgA2oLXLs0OmV1WsJxNTYOjXoML5J1yv-qe_g6Bj_9pPhQ-dW6PQ5EShQSadLF-UxRNj',
+  'client_secret': 'ELJGz7y4lKWoRVPdrnxfqUt0NOvFucR9w6_6iGkNVFn7HyBL0QCSYDqwRLrBCPIoOnlHzfSAoAD8EN9f'
+});

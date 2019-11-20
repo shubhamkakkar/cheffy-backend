@@ -14,6 +14,5 @@ router.post('/decline/:id',authService.authorize, controller.decline);
 router.post('/createdelivery/:id',authService.authorize, controller.createDelivery);
 router.post('/pickup/:id',authService.authorize, controller.pickupDelivery);
 router.post('/complete/:id',authService.authorize, controller.completeDelivery);
-router.get('/deliveries/getmodeltype', controller.getModelTypeOrderDeliveries);
 
 module.exports = router;

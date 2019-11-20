@@ -33,11 +33,11 @@ module.exports = {
       },
       location_lat: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.DECIMAL(10,8),
       },
       location_lon: {
         allowNull: true,
-        type: Sequelize.STRING,
+        type: Sequelize.DECIMAL(10,8)
       },
       user_type: {
         allowNull: false,

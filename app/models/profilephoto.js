@@ -2,7 +2,12 @@
 module.exports = (sequelize, DataTypes) => {
   const ProfilePhoto = sequelize.define('ProfilePhoto', {
     description: DataTypes.STRING,
-    url: DataTypes.STRING,
+    url: {
+      type: DataTypes.STRING,
+      get() {
+        return `${process.env.URL_SERVER}tmp/profile_photo/${this.getDataValue('url')}`;
+      }
+    },
     state_type: {
       type: DataTypes.ENUM('validated', 'invalid', 'pending'),
       defaultValue: 'pending'

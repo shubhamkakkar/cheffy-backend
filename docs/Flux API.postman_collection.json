@@ -1,0 +1,669 @@
+{
+	"info": {
+		"_postman_id": "fea483fe-7ccd-46a3-a1b3-4c0e1bc4f9f5",
+		"name": "Flux API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"login\": \"demo-1@cheffy.com\",\n\t\"password\": \"12345678\"\n}"
+				},
+				"url": {
+					"raw": "{{url}}/user/login",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create account",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Demo Driver 01\",\n\t\"email\": \" driverTest01@test.com\",\n\t\"user_type\": \"driver\",\n\t\"password\": \"eaa69cpxy2\"\n}"
+				},
+				"url": {
+					"raw": "{{url}}/user/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Ready for delivery",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/order/ready-delivery",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"order",
+						"ready-delivery"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Plate for distance radius",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/plate/near?latitude=38.8182225&longitude=-76.9770391&radius=41",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"near"
+					],
+					"query": [
+						{
+							"key": "latitude",
+							"value": "38.8182225"
+						},
+						{
+							"key": "longitude",
+							"value": "-76.9770391"
+						},
+						{
+							"key": "radius",
+							"value": "41"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Return latest plates",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsImVtYWlsIjoiZGVtby0xQGNoZWZmeS5jb20iLCJuYW1lIjoiRGVtbyBVc2VybmFtZSAxIiwiaWF0IjoxNTcxMzM3MDA2LCJleHAiOjE2MDI4NzMwMDZ9.IJLRfPt-pttRmfYD0aKAcEAMzaaPcU-3S75ncSU6mwU",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/plate/latest/2",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"latest",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List orders",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzIsImVtYWlsIjoiZHJpdmVyVGVzdEB0ZXN0LmNvbSIsImlhdCI6MTU3MTI1NTM5NCwiZXhwIjoxNjAyNzkxMzk0fQ.tNl0STT3TrvQAFVZCQsmfQ1Nwy5GGxO9PRri8kfVm68",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/order/list",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"order",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create user",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Demo Chef 01\",\n\t\"email\": \"claudionts@gmail.com\",\n\t\"user_type\": \"chef\",\n\t\"restaurant_name\": \"Cozinha Caipira\",\n\t\"password\": \"eaa69cpxy2\"\n}"
+				},
+				"url": {
+					"raw": "{{url}}/user/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get user info",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzIsImVtYWlsIjoiZHJpdmVyVGVzdEB0ZXN0LmNvbSIsImlhdCI6MTU3MTI1NTM5NCwiZXhwIjoxNjAyNzkxMzk0fQ.tNl0STT3TrvQAFVZCQsmfQ1Nwy5GGxO9PRri8kfVm68",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/user",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Order list",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsImVtYWlsIjoiZGVtby0xQGNoZWZmeS5jb20iLCJuYW1lIjoiRGVtbyBVc2VybmFtZSAxIiwiaWF0IjoxNTcxMzQxNjU0LCJleHAiOjE2MDI4Nzc2NTR9.NehavLVurHw97Sfp1k0ZHvHTvWdMBBMJ6RQy_M-m1KE",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/order/list",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"order",
+						"list"
+					],
+					"query": [
+						{
+							"key": "x-access-token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsImVtYWlsIjoiZGVtby0xQGNoZWZmeS5jb20iLCJuYW1lIjoiRGVtbyBVc2VybmFtZSAxIiwiaWF0IjoxNTcxMzM3MDA2LCJleHAiOjE2MDI4NzMwMDZ9.IJLRfPt-pttRmfYD0aKAcEAMzaaPcU-3S75ncSU6mwU",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Chef plate",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsImVtYWlsIjoiZGVtby0xQGNoZWZmeS5jb20iLCJuYW1lIjoiRGVtbyBVc2VybmFtZSAxIiwiaWF0IjoxNTcxNTU4NTQ5LCJleHAiOjE2MDMwOTQ1NDl9.YHxytHlOcYG7OzWDnxnlDw0Xt3Te8msq-1qUPdPa5n8",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/plate/chef/16",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"chef",
+						"16"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send Received Token for Email",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/user/resend-emailtoken",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user",
+						"resend-emailtoken"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List receipt for id plate",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/plate/1/receipt",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"1",
+						"receipt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Documents",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "kitchen_photo",
+							"contentType": "driver  license",
+							"description": "descrição imagem",
+							"type": "file",
+							"src": "/home/claudio/Pictures/desk.jpg"
+						},
+						{
+							"key": "chef_certificate",
+							"contentType": "chef certificate",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						},
+						{
+							"key": "chef_license",
+							"contentType": "chef license",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						},
+						{
+							"key": "front_side",
+							"contentType": "front side",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						},
+						{
+							"key": "profile_photo",
+							"contentType": "profile photo",
+							"type": "file",
+							"src": "/home/claudio/Pictures/eu.jpg"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "javascript"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/docs/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"docs",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Edit Docs",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "profile_photo",
+							"contentType": "driver  license",
+							"description": "descrição imagem",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						},
+						{
+							"key": "chef_license",
+							"type": "file",
+							"src": "/home/claudio/Pictures/desk.jpg"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "javascript"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/docs/edit/16",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"docs",
+						"edit",
+						"16"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Docs",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/docs/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"docs",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search Plate",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/plate/search/salad",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"search",
+						"salad"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Plate",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/plate/",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create plate image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "plate_image",
+							"contentType": "plate image",
+							"description": "plate image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						},
+						{
+							"key": "plate_image",
+							"contentType": "plate image",
+							"description": "plate image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png",
+							"disabled": true
+						},
+						{
+							"key": "plate_image",
+							"contentType": "plate image",
+							"description": "plate image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png",
+							"disabled": true
+						},
+						{
+							"key": "kitchen_image",
+							"contentType": "plate image",
+							"description": "plate image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						},
+						{
+							"key": "kitchen_image",
+							"contentType": "kitchen image",
+							"description": "kitchen image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png",
+							"disabled": true
+						},
+						{
+							"key": "receipt_image",
+							"contentType": "plate image",
+							"description": "plate image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png",
+							"disabled": true
+						},
+						{
+							"key": "receipt_image",
+							"contentType": "receipt image",
+							"description": "receipt image",
+							"type": "file",
+							"src": "/home/claudio/Pictures/code.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/plate/images/990",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"images",
+						"990"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete plate image",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsImVtYWlsIjoiY2xhdWRpb250c0BnbWFpbC5jb20iLCJpYXQiOjE1NzEzNDE0NTIsImV4cCI6MTYwMjg3NzQ1Mn0.Fd4KqB4zF2f3SVYA_pZvcT0-LF9lGNIU6jl6Fb2zC6I",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/plate/images/plate_image/1050",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"plate",
+						"images",
+						"plate_image",
+						"1050"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

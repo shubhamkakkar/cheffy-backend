@@ -61,7 +61,7 @@ const post_process = async (user_data, shipping, user_basket, basket_content, co
       walletId: wallet,
       plate_id: elem.plate.id,
       user_id: elem.plate.userId,
-      chef_location: loc,
+      chef_location: `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`,
       name: elem.plate.name,
       description: elem.plate.description,
       amount: elem.plate.price,
@@ -93,7 +93,7 @@ const post_process = async (user_data, shipping, user_basket, basket_content, co
     payment_confirmation: confirmation,
   }
 
-  return;
+  return user_info;
 }
 
 exports.list = async (req, res, next) => {
@@ -171,67 +171,42 @@ exports.getOneOrder = async (req, res, next) => {
   }
 }
 exports.create = async (req, res, next) => {
-  if (!req.body.shipping_id) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We couldn't find your shipping address!",
-      status: HttpStatus.CONFLICT
-    });
+  const contract = new ValidationContract();
+
+  contract.isRequired(req.body.shipping_id, "We couldn't find your shipping address!");
+  //contract.isRequired(req.body.card.number, "We couldn't find your card number!");
+  //contract.isRequired(req.body.card.exp_month, "We couldn't find your card expiration month!");
+  //contract.isRequired(req.body.card.exp_year, "We couldn't find your card expiration year!");
+  //contract.isRequired(req.body.card.cvc, "We couldn't find your card CVC!");
+  
+  if (!contract.isValid()) {
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
-  if (!req.body.card.number) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We couldn't find your card number!",
-      status: HttpStatus.CONFLICT
-    });
-    return 0;
-  }
-  if (!req.body.card.exp_month) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We couldn't find your card expiration month!",
-      status: HttpStatus.CONFLICT
-    });
-    return 0;
-  }
-  if (!req.body.card.exp_year) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We couldn't find your card expiration year!",
-      status: HttpStatus.CONFLICT
-    });
-    return 0;
-  }
-  if (!req.body.card.cvc) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We couldn't find your card CVC!",
-      status: HttpStatus.CONFLICT
-    });
-    return 0;
-  }
+
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
-  const user_data = await repository.user(token_return.id)
-  if (user_data === null || user_data === '' || user_data === undefined) {
-    res
-      .status(HttpStatus.CONFLICT)
-      .send({ message: "Fail to get user data!", error: true });
+  const user_data = await repository.user(token_return.id);
+
+  if (!user_data) {
+    res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user data!", error: true });
     return 0;
   }
-  const user_address = await repositoryShip.getExistAddress(req.body.shipping_id)
-  if (user_address === null || user_address === '' || user_address === undefined) {
-    res
-    .status(HttpStatus.CONFLICT)
-    .send({ message: "Fail to get user address!", error: true });
+
+  const user_address = await repositoryShip.getExistAddress(req.body.shipping_id);
+  if (!user_address) {
+    res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user address!", error: true });
     return 0;
   }
   let user_basket = await repositoryCart.getOneUserBasket(token_return.id)
   let basket_content = await repositoryCart.listBasket(user_basket.id)
 
-  if (basket_content === null || basket_content === '' || basket_content === undefined) {
-    res
-    .status(HttpStatus.CONFLICT)
-    .send({ message: "Fail to get user shopping cart!", error: true });
+  if (!basket_content) {
+    res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user shopping cart!", error: true });
     return 0;
   }
 
   let itens = basket_content.BasketItems;
+
   let cart_itens = itens.map( async ( elem ) => {
     let element = {
       chef_id: elem.plate.userId,
@@ -250,125 +225,30 @@ exports.create = async (req, res, next) => {
     basketId: user_basket.id,
     userId: token_return.id,
     total_itens: itens.length,
+    state_type: 'pending',
     order_total: total_cart / 100,
   }
-  let create_order, card_return, user_return, confirm
-  try {
-    create_order = await repository.create(payload);
-  } catch (e) {
-    console.log("create: ", e)
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to create your order!',
-      data: e,
-      error: true
+
+  //create order at database BasketItems --> Basket --> [Create Order]
+  const create_order = await repository
+    .create(payload)
+    .catch( e => {
+      console.log("create: ", e)
+      res.status(HttpStatus.CONFLICT).send({
+        message: 'There was a problem to create your order!',
+        data: e,
+        error: true
+      });
+      return 0;
     });
-    return 0;
-  }
-  try {
-    user_return = await paymentService.createUser(user_data, user_address);
-  } catch (e) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to create your payment data!',
-      data: e,
-      error: true
-    });
-    return 0;
-  }
-  try {
-    card_return = await paymentService.createCard(user_data, user_address, req.body.card);
-  } catch (e) {
-    console.log("createCard: ", e)
-    let retorn = {
-      orderId: create_order.id,
-      payment_id: null,
-      amount: total_cart,
-      client_secret: null,
-      customer: e.raw.requestId,
-      payment_method: null,
-      status: e.raw.code,
-      receipt_url: null,
-      card_brand: null,
-      card_country: null,
-      card_exp_month: null,
-      card_exp_year: null,
-      card_fingerprint: null,
-      card_last: null,
-      network_status: null,
-      risk_level: null,
-      risk_score: null,
-      seller_message: e.raw.message,
-      type: e.raw.type,
-      paid: false,
-    }
-    await repositoryOrderPayment.create(retorn);
-    await repository.editState(create_order.id, 'declined')
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to validate your card!',
-      data: e,
-      error: true
-    });
-    return 0;
-  }
-
-  let user_card = await paymentService.attachUser(card_return.id, user_return.id);
-
-  try {
-    confirm = await paymentService.confirmPayment(total_cart, user_card.id, user_return.id);
-  } catch (e) {
-    console.log("confirmPayment: ", e)
-    await repository.editState(create_order.id, 'declined')
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to confirm your payment!',
-      data: e,
-      error: true
-    });
-    return 0;
-  }
-
-
-  let data_full = await change_data(create_order.id, confirm);
-
-  try {
-    const create_wallet = await repositoryOrderPayment.getWallet(user_data.id);
-  } catch (e) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to save your data!',
-      data: e,
-      error: true
-    });
-    return 0;
-  }
-
+  const data_full = { orderId: create_order.id, amount: payload.order_total, status: 'pending' };
+  await repositoryOrderPayment.getWallet(user_data.id);
   const create_orderPayment = await repositoryOrderPayment.create(data_full);
 
   await post_process(user_data, user_address, user_basket, basket_content, data_full, create_order.id)
 
-
-  if (create_orderPayment.status === 'succeeded' && create_orderPayment.type === 'authorized') {
-    await repository.editState(create_order.id, 'aproved')
-
-    let bulkTransactions = cart_itens.map(elem => (
-      {
-        identifier:'order_payment',
-        userId:elem.chef_id,
-        orderId:create_order.id,
-        orderPaymentId:create_orderPayment.id,
-        amount:elem.amount
-      }
-    ))
-
-    let transactionsService = new TransactionsService();
-    transactionsService.recordBulkCreditTransaction(bulkTransactions)
-
-    res.status(HttpStatus.ACCEPTED).send({
-      message: 'Your order was successfully paid!',
-      payment_return: create_orderPayment
-    });
-    return 0;
-  }
-  await repository.editState(create_order.id, 'declined')
   res.status(HttpStatus.CONFLICT).send({
-    message: 'There was a problem paying your order!',
+    message: 'Order available for payment!',
     payment_return: create_orderPayment,
     error: true
   });
@@ -425,62 +305,27 @@ exports.createOrderReview = async (req, res, next) => {
   }
 };
 
-exports.getModelTypeOrders = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('orders');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
+exports.ordersReadyForDelivery = async (req, res, next) => {
+  const token_return =  await authService.decodeToken(req.headers['x-access-token'])
+  if (!token_return) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "You must be logged in to check your orders",
+      error: true
     });
   }
-};
-
-exports.getModelTypeOrderItems = async (req, res, next) => {
   try {
-    const dataTypes = await repository.getModelType('items');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
+    const orders_ready = await repository.getOrdersReadyDelivery();
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Orders ready for delivery!',
+      data: orders_ready
     });
-  }
-};
-
-exports.getModelTypeOrderPayments = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('payments');
-    res.status(200).json(dataTypes);
+    return 0;
   } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
+    console.log(e)
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'Fail to get your orders!',
+      error: true
     });
-  }
-};
-
-exports.getModelTypeOrderTransactions = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('transactions');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
-  }
-};
-
-exports.getModelTypeOrderWallets = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('wallets');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
+    return 0;
   }
 };

@@ -1,18 +1,18 @@
 'use strict';
 var HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { Plates, User, Ingredient } = require('../models/index');
+const { Plates, User, PlateImage, ReceiptImage, KitchenImage } = require('../models/index');
 const repository = require('../repository/plate-repository');
 const repoCustom = require('../repository/customPlate-repository');
 const repositoryDocs = require('../repository/docs-repository');
 const md5 = require('md5');
 const authService = require('../services/auth');
+const upload = require('../services/upload');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
 
 exports.create = async (req, res, next) => {
-
   let contract = new ValidationContract();
   contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
   contract.isRequired(req.body.description, 'Plate description is required!');
@@ -29,15 +29,15 @@ exports.create = async (req, res, next) => {
   const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (existUser.user_type !== 'chef') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true }).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
     return 0;
   }
   if (existUser.verification_email_status !== 'verified') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Your email was not verified", error: true }).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Your email was not verified", error: true}).end();
     return 0;
   }
   if (existUser.verification_phone_status !== 'verified') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true }).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true}).end();
     return 0;
   }
   const validate_docs = await repositoryDocs.getUserDocs(existUser.id)
@@ -47,7 +47,7 @@ exports.create = async (req, res, next) => {
   }
 
   let full_data = req.body;
-  let ingred, images, kitchen, receipt
+  let ingred;
 
   full_data.userId = existUser.id;
 
@@ -56,23 +56,8 @@ exports.create = async (req, res, next) => {
     delete full_data.ingredients;
   }
 
-  if (full_data.images) {
-    images = full_data.images;
-    delete full_data.images;
-  }
-
-  if (full_data.kitchen_images) {
-    kitchen = full_data.kitchen_images;
-    delete full_data.kitchen_images;
-  }
-
-  if (full_data.receipt_images) {
-    receipt = full_data.receipt_images;
-    delete full_data.receipt_images;
-  }
-
   let plate = await Plates.create({ ...full_data });
-  let ingred_create, images_create, kitchen_create, receipt_create
+  let ingred_create;
 
   if (ingred) {
     let ingred_data = []
@@ -83,41 +68,11 @@ exports.create = async (req, res, next) => {
     ingred_create = await repository.createIngredient(ingred_data)
   }
 
-  if (images) {
-    let images_data = []
-    images.forEach(elem => {
-      elem.plateId = plate.id;
-      images_data.push(elem);
-    })
-    images_create = await repository.createPlateImage(images_data)
-  }
-
-  if (kitchen) {
-    let kitchen_data = []
-    kitchen.forEach(elem => {
-      elem.plateId = plate.id;
-      kitchen_data.push(elem);
-    })
-    kitchen_create = await repository.createKitchenImage(kitchen_data)
-  }
-
-  if (receipt) {
-    let receipt_data = []
-    receipt.forEach(elem => {
-      elem.plateId = plate.id;
-      receipt_data.push(elem);
-    })
-    receipt_create = await repository.createReceiptImage(receipt_data)
-  }
-
   let payload = {};
 
   payload.status = HttpStatus.CREATED;
   payload.plate = plate;
   payload.ingredients = ingred_create;
-  payload.images = images_create;
-  payload.kitchen_images = kitchen_create;
-  payload.receipt_images = receipt_create;
   res.status(payload.status).send(payload);
 }
 
@@ -128,8 +83,8 @@ exports.list = async (req, res, next) => {
     retorno = await repository.listPlates2(req.query)
   } else {
     let data = req.query;
-    data.page = 1;
-    data.pageSize = 10;
+    data.page=1;
+    data.pageSize=10;
     retorno = await repository.listPlates2(data)
   }
   res.status(HttpStatus.ACCEPTED).send(retorno);
@@ -144,22 +99,16 @@ exports.edit = async (req, res, next) => {
   try {
     let existPlate = await repository.findPlate(req.params.id);
     if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT });
+      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
       return 0;
     }
-    let newReceiptImages = existPlate.ReceiptImages;
 
     existPlate.name = req.body.name || existPlate.name;
     existPlate.description = req.body.description || existPlate.description;
-    existPlate.price = req.body.price || existPlate.price;
+    existPlate.price = req.body.price  || existPlate.price;
     existPlate.delivery_time = req.body.delivery_time || existPlate.delivery_time;
     existPlate.delivery_type = req.body.delivery_type || existPlate.delivery_type;
     await existPlate.save();
-
-    await repository.updateReceiptImage(req.body.ReceiptImages)
-    await repository.updateKitchenImage(req.body.KitchenImages)
-    await repository.updatePlateImage(req.body.PlateImages)
-    await repository.updateIngredient(req.body.Ingredients)
 
     const updatedPlate = await repository.findPlate(req.params.id);
 
@@ -213,10 +162,10 @@ exports.getPlateReview = async (req, res, next) => {
 exports.getRelatedPlates = async (req, res, next) => {
   try {
     const relatedPlates = await repository.getRelatedPlate(req.params.id);
-    if (relatedPlates) {
+    if(relatedPlates){
       res.status(200).send(relatedPlates);
-    } else {
-      res.status(404).send({ message: "Plate not found" });
+    }else{
+      res.status(404).send({message:"Plate not found"});
     }
   } catch (e) {
     res.status(500).send({
@@ -282,139 +231,164 @@ exports.searchPlates = async (req, res, next) => {
         [Op.like]: '%' + req.params.text + '%'
       }
     },
-    attributes: ["name", "description", "price", "delivery_time"]
+    attributes: ["name", "description", "price", "delivery_time"],
+    include: [
+      {
+        model: PlateImage,
+        attributes: [ 'id', 'url', 'name' ],
+      },
+      {
+        model: ReceiptImage,
+        attributes: [ 'id', 'url', 'name' ],
+      },
+      {
+        model: KitchenImage,
+        attributes: [ 'id', 'url', 'name' ],
+      },
+    ],
   });
   res.status(200).send({ message: "Plates find!", param: req.params.text, data: list_plates });
 };
 
-exports.getModelTypePlates = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('plates');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
+exports.searchLatestPlates = async (req, res, next) => {
+  const retorno = await repository.searchLatestPlates({ amount: req.params.amount });
+  res.status(HttpStatus.ACCEPTED).send(retorno);
+};
+
+exports.imagePlateKitchen = async (req, res, next) => {
+  const { id } = req.params;
+  const retorno = await PlateImage.findAll({ where: { plateId: id } });
+  res.status(HttpStatus.ACCEPTED).send(retorno);
+};
+
+exports.getChefPlates = async (req, res, next) => {
+  const { id } = req.params;
+  const retorno = await repository.getChefPlates({ userId: id });
+  res.status(HttpStatus.ACCEPTED).send(retorno);
+};
+
+exports.listReceipt = async (req, res, next) => {
+  const { id } = req.params;
+  const retorno = await ReceiptImage.findOne({ where: { plateId: id } });
+  res.status(200).send({ message: "Receipt find!", data: retorno });
+};
+
+exports.uploadImages = async (req, res, next) => {
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  const { id } = req.params;
+  const existUser = await User.findOne({ where: { id: token_return.id } });
+  
+  if (existUser.user_type !== 'chef') {
+    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
+    return 0;
+  }
+
+  const actualPlate = await Plates.findOne({ where: { id }});
+  if (!actualPlate) {
+    await Object.keys(req.files).map(async keyObject => {
+      await req.files[keyObject].map(async file => {
+        const { fieldname, key } = file;
+        await uploadService.deleteImage(fieldname, key);
+      });
     });
+    
+    res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
+    return 0;
+  }
+  
+  if (req.files.plate_image.length > 0) {
+    let plateImages = [];
+    let kitchenImages = [];
+    let receiptImages = [];
+    await Object.keys(req.files).map(async keyObject => {
+      switch (keyObject) {
+        case 'plate_image':
+          req.files[keyObject].map(plateImage => plateImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));
+          break;
+        case 'kitchen_image':
+          req.files[keyObject].map(plateImage => kitchenImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));
+          break;
+        case 'receipt_image':
+          req.files[keyObject].map(plateImage => receiptImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));
+          break;
+        default:
+          break;
+      }
+    });
+    let returnPlateImages, returnKitchenImages, returnReceiptImages = [];
+
+    if (plateImages.length > 0)
+      returnPlateImages = await repository.createPlateImage(plateImages);
+    if (kitchenImages.length > 0)
+      returnKitchenImages = await repository.createKitchenImage(kitchenImages);
+    if (receiptImages.length > 0)
+      returnReceiptImages = await repository.createReceiptImage(receiptImages);
+
+    res.status(200).send({ 
+      message: "Plates images created!",
+      data: {
+        plate_image: returnPlateImages,
+        kitchen_image: returnKitchenImages,
+        receipt_image: returnReceiptImages
+      }});
   }
 };
 
-exports.getModelTypePlateCategories = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('plateCategories');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
+exports.deleteImage = async (req, res, next) => {
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  const { id, type_image } = req.params;
+  const existUser = await User.findOne({ where: { id: token_return.id } });
+  
+  if (existUser.user_type !== 'chef') {
+    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
+    return 0;
   }
-};
 
-exports.getModelTypePlateImages = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('plateImages');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
+  let actualImage, message;
+  switch (type_image) {
+    case 'plate_image':
+      actualImage = await PlateImage.findOne({ where: { id }});
+      message = "Plate deleted image!";
+      break;
+    case 'kitchen_image':
+      actualImage = await KitchenImage.findOne({ where: { id }});
+      message = "Kitchen deleted image!"
+      break;
+    case 'receipt_image':
+      actualImage = await ReceiptImage.findOne({ where: { id }});
+      message = "Receipt deleted image!"
+      break;
+    default:
+      break;
   }
-};
 
-exports.getModelTypeCustomPlates = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('customPlates');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
+  if (!actualImage) {
+    res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your image for id", status: HttpStatus.CONFLICT});
+    return 0;
   }
-};
 
-exports.getModelTypeCustomPlateAuctionBids = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('customPlateAuctionBids');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
-  }
-};
+  const actualPlate = await Plates.findOne({ where: { id: actualImage.plateId }});
 
-exports.getModelTypeCustomPlateAuctions = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('customPlateAuctions');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
+  if (!actualPlate) {
+    res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
+    return 0;
   }
-};
+  
+  await upload.deleteImage(type_image, actualImage.getDataValue('url'));
 
-exports.getModelTypeCustomPlateImages = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('customPlateImages');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
+  switch (type_image) {
+    case 'plate_image':
+      await repository.deletePlateImage(id);
+      break;
+    case 'kitchen_image':
+      await repository.deleteKitchenImage(id);
+      break;
+    case 'receipt_image':
+      await repository.deleteReceiptImage(id);
+      break;
+    default:
+      break;
   }
-};
 
-exports.getModelTypeCustomPlateOrders = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('customPlateOrders');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
-  }
-};
-
-exports.getModelTypePlateReviews = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('plateReviews');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
-  }
-};
-
-exports.getModelTypeIngredients = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('ingredients');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
-  }
-};
-
-exports.getModelTypeReceiptImages = async (req, res, next) => {
-  try {
-    const dataTypes = await repository.getModelType('receiptImages');
-    res.status(200).json(dataTypes);
-  } catch (e) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to getting model types",
-      error: e
-    });
-  }
+  res.status(200).send({ message: message, data: actualImage });
 };

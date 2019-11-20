@@ -9,12 +9,10 @@ const facebookRouter = require("../routes/facebook");
 const creditCardRouter = require("../routes/card");
 
 router.get('/dummy', controller.dummy);
-router.get('/dummy-categories', controller.dummyCategories);
 
 router.get('/', authService.authorize, controller.getUser);
 router.post('/', controller.create);
 router.post('/login', controller.authenticate);
-router.get('/getmodeltype', controller.getModelType);
 router.get('/balance', authService.authorize, controller.getUserBalance);
 router.get('/balance/history?:from:to', authService.authorize, controller.getUserBalanceHistory);
 router.post('/verifyphone', authService.authorize, controller.verifyPhone);
@@ -41,6 +39,5 @@ router.use('/card',creditCardRouter);
 router.get('/messages/users', messageController.list);
 router.post('/messages/users/:to_userID', messageController.new);
 router.get('/messages/users/:to_userID', messageController.messages);
-router.get('/messages/getmodeltype', messageController.getModelType);
 
 module.exports = router;

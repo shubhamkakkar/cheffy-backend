@@ -16,6 +16,15 @@ module.exports = {
         type: Sequelize.ENUM("validated", "invalid", "pending"),
         defaultValue: "pending"
       },
+      social_security_number: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        validate: {
+          notNull: {
+            msg: 'Social security number is empty!'
+          }
+        }
+      },
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,

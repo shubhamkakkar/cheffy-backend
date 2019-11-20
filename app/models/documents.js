@@ -13,6 +13,15 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    social_security_number: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'Social security number is empty!'
+        }
+      }
+    },
   }, {});
   Documents.associate = function(models) {
     Documents.belongsTo(models.User, {foreignKey: 'userId', as: 'user', onDelete: 'cascade'})
@@ -21,6 +30,8 @@ module.exports = (sequelize, DataTypes) => {
     Documents.hasOne(models.KitchenPhoto);
     Documents.hasOne(models.NIDFrontSide);
     Documents.hasOne(models.ProfilePhoto);
+    Documents.hasOne(models.DriverLicenseFrontSide);
+    Documents.hasOne(models.DriverVehicleRegistration);
   };
   return Documents;
 };

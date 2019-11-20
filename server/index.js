@@ -3,13 +3,21 @@ const bodyParser = require('body-parser');
 const payService = require("../app/services/payment");
 const cors = require('cors');
 const conf = require('../configs');
+const nunjucks = require('nunjucks');
+
 var corsOptions = {
   origin: '*',
   optionsSuccessStatus: 200
 }
 const app = express();
+
+nunjucks.configure('views', {
+  autoescape: true,
+  express: app
+});
+
 app.use(cors(corsOptions))
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({
   limit: '50mb', extended: true
 }));

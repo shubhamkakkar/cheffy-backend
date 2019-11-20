@@ -4,6 +4,7 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert('Plates', [
       {
+        id: 999,
       	name: "Takos",
       	description: "Mexican food",
       	price: "9",
@@ -14,6 +15,7 @@ module.exports = {
         updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
       },
       {
+        id: 990,
       	name: "Salad",
       	description: "Common salad",
       	price: "12",

@@ -1,6 +1,5 @@
 'use strict';
 const { CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User } = require("../models/index");
-const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
@@ -149,10 +148,4 @@ exports.getCustomPlateBid = async (data) => {
     preparation_time: bid.preparation_time,
   }
   return plate_data;
-}
-
-exports.getModelType = async () => {
-  // const res = await getModelSQLTypes(User);
-  const res = await getModelSQLTypesQuery('CustomPlates');
-  return res;
 }

@@ -1,33 +1,38 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
+
 const controller = require('../controlers/plate-controler');
 const authService = require("../services/auth");
+const multerStart = require("../../config/multer");
 
+const router = express.Router();
 
-router.post('/', controller.create);
+router.post('/', authService.authorize, controller.create);
 router.get('/', controller.list);
+router.post(
+  '/images/:id',
+  authService.authorize,
+  multerStart([
+    { name: 'plate_image', maxCount: 10 },
+    { name: 'kitchen_image', maxCount: 10 },
+    { name: 'receipt_image', maxCount: 10 }
+  ]),
+  controller.uploadImages
+);
+router.delete('/images/:type_image/:id', authService.authorize, controller.deleteImage);
 router.post('/edit/:id', controller.edit);
 router.get("/search/:text", controller.searchPlates);
 router.get('/show/:id', controller.getPlate);
+router.get('/:id/kitchen', controller.imagePlateKitchen);
 router.get('/:id/review', controller.getPlateReview);
 router.get('/:id/related', controller.getRelatedPlates);
 //router.post('/:id/review', controller.createPlateReview);
 router.get('/near', controller.listNear);
 router.get('/custom-plates', controller.customPlates);
 router.get('/custom-plate/:id', controller.customPlate);
-router.get('/getmodeltype', controller.getModelTypePlates);
-router.get('/categories/getmodeltype', controller.getModelTypePlateCategories);
-router.get('/images/getmodeltype', controller.getModelTypePlateImages);
-router.get('/reviews/getmodeltype', controller.getModelTypePlateReviews);
-router.get('/custom-plates/getmodeltype', controller.getModelTypeCustomPlates);
-router.get('/custom-auction-bids/getmodeltype', controller.getModelTypeCustomPlateAuctionBids);
-router.get('/custom-auction/getmodeltype', controller.getModelTypeCustomPlateAuctions);
-router.get('/custom-images/getmodeltype', controller.getModelTypeCustomPlateImages);
-router.get('/custom-orders/getmodeltype', controller.getModelTypeCustomPlateOrders);
-router.get('/ingredients/getmodeltype', controller.getModelTypeIngredients);
-router.get('/receipt-images/getmodeltype', controller.getModelTypeReceiptImages);
-
-
+router.get('/latest/:amount', controller.searchLatestPlates);
+router.get('/chef/:id', authService.authorize, controller.getChefPlates);
+router.get('/:id/receipt', authService.authorize, controller.listReceipt);
+    
 module.exports = router;

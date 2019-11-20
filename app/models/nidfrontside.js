@@ -2,7 +2,12 @@
 module.exports = (sequelize, DataTypes) => {
   const NIDFrontSide = sequelize.define('NIDFrontSide', {
     description: DataTypes.STRING,
-    url: DataTypes.STRING,
+    url: {
+      type: DataTypes.STRING,
+      get() {
+        return `${process.env.URL_SERVER}tmp/front_side/${this.getDataValue('url')}`;
+      }
+    },
     state_type: {
       type: DataTypes.ENUM('validated', 'invalid', 'pending'),
       defaultValue: 'pending'

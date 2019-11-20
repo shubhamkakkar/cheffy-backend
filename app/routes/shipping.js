@@ -8,6 +8,5 @@ const authService = require("../services/auth");
 router.post("/", authService.authorize, controller.create);
 router.get("/", authService.authorize, controller.list);
 router.post("/edit/:id", authService.authorize, controller.edit);
-router.get('/getmodeltype', controller.getModelType);
 
 module.exports = router;

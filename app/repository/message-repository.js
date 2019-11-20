@@ -1,7 +1,6 @@
 'use strict';
 
 const { Message,sequelize } = require('../models/index');
-const { getModelSQLTypesQuery } = require('../../helpers/model-type');
 
 exports.getMessagesByUserId = async (id) => {
     let messages = await Message.findAll({
@@ -27,10 +26,4 @@ exports.getMessagesFromUser = async (userId, to_userid) => {
     } catch (err) {
         return null;
     }
-}
-
-exports.getModelType = async () => {
-  // const res = await getModelSQLTypes(User);
-  const res = await getModelSQLTypesQuery('Messages');
-  return res;
 }
