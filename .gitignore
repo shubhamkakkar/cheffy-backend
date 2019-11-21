@@ -5,6 +5,5 @@ package-lock.json
 .history/
 .history
 .idea/
-.env
 tmp/*/*
 !tmp/*/.gitkeep

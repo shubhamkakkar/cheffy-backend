@@ -4,10 +4,10 @@
   "description": "",
   "main": "./bin/index.js",
   "scripts": {
-    "test": "NODE_ENV= mocha 'test/**/*.js' --timeout 10000",
+    "test": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000",
     "watch": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000 -w",
-    "start": "node ./bin/server.js",
-    "dev": "NODE_ENV=development nodemon ./bin/server.js",
+    "start": "NODE_ENV=production node ./bin/server.js",
+    "dev": "NODE_ENV=test nodemon ./bin/server.js",
     "migrate": "sequelize db:migrate"
   },
   "keywords": [
@@ -33,6 +33,7 @@
     "moment": "^2.24.0",
     "multer": "^1.4.2",
     "mysql2": "^1.7.0",
+    "nock": "^11.7.0",
     "nodemailer": "^6.3.0",
     "nodemailer-express-handlebars": "^3.1.0",
     "nunjucks": "^3.2.0",

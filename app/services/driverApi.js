@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const connection = axios.create({
-  baseURL: process.env.URL_API_DRIVER,
+  baseURL: process.env.DRIVER_API_URL,
 });
 
 exports.createDriver = (data) => connection.post('/driver/register', data);

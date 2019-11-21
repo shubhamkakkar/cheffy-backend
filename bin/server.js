@@ -1,5 +1,10 @@
 'use strict'
 
+require("dotenv").config({
+    path: process.env.NODE_ENV === "test" ? ".env.test" : ".env"
+});
+  
+console.log(process.env.DB_HOST);
 const app = require('../server/index');
 const debug = require('debug');
 const http = require('http');

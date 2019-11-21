@@ -19,8 +19,8 @@ let payment_object = {
       "payment_method": "paypal"
   },
   "redirect_urls": {
-      "return_url": "http://localhost:9000/payment/paypal/callback",
-      "cancel_url": "http://localhost:9000/payment/paypal/cancel"
+      "return_url": `${process.env.CURRENT_API_URL}/payment/paypal/callback`,
+      "cancel_url": `${process.env.CURRENT_API_URL}/payment/paypal/cancel`
   },
   "transactions": []
 };
