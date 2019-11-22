@@ -100,10 +100,7 @@ exports.create = async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
   contract.isRequired(req.body.user_type, 'User type is required!');
-  contract.isRequired(req.body.password, 'User type is required!');
 
-  if (req.body.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
-  
   if (!contract.isValid()) {
     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
@@ -118,27 +115,6 @@ exports.create = async (req, res, next) => {
   }
 
   let full_data = req.body;
-  full_data.password = bcrypt.hashSync(full_data.password,bcrypt.genSaltSync(10));
-  if (full_data.user_type === 'chef') {
-    if (full_data.restaurant_name === '' || full_data.restaurant_name === null || full_data.restaurant_name === undefined) {
-      res.status(HttpStatus.CONFLICT).send({ message: "You need to register the restaurant name" }).end();
-      return 0;
-    }
-  }
-
-  if (full_data.user_type === 'driver') {
-    try {
-      await driverAPI.createDriver({
-        name: full_data.name,
-        email: full_data.email,
-        vehicle: full_data.vehicle
-      });
-    } catch (err) {
-      res.status(HttpStatus.CONFLICT).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
-      return 0;
-    }
-  }
-
   const user = await User.create({ ...full_data });
   let pass = (""+Math.random()).substring(2,6);
   user.verification_email_token = pass;
@@ -337,6 +313,63 @@ exports.verifyPhone = async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send(retorno);
 }
 
+exports.completeRegistration = async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.email_token, 'This email token is required!');
+  contract.isRequired(req.body.name, 'User password is required!');
+  contract.isRequired(req.body.password, 'User password is required!');
+
+  if (req.body.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
+
+  if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    return 0;
+  }
+
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  const existUser = await User.findOne({ where: { id: token_return.id } });
+  
+  if (req.body.email_token === existUser.verification_email_token) {
+    
+    existUser.verification_email_token = 'OK';
+    existUser.name = req.body.name;
+    existUser.verification_email_status = 'verified';
+    existUser.password = bcrypt.hashSync(req.body.password,bcrypt.genSaltSync(10));
+
+    if (existUser.user_type === 'driver') {
+    
+      existUser.vehicle = req.body.vehicle;
+      
+      try {
+        await driverAPI.createDriver({
+          name: existUser.name,
+          email: existUser.email,
+          vehicle: existUser.vehicle
+        });
+      } catch (err) {
+        res.status(HttpStatus.CONFLICT).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
+        return 0;
+      }
+    }
+
+    if (existUser.user_type === 'chef') {
+      existUser.restaurant_name = req.body.restaurant_name;
+    }
+
+    await existUser.save();
+    res.status(HttpStatus.ACCEPTED).send({
+      message: "Congratulations, Email successfully verified!",
+      status: HttpStatus.ACCEPTED,
+      result: existUser
+    });
+    return 0;
+  }
+
+  res.status(HttpStatus.CONFLICT).send({ message: 'Token code not verified!', status: HttpStatus.CONFLICT});
+}
+
 exports.verifyEmailToken = async (req, res, next) => {
   if (req.body.email_token == null || req.body.email_token == '' || req.body.email_token == undefined) {
     res.status(HttpStatus.CONFLICT).send({ message: 'Token code not found!', status: HttpStatus.CONFLICT});
@@ -346,7 +379,7 @@ exports.verifyEmailToken = async (req, res, next) => {
   const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (req.body.email_token == existUser.verification_email_token) {
-    existUser.verification_email_token = 'OK';
+    //existUser.verification_email_token = 'OK';
     existUser.verification_email_status = 'verified';
     await existUser.save();
     res.status(HttpStatus.ACCEPTED).send({
@@ -377,7 +410,7 @@ exports.resendEmailToken = async (req, res, next) => {
     from: "Cheffy contact@cheffy.com",
     replyTo: "contact@cheffy.com",
     subject: `Email Token`,
-    template: "forget/forgot",
+    template: "welcome/welcome",
     context: { token, user: existUser.name }
   };
   mailer.sendMail(args);
