@@ -314,22 +314,27 @@ exports.verifyPhone = async (req, res, next) => {
 }
 
 exports.completeRegistration = async (req, res, next) => {
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  const existUser = await User.findOne({ where: { id: token_return.id } });
+
+  if (!existUser) {
+    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+    return 0;
+  }
+
   let contract = new ValidationContract();
   contract.isRequired(req.body.email_token, 'This email token is required!');
   contract.isRequired(req.body.name, 'User password is required!');
   contract.isRequired(req.body.password, 'User password is required!');
 
-  if (req.body.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
+  if (existUser.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
 
-  if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
+  if (existUser.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
-
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
   
   if (req.body.email_token === existUser.verification_email_token) {
     
@@ -341,7 +346,7 @@ exports.completeRegistration = async (req, res, next) => {
     if (existUser.user_type === 'driver') {
     
       existUser.vehicle = req.body.vehicle;
-      
+
       try {
         await driverAPI.createDriver({
           name: existUser.name,
