@@ -99,7 +99,6 @@ exports.create = async (req, res, next) => {
 
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
-  contract.isRequired(req.body.user_type, 'User type is required!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
@@ -326,10 +325,11 @@ exports.completeRegistration = async (req, res, next) => {
   contract.isRequired(req.body.email_token, 'This email token is required!');
   contract.isRequired(req.body.name, 'User password is required!');
   contract.isRequired(req.body.password, 'User password is required!');
+  contract.isRequired(req.body.user_type, 'User type is required!');
 
-  if (existUser.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
+  if (req.body.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
 
-  if (existUser.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
+  if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
@@ -340,8 +340,9 @@ exports.completeRegistration = async (req, res, next) => {
     
     existUser.verification_email_token = 'OK';
     existUser.name = req.body.name;
+    existUser.user_type = req.body.user_type;
     existUser.verification_email_status = 'verified';
-    existUser.password = bcrypt.hashSync(req.body.password,bcrypt.genSaltSync(10));
+    existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
 
     if (existUser.user_type === 'driver') {
     
@@ -398,11 +399,24 @@ exports.verifyEmailToken = async (req, res, next) => {
 }
 
 exports.resendEmailToken = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error verifying data!', status: HttpStatus.CONFLICT});
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+  if (!existUser) {
+    res.status(HttpStatus.CONFLICT).send({ message: 'User not found!', status: HttpStatus.CONFLICT});
+    return 0;
+  }
+
+  let template = "welcome/welcome";
+
+  if (req.body.template !== undefined || req.body.template !== null || req.body.template !== '') {
+    template = "forget/forgot";
   }
 
   let token = (""+Math.random()).substring(2,6);
@@ -415,7 +429,7 @@ exports.resendEmailToken = async (req, res, next) => {
     from: "Cheffy contact@cheffy.com",
     replyTo: "contact@cheffy.com",
     subject: `Email Token`,
-    template: "welcome/welcome",
+    template,
     context: { token, user: existUser.name }
   };
   mailer.sendMail(args);
@@ -477,17 +491,26 @@ exports.confirmChangePassword = async (req, res, next) => {
 }
 
 exports.changePassword = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+  contract.isRequired(req.body.email_token, 'This email token is required?');
+  contract.isRequired(req.body.password, 'This password is required');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    return 0;
+  }
+  const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
     res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
     return 0;
   }
 
-  if (existUser.verification_code === 'verified') {
-    existUser.verification_code = '';
-    existUser.password = md5(req.body.password + global.SALT_KEY);
+  if (existUser.verification_email_token === req.body.email_token) {
+    existUser.verification_code = 'OK';
+    existUser.verification_email_status = 'verified';
+    existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
     await existUser.save();
     res.status(HttpStatus.ACCEPTED).send({
       message: "Congratulations, password successfully changed!",
