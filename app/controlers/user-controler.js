@@ -392,12 +392,16 @@ exports.completeRegistration = async (req, res, next) => {
 }
 
 exports.verifyEmailToken = async (req, res, next) => {
-  if (req.body.email_token == null || req.body.email_token == '' || req.body.email_token == undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Token code not found!', status: HttpStatus.CONFLICT});
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'Email is correct?')
+  contract.isRequired(req.body.email_token, 'This email token is required!');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    return 0;
   }
 
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
+  const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (req.body.email_token == existUser.verification_email_token) {
     //existUser.verification_email_token = 'OK';
