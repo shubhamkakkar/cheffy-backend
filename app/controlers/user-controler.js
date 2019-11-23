@@ -107,6 +107,21 @@ exports.create = async (req, res, next) => {
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
+  if (existUser && existUser.verification_email_status === 'pending') {
+    let pass = (""+Math.random()).substring(2,6);
+    let args = {
+      to: req.body.email,
+      from: "Cheffy contact@cheffy.com",
+      replyTo: "contact@cheffy.com",
+      subject: `Welcome to Cheffy!`,
+      template: "forget/forgot",
+      context: { token: pass, user: ' One more step...' }
+    };
+    mailer.sendMail(args);
+    res.status(HttpStatus.ACCEPTED).send({ message: "Resend token for you email!", status: HttpStatus.ACCEPTED });
+    return 0;
+  }
+
   if (existUser) {
     payload.status = HttpStatus.CONFLICT;
     res.status(HttpStatus.CONFLICT).send({ message: "E-Mail already in use!", status: HttpStatus.CONFLICT });
