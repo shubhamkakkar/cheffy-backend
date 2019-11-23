@@ -17,7 +17,7 @@ router.get('/balance', authService.authorize, controller.getUserBalance);
 router.get('/balance/history?:from:to', authService.authorize, controller.getUserBalanceHistory);
 router.post('/verifyphone', authService.authorize, controller.verifyPhone);
 router.post('/confirmphone', authService.authorize, controller.checkPhone);
-router.post('/confirmemail', authService.authorize, controller.verifyEmailToken);
+router.post('/verify-email-token', authService.authorize, controller.verifyEmailToken);
 router.post('/complete-registration', authService.authorize, controller.completeRegistration);
 router.post('/resend-emailtoken', authService.authorize, controller.resendEmailToken);
 
