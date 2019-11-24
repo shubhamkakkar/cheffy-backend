@@ -331,14 +331,6 @@ exports.verifyPhone = async (req, res, next) => {
 }
 
 exports.completeRegistration = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-
   let contract = new ValidationContract();
   contract.isRequired(req.body.email_token, 'This email token is required!');
   contract.isRequired(req.body.name, 'User password is required!');
@@ -354,6 +346,13 @@ exports.completeRegistration = async (req, res, next) => {
     return 0;
   }
   
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if (!existUser) {
+    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+    return 0;
+  }
+
   if (req.body.email_token === existUser.verification_email_token) {
     
     existUser.verification_email_token = 'OK';
