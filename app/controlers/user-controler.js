@@ -109,6 +109,8 @@ exports.create = async (req, res, next) => {
 
   if (existUser && existUser.verification_email_status === 'pending') {
     let pass = (""+Math.random()).substring(2,6);
+    existUser.verification_email_token = pass;
+    await user.save();
     let args = {
       to: req.body.email,
       from: "Cheffy contact@cheffy.com",
@@ -141,6 +143,7 @@ exports.create = async (req, res, next) => {
     template: "welcome/welcome",
     context: { token: pass, user: ' One more step...' }
   };
+
   mailer.sendMail(args);
   const token = await authService.generateToken({
     id: user.id,
