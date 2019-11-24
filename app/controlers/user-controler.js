@@ -333,7 +333,6 @@ exports.verifyPhone = async (req, res, next) => {
 exports.completeRegistration = async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
-  contract.isRequired(req.body.email_token, 'This email token is required!');
   contract.isRequired(req.body.name, 'User password is required!');
   contract.isRequired(req.body.password, 'User password is required!');
   contract.isRequired(req.body.user_type, 'User type is required!');
@@ -354,16 +353,12 @@ exports.completeRegistration = async (req, res, next) => {
     return 0;
   }
 
-  if (req.body.email_token === existUser.verification_email_token) {
-    
-    existUser.verification_email_token = 'OK';
+  if (existUser.verification_email_status === 'verified') {
     existUser.name = req.body.name;
     existUser.user_type = req.body.user_type;
-    existUser.verification_email_status = 'verified';
     existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
 
     if (existUser.user_type === 'driver') {
-    
       existUser.vehicle = req.body.vehicle;
 
       try {
