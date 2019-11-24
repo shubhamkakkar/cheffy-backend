@@ -332,6 +332,7 @@ exports.verifyPhone = async (req, res, next) => {
 
 exports.completeRegistration = async (req, res, next) => {
   let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
   contract.isRequired(req.body.email_token, 'This email token is required!');
   contract.isRequired(req.body.name, 'User password is required!');
   contract.isRequired(req.body.password, 'User password is required!');
