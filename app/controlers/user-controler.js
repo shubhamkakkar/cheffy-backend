@@ -110,7 +110,7 @@ exports.create = async (req, res, next) => {
   if (existUser && existUser.verification_email_status === 'pending') {
     let pass = (""+Math.random()).substring(2,6);
     existUser.verification_email_token = pass;
-    await user.save();
+    await existUser.save();
     let args = {
       to: req.body.email,
       from: "Cheffy contact@cheffy.com",
