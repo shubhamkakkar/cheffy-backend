@@ -1,7 +1,7 @@
 'use strict';
 var HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { User, Wallet, OrderItem, ShippingAddress, Plates } = require('../models/index');
+const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents } = require('../models/index');
 const repositoryDoc = require('../repository/docs-repository');
 const repository = require('../repository/plate-repository');
 const repositoryCategory = require('../repository/category-repository');
@@ -126,7 +126,7 @@ exports.create = async (req, res, next) => {
   }
 
   if (existUser && existUser.id) {
-    const doc = repositoryDoc.getUserDoc(existUser.id);
+    const doc = await Documents.findOne({ where: { userId: existUser.id } });
     res.status(HttpStatus.OK).send({
       message: "E-Mail already in use",
       data: {
