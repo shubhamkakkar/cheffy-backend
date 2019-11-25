@@ -126,13 +126,14 @@ exports.create = async (req, res, next) => {
   }
 
   if (existUser && existUser.id) {
-    const doc = repositoryDoc.getUserDoc(existUser.id);
+    const doc = await repositoryDoc.getUserDoc(existUser.id);
     res.status(HttpStatus.OK).send({
       message: "E-Mail already in use",
       data: {
         user_type: existUser.user_type,
         verification_email_status: existUser.verification_email_status,
-        user_doc: !doc
+        password_generated: !!(existUser.password),
+        user_doc: !!(doc)
       },
       status: HttpStatus.OK });
     return 0;
