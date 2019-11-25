@@ -1,7 +1,7 @@
 'use strict';
 var HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { User, Wallet, OrderItem, ShippingAddress, Plates, Ingredient } = require('../models/index');
+const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents } = require('../models/index');
 const repository = require('../repository/plate-repository');
 const repositoryCategory = require('../repository/category-repository');
 const md5 = require('md5');
@@ -125,7 +125,15 @@ exports.create = async (req, res, next) => {
   }
 
   if (existUser) {
-    res.status(HttpStatus.OK).send({ message: "E-Mail already in use!", status: HttpStatus.OK });
+    const document = await Documents.findOne({ where: { userId: existUser.id } });
+    res.status(HttpStatus.OK).send({
+      message: "E-Mail already in use",
+      data: {
+        user_type: existUser.user_type,
+        verification_email_status: existUser.verification_email_status,
+        user_docs: !(document == null)
+      },
+      status: HttpStatus.OK });
     return 0;
   }
 
@@ -340,9 +348,8 @@ exports.completeRegistration = async (req, res, next) => {
   contract.isRequired(req.body.password, 'User password is required!');
   contract.isRequired(req.body.user_type, 'User type is required!');
 
-  if (req.body.user_type === 'driver') contract.isRequired(req.body.vehicle, 'Vehicle is required!');
 
-  if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
+  if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
@@ -352,7 +359,7 @@ exports.completeRegistration = async (req, res, next) => {
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
-    res.status(HttpStatus.ACCEPTED).send({ message: "E-Mail already in use!", status: HttpStatus.ACCEPTED });
+    res.status(HttpStatus.ACCEPTED).send({ message: `E-Mail already in use, user type: ${existUser.user_type} status: ${existUser.verification_email_status}`, status: HttpStatus.ACCEPTED });
     return 0;
   }
 
@@ -362,13 +369,10 @@ exports.completeRegistration = async (req, res, next) => {
     existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
 
     if (existUser.user_type === 'driver') {
-      existUser.vehicle = req.body.vehicle;
-
       try {
         await driverAPI.createDriver({
           name: existUser.name,
-          email: existUser.email,
-          vehicle: existUser.vehicle
+          email: existUser.email
         });
       } catch (err) {
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
@@ -408,9 +412,9 @@ exports.verifyEmailToken = async (req, res, next) => {
     //existUser.verification_email_token = 'OK';
     existUser.verification_email_status = 'verified';
     await existUser.save();
-    res.status(HttpStatus.ACCEPTED).send({
+    res.status(HttpStatus.OK).send({
       message: "Congratulations, Email successfully verified!",
-      status: HttpStatus.ACCEPTED
+      status: HttpStatus.OK
     });
     return 0;
   }

@@ -9,7 +9,6 @@ const { User } = require("../models/index");
 
 exports.create = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
-  const { social_security_number } = req.body;
   const actualUser = await User.findByPk(token_return.id);
   let actualDocs;
   if (actualUser.user_type === 'driver')
@@ -18,13 +17,13 @@ exports.create = async (req, res, next) => {
     actualDocs = await repository.getDriverDoc(token_return.id);
   
   if (actualDocs) {
-    res.status(HttpStatus.ACCEPTED).send({ message: "You already have documents applied", data: actualDocs });
+    res.status(HttpStatus.OK).send({ message: "You already have documents applied", data: actualDocs });
     return 0;
   }
 
   let contract = new ValidationContract();
   if (actualUser.user_type === 'chef') {
-    contract.isRequired(social_security_number, 'The social security number is incorrect!');
+    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
     contract.isRequired(req.files['chef_license'], "Chef's license is missing!");
     contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing!");
     contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing!");
@@ -34,20 +33,20 @@ exports.create = async (req, res, next) => {
 
   if (actualUser.user_type === 'driver') {
     contract.isRequired(req.files['profile_photo'], "User photo is missing");
-    contract.isRequired(social_security_number, 'The social security number is incorrect!');
+    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
     contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");
     contract.isRequired(req.files['driver_vehicle_registration'], "Driver vehicle registration is missing!");
   }
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
   let new_doc = await repository.createDoc({
     comment: "",
     userId: token_return.id,
-    social_security_number
+    social_security_number: req.body.social_security_number
   });
 
   if (actualUser.user_type === 'chef' && req.files['chef_license'])
@@ -72,8 +71,7 @@ exports.create = async (req, res, next) => {
   if (actualUser.user_type === 'chef')
     saved_data = await repository.getDriverDoc(token_return.id);
 
-  console.log(saved_data)
-  res.status(HttpStatus.ACCEPTED).send({ message: "Documents successfully saved", data: saved_data });
+  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", data: saved_data });
 }
 
 
