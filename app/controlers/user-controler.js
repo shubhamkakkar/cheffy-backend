@@ -131,7 +131,7 @@ exports.create = async (req, res, next) => {
       data: {
         user_type: existUser.user_type,
         verification_email_status: existUser.verification_email_status,
-        user_docs: !(document == null)
+        user_docs: document
       },
       status: HttpStatus.OK });
     return 0;
