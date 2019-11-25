@@ -1,7 +1,8 @@
 'use strict';
 var HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents } = require('../models/index');
+const { User, Wallet, OrderItem, ShippingAddress, Plates } = require('../models/index');
+const repositoryDoc = require('../repository/docs-repository');
 const repository = require('../repository/plate-repository');
 const repositoryCategory = require('../repository/category-repository');
 const md5 = require('md5');
@@ -124,12 +125,14 @@ exports.create = async (req, res, next) => {
     return 0;
   }
 
-  if (existUser) {
+  if (existUser && existUser.id) {
+    const doc = repositoryDoc.getUserDoc(existUser.id);
     res.status(HttpStatus.OK).send({
       message: "E-Mail already in use",
       data: {
         user_type: existUser.user_type,
-        verification_email_status: existUser.verification_email_status
+        verification_email_status: existUser.verification_email_status,
+        user_doc: doc
       },
       status: HttpStatus.OK });
     return 0;
