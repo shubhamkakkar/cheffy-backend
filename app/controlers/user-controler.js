@@ -125,13 +125,11 @@ exports.create = async (req, res, next) => {
   }
 
   if (existUser) {
-    const document = await Documents.findOne({ where: { userId: existUser.id } });
     res.status(HttpStatus.OK).send({
       message: "E-Mail already in use",
       data: {
         user_type: existUser.user_type,
-        verification_email_status: existUser.verification_email_status,
-        user_docs: document
+        verification_email_status: existUser.verification_email_status
       },
       status: HttpStatus.OK });
     return 0;
