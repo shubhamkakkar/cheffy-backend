@@ -132,7 +132,7 @@ exports.create = async (req, res, next) => {
       data: {
         user_type: existUser.user_type,
         verification_email_status: existUser.verification_email_status,
-        user_doc: doc
+        user_doc: !doc
       },
       status: HttpStatus.OK });
     return 0;
