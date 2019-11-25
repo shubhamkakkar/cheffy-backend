@@ -101,7 +101,7 @@ exports.create = async (req, res, next) => {
   contract.isEmail(req.body.email, 'This email is correct?');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
@@ -120,13 +120,12 @@ exports.create = async (req, res, next) => {
       context: { token: pass, user: ' One more step...' }
     };
     mailer.sendMail(args);
-    res.status(HttpStatus.ACCEPTED).send({ message: "Resend token for you email!", status: HttpStatus.ACCEPTED });
+    res.status(HttpStatus.OK).send({ message: "Resend token for you email!", status: HttpStatus.OK });
     return 0;
   }
 
   if (existUser) {
-    payload.status = HttpStatus.CONFLICT;
-    res.status(HttpStatus.CONFLICT).send({ message: "E-Mail already in use!", status: HttpStatus.CONFLICT });
+    res.status(HttpStatus.OK).send({ message: "E-Mail already in use!", status: HttpStatus.OK });
     return 0;
   }
 
@@ -298,18 +297,22 @@ exports.getUser = async (req, res, next) => {
 }
 
 exports.verifyPhone = async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.country_code, "E-Mail already in use!");
+  contract.isRequired(body.phone_no, 'Phone number not found!');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    return 0;
+  }
+
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
 
   const existUser = await User.findOne({ where: { id: token_return.id } });
+ 
   if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'error when registering: user not found', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.OK).send({ message: "E-Mail already in use!", status: HttpStatus.OK });
     return 0;
-  }
-  if (req.body.country_code == null || req.body.country_code == '' || req.body.country_code == undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Country code not found!', status: HttpStatus.CONFLICT});
-  }
-  if (req.body.phone_no == null || req.body.phone_no == '' || req.body.phone_no == undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Phone number not found!', status: HttpStatus.CONFLICT});
   }
 
   const code = (""+Math.random()).substring(2,6);
@@ -321,13 +324,13 @@ exports.verifyPhone = async (req, res, next) => {
   let phone = req.body.country_code + req.body.phone_no;
 
   if (phone === null && phone === '' && phone === undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'error when registering: phone not found', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.OK).send({ message: 'error when registering: phone not found', status: HttpStatus.OK });
     return 0;
   }
 
   const retorno = await phoneService.sendMessage(phone, code);
 
-  res.status(HttpStatus.ACCEPTED).send(retorno);
+  res.status(HttpStatus.OK).send(retorno);
 }
 
 exports.completeRegistration = async (req, res, next) => {
@@ -342,14 +345,14 @@ exports.completeRegistration = async (req, res, next) => {
   if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Vehicle is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
   
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.ACCEPTED).send({ message: "E-Mail already in use!", status: HttpStatus.ACCEPTED });
     return 0;
   }
 
@@ -368,7 +371,7 @@ exports.completeRegistration = async (req, res, next) => {
           vehicle: existUser.vehicle
         });
       } catch (err) {
-        res.status(HttpStatus.CONFLICT).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
         return 0;
       }
     }
@@ -378,15 +381,15 @@ exports.completeRegistration = async (req, res, next) => {
     }
 
     await existUser.save();
-    res.status(HttpStatus.ACCEPTED).send({
-      message: "Congratulations, Email successfully verified!",
-      status: HttpStatus.ACCEPTED,
+    res.status(HttpStatus.CREATED).send({
+      message: `Congratulations, successfully created ${req.body.user_type} type user!`,
+      status: HttpStatus.CREATED,
       result: existUser
     });
     return 0;
   }
 
-  res.status(HttpStatus.CONFLICT).send({ message: 'Token code not verified!', status: HttpStatus.CONFLICT});
+  res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
 }
 
 exports.verifyEmailToken = async (req, res, next) => {
@@ -395,7 +398,7 @@ exports.verifyEmailToken = async (req, res, next) => {
   contract.isRequired(req.body.email_token, 'This email token is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
@@ -412,7 +415,7 @@ exports.verifyEmailToken = async (req, res, next) => {
     return 0;
   }
 
-  res.status(HttpStatus.CONFLICT).send({ message: 'Token code not verified!', status: HttpStatus.CONFLICT});
+  res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
 }
 
 exports.resendEmailToken = async (req, res, next) => {
@@ -420,13 +423,13 @@ exports.resendEmailToken = async (req, res, next) => {
   contract.isEmail(req.body.email, 'This email is correct?');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
   if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'User not found!', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.OK).send({ message: 'User not found!', status: HttpStatus.OK});
     return 0;
   }
 
@@ -450,9 +453,9 @@ exports.resendEmailToken = async (req, res, next) => {
     context: { token, user: existUser.name }
   };
   mailer.sendMail(args);
-  res.status(HttpStatus.ACCEPTED).send({
+  res.status(HttpStatus.OK).send({
     message: "Congratulations, an email with verification code has been sent!",
-    status: HttpStatus.ACCEPTED
+    status: HttpStatus.OK
   });
   return 0;
 }
@@ -539,8 +542,12 @@ exports.changePassword = async (req, res, next) => {
 }
 
 exports.checkPhone = async (req, res, next) => {
-  if (req.body.sms_token == null || req.body.sms_token == '' || req.body.sms_token == undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'SMS code not found!', status: HttpStatus.CONFLICT});
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.sms_token, 'SMS code not found!');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    return 0;
   }
 
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
@@ -550,14 +557,14 @@ exports.checkPhone = async (req, res, next) => {
     existUser.verification_phone_token = 'OK';
     existUser.verification_phone_status = 'verified';
     await existUser.save();
-    res.status(HttpStatus.ACCEPTED).send({
+    res.status(HttpStatus.OK).send({
       message: "Congratulations, phone successfully verified!",
-      status: HttpStatus.ACCEPTED
+      status: HttpStatus.OK
     });
     return 0;
   }
 
-  res.status(HttpStatus.CONFLICT).send({ message: 'SMS code not found!', status: HttpStatus.CONFLICT});
+  res.status(HttpStatus.BAD_REQUEST).send({ message: 'SMS code not found!', status: HttpStatus.BAD_REQUEST});
 }
 
 exports.authenticate = async (req, res, next) => {
