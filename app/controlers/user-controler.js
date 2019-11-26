@@ -611,17 +611,19 @@ exports.authenticate = async (req, res, next) => {
       return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
     }
 
-    const doc = await Documents.findOne({ where: { userId: costumer.id } });
+    const doc = await Documents.findOne({ where: { userId: customer.id } });
     const token = await authService.generateToken({
       id: customer.id,
       email: customer.email,
       name: customer.name
     });
+
     res.status(200).send({
       token: token,
-      data: { ...costumer, user_doc: !!(doc) }
+      data: { ...customer.dataValues, user_doc: !!(doc) }
     });
   } catch (e) {
+    console.log(e)
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
       message: 'Request fail',
       error: e
