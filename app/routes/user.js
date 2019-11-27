@@ -19,11 +19,11 @@ router.post('/verifyphone', authService.authorize, controller.verifyPhone);
 router.post('/confirmphone', authService.authorize, controller.checkPhone);
 router.post('/verify-email-token', controller.verifyEmailToken);
 router.post('/complete-registration', controller.completeRegistration);
-router.post('/resend-emailtoken', authService.authorize, controller.resendEmailToken);
+router.post('/resend-emailtoken', controller.resendEmailToken);
 
 router.post('/verifypassword', authService.authorize, controller.verifyChangePassword);
+router.post('/changepassword', controller.changePassword);
 router.post('/confirmchangepassword', authService.authorize, controller.confirmChangePassword);
-router.post('/changepassword', authService.authorize, controller.changePassword);
 router.put('/edit', authService.authorize, controller.put);
 
 router.put('/balance', authService.authorize, controller.getUserBalance);

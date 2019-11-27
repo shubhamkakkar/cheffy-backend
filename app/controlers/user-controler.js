@@ -311,7 +311,7 @@ exports.getUser = async (req, res, next) => {
     });
     res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: existUser});
   } catch (err) {
-    res.status(HttpStatus.BAD_REQUEST).send({ message: 'FAILED', data: err});
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: 'FAILED', data: err, status: HttpStatus.NON_AUTHORITATIVE_INFORMATION});
   }
 }
 
@@ -321,7 +321,7 @@ exports.verifyPhone = async (req, res, next) => {
   contract.isRequired(body.phone_no, 'Phone number not found!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
     return 0;
   }
 
@@ -363,7 +363,7 @@ exports.completeRegistration = async (req, res, next) => {
   if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
     return 0;
   }
   
@@ -413,7 +413,7 @@ exports.verifyEmailToken = async (req, res, next) => {
   contract.isRequired(req.body.email_token, 'This email token is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
     return 0;
   }
 
@@ -438,13 +438,13 @@ exports.resendEmailToken = async (req, res, next) => {
   contract.isEmail(req.body.email, 'This email is correct?');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
     return 0;
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
   if (!existUser) {
-    res.status(HttpStatus.OK).send({ message: 'User not found!', status: HttpStatus.OK});
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND});
     return 0;
   }
 
@@ -467,6 +467,7 @@ exports.resendEmailToken = async (req, res, next) => {
     template,
     context: { token, user: existUser.name }
   };
+
   mailer.sendMail(args);
   res.status(HttpStatus.OK).send({
     message: "Congratulations, an email with verification code has been sent!",
@@ -532,13 +533,13 @@ exports.changePassword = async (req, res, next) => {
   contract.isRequired(req.body.password, 'This password is required');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
     return 0;
   }
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND });
     return 0;
   }
 
@@ -547,13 +548,14 @@ exports.changePassword = async (req, res, next) => {
     existUser.verification_email_status = 'verified';
     existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
     await existUser.save();
-    res.status(HttpStatus.ACCEPTED).send({
+    res.status(HttpStatus.OK).send({
       message: "Congratulations, password successfully changed!",
-      status: HttpStatus.ACCEPTED
+      status: HttpStatus.OK
     });
     return 0;
   }
-  res.status(HttpStatus.CONFLICT).send({ message: "Error validating data!", status: HttpStatus.CONFLICT });
+
+  res.status(HttpStatus.UNAUTHORIZED).send({ message: "Invalid email token", status: HttpStatus.UNAUTHORIZED });
 }
 
 exports.checkPhone = async (req, res, next) => {
@@ -561,7 +563,7 @@ exports.checkPhone = async (req, res, next) => {
   contract.isRequired(req.body.sms_token, 'SMS code not found!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
     return 0;
   }
 
