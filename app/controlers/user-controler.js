@@ -99,16 +99,17 @@ exports.create = async (req, res, next) => {
   let payload = {};
 
   let contract = new ValidationContract();
-  contract.isEmail(req.body.email, 'This email is correct?');
+  contract.isEmail(req.body.email, 'Invalid email');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (existUser && existUser.verification_email_status === 'pending') {
+    const doc = await Documents.findOne({ where: { userId: existUser.id } });
     let pass = (""+Math.random()).substring(2,6);
     existUser.verification_email_token = pass;
     await existUser.save();
@@ -121,21 +122,29 @@ exports.create = async (req, res, next) => {
       context: { token: pass, user: ' One more step...' }
     };
     mailer.sendMail(args);
-    res.status(HttpStatus.OK).send({ message: "Resend token for you email!", status: HttpStatus.OK });
+    
+    const { id, email, verification_email_status, password } = existUser;
+    
+    res.status(HttpStatus.OK).send({
+      message: "Resend token for you email!",
+      status: HttpStatus.OK,
+      data: { id, email, verification_email_status, password_generated: !!(password), user_doc: !!(doc) }
+    });
+  
     return 0;
   }
 
   if (existUser && existUser.id) {
     const doc = await Documents.findOne({ where: { userId: existUser.id } });
-    res.status(HttpStatus.OK).send({
-      message: "E-Mail already in use",
+    res.status(HttpStatus.ACCEPTED).send({
+      message: "Already registered user",
       data: {
         user_type: existUser.user_type,
         verification_email_status: existUser.verification_email_status,
         password_generated: !!(existUser.password),
         user_doc: !!(doc)
       },
-      status: HttpStatus.OK });
+      status: HttpStatus.ACCEPTED });
     return 0;
   }
 
@@ -164,7 +173,7 @@ exports.create = async (req, res, next) => {
     attributes: ['id', 'name', 'email', 'country_code', 'phone_no', 'user_type', 'verification_email_status', 'verification_phone_status', 'createdAt'],
   });
   payload.token = token;
-  payload.result = newuser;
+  payload.data = newuser;
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
