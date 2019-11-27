@@ -13,7 +13,7 @@ exports.updateDriverPosition = async (req, res, next) => {
     contract.isRequired(req.body.longitude, 'You must provide longitude');
   
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
       return 0;
     }
 
@@ -55,7 +55,7 @@ exports.getDriverPosition = async (req, res, next) => {
    contract.isEmail(req.body.email, 'This email is correct?');
  
    if (!contract.isValid()) {
-     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+     res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
      return 0;
    }
    let response;
@@ -86,7 +86,7 @@ exports.createBankAccount = async (req, res, next) => {
    contract.isTaxInformation(req.body.taxInformation, 'This Tax Information is correct?');
 
    if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
       return 0;
    }
    let response;

@@ -180,7 +180,7 @@ exports.create = async (req, res, next) => {
   //contract.isRequired(req.body.card.cvc, "We couldn't find your card CVC!");
   
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 

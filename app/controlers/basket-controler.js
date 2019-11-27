@@ -21,7 +21,7 @@ exports.addItem = async (req, res, next) => {
     contract.isRequired(req.body.quantity, 'Quantity field is required!');
 
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send(contract.errors());
+      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
       return 0;
     }
 

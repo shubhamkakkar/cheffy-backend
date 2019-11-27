@@ -321,7 +321,7 @@ exports.verifyPhone = async (req, res, next) => {
   contract.isRequired(body.phone_no, 'Phone number not found!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
@@ -363,7 +363,7 @@ exports.completeRegistration = async (req, res, next) => {
   if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
   
@@ -413,7 +413,7 @@ exports.verifyEmailToken = async (req, res, next) => {
   contract.isRequired(req.body.email_token, 'This email token is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
@@ -438,7 +438,7 @@ exports.resendEmailToken = async (req, res, next) => {
   contract.isEmail(req.body.email, 'This email is correct?');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
@@ -533,7 +533,7 @@ exports.changePassword = async (req, res, next) => {
   contract.isRequired(req.body.password, 'This password is required');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
   const existUser = await User.findOne({ where: { email: req.body.email } });
@@ -563,7 +563,7 @@ exports.checkPhone = async (req, res, next) => {
   contract.isRequired(req.body.sms_token, 'SMS code not found!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send(contract.errors()).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 

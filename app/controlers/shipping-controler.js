@@ -13,7 +13,7 @@ exports.create = async (req, res, next) => {
   contract.isRequired(req.body.state, "The state field is required!");
   contract.isRequired(req.body.zipCode, "The zipcode field is required!");
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors());
+    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
     return 0;
   }
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
@@ -76,7 +76,7 @@ exports.edit = async (req, res, next) => {
     contract.isRequired(req.body.state, "The state field is required!");
     contract.isRequired(req.body.zipCode, "The zipcode field is required!");
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send(contract.errors());
+      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
       return 0;
     }
 

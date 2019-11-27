@@ -27,7 +27,7 @@ exports.addCustomPlate = async (req, res, next) => {
   contract.isRequired(req.body.price_max  , 'The maximum price is required!');
   contract.isRequired(req.body.quantity, 'The amount of plates is obligatory!');
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 

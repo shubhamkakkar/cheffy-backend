@@ -144,7 +144,7 @@ exports.createDelivery = async (req, res, next) => {
     contract.isRequired(req.params.id, 'The order ID is required!');
   
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
       return 0;
     }
 

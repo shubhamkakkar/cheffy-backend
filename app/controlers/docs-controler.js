@@ -17,10 +17,10 @@ exports.create = async (req, res, next) => {
     actualDocs = await repository.getChefDoc(token_return.id);
   
   if (actualDocs) {
-    res.status(HttpStatus.OK).send({ message: "You already have documents applied", data: actualDocs });
+    res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
     return 0;
   }
-
+  
   let contract = new ValidationContract();
   if (actualUser.user_type === 'chef') {
     contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
@@ -39,7 +39,7 @@ exports.create = async (req, res, next) => {
   }
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
@@ -71,7 +71,7 @@ exports.create = async (req, res, next) => {
   if (actualUser.user_type === 'chef')
     saved_data = await repository.getDriverDoc(token_return.id);
 
-  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", data: saved_data });
+  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 }
 
 
@@ -101,7 +101,7 @@ exports.edit = async (req, res, next) => {
     const actual = await User.findByPk(token_return.id);
     let existDocs;
     if (actual.user_type === 'chef')
-      existDocs = await repository.getUserDoc(req.params.id);
+      existDocs = await repository.getChefDoc(req.params.id);
     if (actual.user_type === 'driver')
       existDocs = await repository.getDriverDoc(req.params.id);
 
