@@ -164,6 +164,36 @@ exports.getDriverDocs = async (state, data) => {
   return existUserDocs;
 };
 
+exports.getChefDoc = async (data) => {
+  const existUserDoc = await Documents.findOne({
+    where: { userId: data },
+    include: [
+      {
+        model: ProfilePhoto,
+        attributes: ["description", "url", "state_type"]
+      },
+      {
+        model: ChefLicense,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: ChefCertificate,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: NIDFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: KitchenPhoto,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+    ]
+  });
+  return existUserDoc;
+};
+
+
 exports.getDriverDoc = async (data) => {
   const existUserDoc = await Documents.findOne({
     where: { userId: data },

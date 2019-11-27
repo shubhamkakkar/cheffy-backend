@@ -14,7 +14,7 @@ exports.create = async (req, res, next) => {
   if (actualUser.user_type === 'driver')
     actualDocs = await repository.getDriverDoc(token_return.id);
   if (actualUser.user_type === 'chef')
-    actualDocs = await repository.getDriverDoc(token_return.id);
+    actualDocs = await repository.getChefDoc(token_return.id);
   
   if (actualDocs) {
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", data: actualDocs });
