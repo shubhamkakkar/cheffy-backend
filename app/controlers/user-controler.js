@@ -128,7 +128,7 @@ exports.create = async (req, res, next) => {
     res.status(HttpStatus.OK).send({
       message: "Resend token for you email!",
       status: HttpStatus.OK,
-      data: { id, email, verification_email_status, password_generated: !!(password), user_doc: !!(doc) }
+      result: { id, email, verification_email_status, password_generated: !!(password), user_doc: !!(doc) }
     });
   
     return 0;
@@ -138,7 +138,7 @@ exports.create = async (req, res, next) => {
     const doc = await Documents.findOne({ where: { userId: existUser.id } });
     res.status(HttpStatus.ACCEPTED).send({
       message: "Already registered user",
-      data: {
+      result: {
         user_type: existUser.user_type,
         verification_email_status: existUser.verification_email_status,
         password_generated: !!(existUser.password),
@@ -173,7 +173,7 @@ exports.create = async (req, res, next) => {
     attributes: ['id', 'name', 'email', 'country_code', 'phone_no', 'user_type', 'verification_email_status', 'verification_phone_status', 'createdAt'],
   });
   payload.token = token;
-  payload.data = newuser;
+  payload.result = newuser;
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
