@@ -39,7 +39,7 @@ exports.create = async (req, res, next) => {
   }
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    res.status(HttpStatus.BAD_REQUEST).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
