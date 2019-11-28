@@ -76,29 +76,36 @@ exports.create = async (req, res, next) => {
     saved_data = await repository.getDriverDoc(token_return.id);
   if (actualUser.user_type === 'chef')
     saved_data = await repository.getChefDoc(token_return.id);
-
+  new_doc.state_type = 'validated';
+  new_doc.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 }
 
 
 exports.list = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
-  let user_docs;
-  
-  if (req.query.state) {
-    user_docs = await repository.getUserDocs(req.query.state, token_return.id);
-  } else {
-    user_docs = await repository.getUserDocs(token_return.id);
-  }
+  const actualUser = await User.findOne({ where: { id: token_return.id } });
 
-  if (user_docs) {
-    res.status(HttpStatus.ACCEPTED).send(user_docs);
+  if (!actualUser) {
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
     return 0;
   }
-  res.status(HttpStatus.ACCEPTED).send({
-    message: "No documents found!",
-    error: false
-  });
+
+  let actualDocs;
+  if (actualUser.user_type === 'driver')
+    actualDocs = await repository.getDriverDoc(token_return.id);
+  if (actualUser.user_type === 'chef')
+    actualDocs = await repository.getChefDoc(token_return.id);
+
+  if (!actualDocs) {
+    res.status(HttpStatus.NOT_FOUND).send({
+      message: "No documents found!",
+      status: HttpStatus.NOT_FOUND
+    });
+    return 0;
+  }
+
+  res.status(HttpStatus.ACCEPTED).send({ message: "Documents found successfully", result: actualDocs });  
 };
 
 exports.edit = async (req, res, next) => {

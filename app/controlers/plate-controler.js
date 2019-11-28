@@ -1,7 +1,7 @@
 'use strict';
 var HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { Plates, User, PlateImage, ReceiptImage, KitchenImage } = require('../models/index');
+const { Plates, User, PlateImage, ReceiptImage, KitchenImage, Documents } = require('../models/index');
 const repository = require('../repository/plate-repository');
 const repoCustom = require('../repository/customPlate-repository');
 const repositoryDocs = require('../repository/docs-repository');
@@ -40,7 +40,7 @@ exports.create = async (req, res, next) => {
     res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true}).end();
     return 0;
   }
-  const validate_docs = await repositoryDocs.getUserDocs(existUser.id)
+  const validate_docs = await Documents.findOne({ where: { userId: existUser.id } })
   if (validate_docs === null || validate_docs.state_type !== "validated") {
     res.status(HttpStatus.CONFLICT).send({ message: "Before creating a new plate you need to validate your documents!", error: true });
     return 0;

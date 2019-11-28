@@ -318,7 +318,7 @@ exports.getUser = async (req, res, next) => {
 exports.verifyPhone = async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.body.country_code, "E-Mail already in use!");
-  contract.isRequired(body.phone_no, 'Phone number not found!');
+  contract.isRequired(req.body.phone_no, 'Phone number not found!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
@@ -334,13 +334,8 @@ exports.verifyPhone = async (req, res, next) => {
     return 0;
   }
 
+  const phone = req.body.country_code + req.body.phone_no;
   const code = (""+Math.random()).substring(2,6);
-  existUser.verification_phone_token = code;
-  existUser.country_code = req.body.country_code;
-  existUser.phone_no = req.body.phone_no;
-  await existUser.save();
-
-  let phone = req.body.country_code + req.body.phone_no;
 
   if (phone === null && phone === '' && phone === undefined) {
     res.status(HttpStatus.OK).send({ message: 'error when registering: phone not found', status: HttpStatus.OK });
@@ -348,8 +343,16 @@ exports.verifyPhone = async (req, res, next) => {
   }
 
   const retorno = await phoneService.sendMessage(phone, code);
+  const status = (retorno.status) ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
 
-  res.status(HttpStatus.OK).send(retorno);
+  if (status === HttpStatus.OK) {
+    existUser.verification_phone_token = code;
+    existUser.country_code = req.body.country_code;
+    existUser.phone_no = req.body.phone_no;
+    await existUser.save();
+  }
+
+  res.status(status).send(retorno);
 }
 
 exports.completeRegistration = async (req, res, next) => {
@@ -581,7 +584,7 @@ exports.checkPhone = async (req, res, next) => {
     return 0;
   }
 
-  res.status(HttpStatus.BAD_REQUEST).send({ message: 'SMS code not found!', status: HttpStatus.BAD_REQUEST});
+  res.status(HttpStatus.NOT_FOUND).send({ message: 'SMS code not found!', status: HttpStatus.NOT_FOUND});
 }
 
 exports.authenticate = async (req, res, next) => {
