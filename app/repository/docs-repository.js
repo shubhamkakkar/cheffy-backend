@@ -84,43 +84,6 @@ exports.getUserDocs = async (state, data) => {
   return existUserDocs;
 };
 
-exports.getUserDoc = async (data) => {
-  const existUserDoc = await Documents.findOne({
-    where: { userId: data },
-    include: [
-      {
-        model: ChefLicense,
-        attributes: ["id", "description", "url", "state_type"]
-      },
-      {
-        model: ChefCertificate,
-        attributes: ["id", "description", "url", "state_type"]
-      },
-      {
-        model: KitchenPhoto,
-        attributes: ["id", "description", "url", "state_type"]
-      },
-      {
-        model: NIDFrontSide,
-        attributes: ["id", "description", "url", "state_type"]
-      },
-      {
-        model: ProfilePhoto,
-        attributes: ["id", "description", "url", "state_type"]
-      },
-      {
-        model: DriverLicenseFrontSide,
-        attributes: ['id', 'name', 'url', 'state_type']
-      },
-      {
-        model: DriverVehicleRegistration,
-        attributes: ['id', 'name', 'url', 'state_type']
-      }
-    ]
-  });
-  return existUserDoc;
-};
-
 exports.getDriverDocs = async (state, data) => {
   if (state && data) {
     const existUserDocs = await Documents.findOne({
@@ -166,7 +129,8 @@ exports.getDriverDocs = async (state, data) => {
 
 exports.getChefDoc = async (data) => {
   const existUserDoc = await Documents.findOne({
-    where: { userId: data },
+    where: {  userId: data },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [
       {
         model: ProfilePhoto,
@@ -197,6 +161,7 @@ exports.getChefDoc = async (data) => {
 exports.getDriverDoc = async (data) => {
   const existUserDoc = await Documents.findOne({
     where: { userId: data },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [
       {
         model: ProfilePhoto,

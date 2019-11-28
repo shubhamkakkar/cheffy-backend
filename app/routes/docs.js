@@ -20,14 +20,14 @@ const fieldsFile = [
 ];
 
 router.post(
-  "/",
+  '/',
   authService.authorize,
   multerStart(fieldsFile),
   controller.create
 );
-router.get("/", authService.authorize, controller.list);
+router.get('/', authService.authorize, controller.list);
 router.put(
-  '/edit/:id',
+  '/',
   authService.authorize,
   multerStart(fieldsFile),
   controller.edit);

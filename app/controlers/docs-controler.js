@@ -10,6 +10,12 @@ const { User } = require("../models/index");
 exports.create = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
   const actualUser = await User.findByPk(token_return.id);
+
+  if (!actualUser) {
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
+    return 0;
+  }
+
   let actualDocs;
   if (actualUser.user_type === 'driver')
     actualDocs = await repository.getDriverDoc(token_return.id);
@@ -67,9 +73,9 @@ exports.create = async (req, res, next) => {
   let saved_data;
 
   if (actualUser.user_type === 'driver')
-    saved_data = await repository.getUserDoc(token_return.id);
-  if (actualUser.user_type === 'chef')
     saved_data = await repository.getDriverDoc(token_return.id);
+  if (actualUser.user_type === 'chef')
+    saved_data = await repository.getChefDoc(token_return.id);
 
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 }
@@ -99,19 +105,26 @@ exports.edit = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token']);
     const actual = await User.findByPk(token_return.id);
+
+    if (!actual) {
+      res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
+      return 0;
+    }
+
     let existDocs;
     if (actual.user_type === 'chef')
-      existDocs = await repository.getChefDoc(req.params.id);
+      existDocs = await repository.getChefDoc(actual.id);
     if (actual.user_type === 'driver')
-      existDocs = await repository.getDriverDoc(req.params.id);
+      existDocs = await repository.getDriverDoc(actual.id);
 
     if (!existDocs) {
       await Object.keys(req.files).map(async keyObject => {
         const { fieldname, key } = req.files[keyObject].shift();
-
+  
         await uploadService.deleteImage(fieldname, key);
       });
-      res.status(HttpStatus.CONFLICT).send({ message: "We couldn't find your docs", status: HttpStatus.CONFLICT});
+
+      res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: "We couldn't find your docs", status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
       return 0;
     }
 
@@ -137,9 +150,9 @@ exports.edit = async (req, res, next) => {
     if (actual.user_type === 'driver')
       updatedDocs = await repository.getDriverDoc(token_return.id);
     if (actual.user_type === 'chef')
-      updatedDocs = await repository.getUserDoc(token_return.id);
+      updatedDocs = await repository.getChefDoc(token_return.id);
 
-    res.status(200).send({ message: 'Docs successfully updated!', data: updatedDocs });
+    res.status(200).send({ message: 'Docs successfully updated!', result: updatedDocs });
   } catch (e) {
     console.log("Error: ", e)
     res.status(500).send({

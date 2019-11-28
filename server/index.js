@@ -16,6 +16,8 @@ nunjucks.configure('views', {
   express: app
 });
 
+app.use('/tmp', express.static(`${__dirname}/../tmp/`));
+
 app.use(cors(corsOptions))
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({
