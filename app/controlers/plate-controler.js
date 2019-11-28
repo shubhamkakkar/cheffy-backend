@@ -19,9 +19,14 @@ exports.create = async (req, res, next) => {
   contract.isRequired(req.body.price, 'Plate price is required!');
   contract.isRequired(req.body.delivery_time, 'Plate delivery time is required!');
   contract.isRequired(req.body.delivery_type, 'Plate delivery type is required!');
-
+  contract.isRequired(req.body.categoryId, 'Caregory id is required!');
+  contract.isRequired(req.body.ingredients, 'Igredients is required!');
+  req.body.ingredients.map( elem => {
+    contract.isRequired(elem.name, 'Igredient name is required!');
+    contract.isRequired(elem.purchase_date, 'Igredient purchase date is required!');
+  });
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
     return 0;
   }
 
@@ -29,20 +34,20 @@ exports.create = async (req, res, next) => {
   const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (existUser.user_type !== 'chef') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
+    res.status(HttpStatus.NOT_FOUND).send({ message: "Only chefs can create plates", error: true}).end();
     return 0;
   }
   if (existUser.verification_email_status !== 'verified') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Your email was not verified", error: true}).end();
+    res.status(HttpStatus.NOT_FOUND).send({ message: "Your email was not verified", error: true}).end();
     return 0;
   }
   if (existUser.verification_phone_status !== 'verified') {
-    res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true}).end();
+    res.status(HttpStatus.NOT_FOUND).send({ message: "Your phone number was not verified", error: true}).end();
     return 0;
   }
   const validate_docs = await Documents.findOne({ where: { userId: existUser.id } })
   if (validate_docs === null || validate_docs.state_type !== "validated") {
-    res.status(HttpStatus.CONFLICT).send({ message: "Before creating a new plate you need to validate your documents!", error: true });
+    res.status(HttpStatus.FORBIDDEN).send({ message: "Before creating a new plate you need to validate your documents!", error: true });
     return 0;
   }
 
