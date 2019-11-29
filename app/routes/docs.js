@@ -32,6 +32,8 @@ router.post('/kitchenPhoto', authService.authorize, multerStart(fieldsFile), con
 router.post('/nidFrontSide', authService.authorize, multerStart(fieldsFile), controller.createNIDFrontInside);
 router.post('/profilePhoto', authService.authorize, multerStart(fieldsFile), controller.createProfilePhoto);
 router.post('/socialSecurityNumber', authService.authorize, multerStart(fieldsFile), controller.insertSocialSecurityNumber)
+router.post('/driverLicense', authService.authorize, multerStart(fieldsFile), controller.createDriverLicense);
+router.post('/vehicleRegistration', authService.authorize, multerStart(fieldsFile), controller.createDriverVehicleLicense);
 router.get('/', authService.authorize, controller.list);
 router.put(
   '/',

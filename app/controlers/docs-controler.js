@@ -511,7 +511,7 @@ exports.createDriverLicense = async (req, res, next) => {
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 }
 
-exports.createDriverVeichleLicense = async (req, res, next) => {
+exports.createDriverVehicleLicense = async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['driver_vehicle_registration'], "Driver license is missing!");//
 
