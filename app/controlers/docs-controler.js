@@ -365,11 +365,6 @@ exports.createNIDFrontInside = async (req, res, next) => {
     return 0;
   }
 
-  if (actualUser.user_type !== 'chef') {
-    res.status(HttpStatus.UNAUTHORIZED).send({ message: 'You must be a chef to perform this action', status: HttpStatus.UNAUTHORIZED});
-    return 0;
-  }
-
   const actualDocs = await Documents.findOne({//
       where: { userId: token_return.id },
       attributes: ['id', 'state_type', 'userId', 'social_security_number'],
@@ -419,11 +414,6 @@ exports.createProfilePhoto = async (req, res, next) => {
 
   if (!actualUser) {
     res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
-    return 0;
-  }
-
-  if (actualUser.user_type !== 'chef') {
-    res.status(HttpStatus.UNAUTHORIZED).send({ message: 'You must be a chef to perform this action', status: HttpStatus.UNAUTHORIZED});
     return 0;
   }
 
