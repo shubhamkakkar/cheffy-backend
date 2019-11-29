@@ -14,13 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     social_security_number: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notNull: {
-          msg: 'Social security number is empty!'
-        }
-      }
+      type: DataTypes.STRING
     },
   }, {});
   Documents.associate = function(models) {

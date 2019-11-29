@@ -25,6 +25,13 @@ router.post(
   multerStart(fieldsFile),
   controller.create
 );
+
+router.post('/chefLicense', authService.authorize, multerStart(fieldsFile), controller.createChefLicense);
+router.post('/chefCertificate', authService.authorize, multerStart(fieldsFile), controller.createChefCertificate);
+router.post('/kitchenPhoto', authService.authorize, multerStart(fieldsFile), controller.createKitchenPhoto);
+router.post('/nidFrontSide', authService.authorize, multerStart(fieldsFile), controller.createNIDFrontInside);
+router.post('/profilePhoto', authService.authorize, multerStart(fieldsFile), controller.createProfilePhoto);
+router.post('/socialSecurityNumber', authService.authorize, multerStart(fieldsFile), controller.insertSocialSecurityNumber)
 router.get('/', authService.authorize, controller.list);
 router.put(
   '/',
