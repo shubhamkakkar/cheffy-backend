@@ -1,7 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
   const ReceiptImage = sequelize.define('ReceiptImage', {
     name: DataTypes.STRING,
-    url: DataTypes.STRING,
+    url: {
+      type: DataTypes.STRING,
+      get() {
+        return `${process.env.URL_SERVER}tmp/receipt_image/${this.getDataValue('url')}`;
+      }
+    },
     plateId: {
       type: DataTypes.INTEGER,
       references: {
