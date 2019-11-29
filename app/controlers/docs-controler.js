@@ -453,6 +453,122 @@ exports.createProfilePhoto = async (req, res, next) => {
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 }
 
+exports.createDriverLicense = async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");//
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    return 0;
+  }
+
+  const token_return = await authService.decodeToken(req.headers['x-access-token']);
+  const actualUser = await User.findByPk(token_return.id);
+
+  if (!actualUser) {
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
+    return 0;
+  }
+
+  if (actualUser.user_type !== 'driver') {
+    res.status(HttpStatus.UNAUTHORIZED).send({ message: 'You must be a driver to perform this action', status: HttpStatus.UNAUTHORIZED});
+    return 0;
+  }
+
+  const actualDocs = await Documents.findOne({//
+      where: { userId: token_return.id },
+      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+      include: [{
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'description', 'url', 'state_type']
+      }]
+    });
+
+  if (actualDocs && actualDocs.DriverLicenseFrontSide) {//
+    res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
+    return 0;
+  }
+
+  const new_doc = await repository.createDoc({
+      comment: "",
+      userId: token_return.id
+    });
+
+  if (req.files['driver_license_front_side'])//
+    await repository.createDriverLicense(new_doc.id, req.files.driver_license_front_side.shift());//
+
+  let saved_data = await Documents.findOne({
+    where: { userId: token_return.id },
+    attributes: ["description", "url", "state_type"],
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: DriverLicenseFrontSide,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
+  saved_data.state_type = 'validated';
+  saved_data.save();
+  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
+}
+
+exports.createDriverVeichleLicense = async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isRequired(req.files['driver_vehicle_registration'], "Driver license is missing!");//
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    return 0;
+  }
+
+  const token_return = await authService.decodeToken(req.headers['x-access-token']);
+  const actualUser = await User.findByPk(token_return.id);
+
+  if (!actualUser) {
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
+    return 0;
+  }
+
+  if (actualUser.user_type !== 'driver') {
+    res.status(HttpStatus.UNAUTHORIZED).send({ message: 'You must be a driver to perform this action', status: HttpStatus.UNAUTHORIZED});
+    return 0;
+  }
+
+  const actualDocs = await Documents.findOne({//
+      where: { userId: token_return.id },
+      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+      include: [{
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'description', 'url', 'state_type']
+      }]
+    });
+
+  if (actualDocs && actualDocs.DriverVehicleRegistration) {//
+    res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
+    return 0;
+  }
+
+  const new_doc = await repository.createDoc({
+      comment: "",
+      userId: token_return.id
+    });
+
+  if (req.files['driver_vehicle_registration'])//
+    await repository.createDriverVehicleLicense(new_doc.id, req.files.driver_license_front_side.shift());//
+
+  let saved_data = await Documents.findOne({
+    where: { userId: token_return.id },
+    attributes: ["description", "url", "state_type"],
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: DriverVehicleRegistration,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
+  saved_data.state_type = 'validated';
+  saved_data.save();
+  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
+}
+
 exports.insertSocialSecurityNumber = async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.body.social_security_number, "Social security number is missing!");//
