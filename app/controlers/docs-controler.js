@@ -503,7 +503,7 @@ exports.createDriverLicense = async (req, res, next) => {
     attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [{
       model: DriverLicenseFrontSide,
-      attributes: ['id', 'description', 'url', 'state_type']
+      attributes: ['id', 'state_type', 'url', 'state_type']
     }]
   });
   saved_data.state_type = 'validated';
@@ -538,7 +538,7 @@ exports.createDriverVehicleLicense = async (req, res, next) => {
       attributes: ['id', 'state_type', 'userId', 'social_security_number'],
       include: [{
         model: DriverVehicleRegistration,
-        attributes: ['id', 'description', 'url', 'state_type']
+        attributes: ['id', 'state_type', 'url', 'state_type']
       }]
     });
 
@@ -553,7 +553,7 @@ exports.createDriverVehicleLicense = async (req, res, next) => {
     });
 
   if (req.files['driver_vehicle_registration'])//
-    await repository.createDriverVehicleLicense(new_doc.id, req.files.driver_license_front_side.shift());//
+    await repository.createDriverVehicleLicense(new_doc.id, req.files.driver_vehicle_registration.shift());//
 
   let saved_data = await Documents.findOne({
     where: { userId: token_return.id },
@@ -561,7 +561,7 @@ exports.createDriverVehicleLicense = async (req, res, next) => {
     attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [{
       model: DriverVehicleRegistration,
-      attributes: ['id', 'description', 'url', 'state_type']
+      attributes: ['id', 'state_type', 'url', 'state_type']
     }]
   });
   saved_data.state_type = 'validated';
