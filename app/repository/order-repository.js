@@ -78,7 +78,7 @@ exports.getUserOrders = async (data) => {
     include: [
       {
         model: OrderPayment,
-        attributes: ["payment_id", "amount", "client_secret", "customer", "payment_method", "status"]
+        attributes: ["amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
         model: OrderItem,
