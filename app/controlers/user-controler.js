@@ -173,7 +173,7 @@ exports.create = async (req, res, next) => {
     attributes: ['id', 'name', 'email', 'country_code', 'phone_no', 'user_type', 'verification_email_status', 'verification_phone_status', 'createdAt'],
   });
   // payload.token = token;
-  payload.result = newuser;console.log(payload)
+  payload.result = newuser;
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
