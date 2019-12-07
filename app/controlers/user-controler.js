@@ -426,7 +426,14 @@ exports.verifyEmailToken = async (req, res, next) => {
     //existUser.verification_email_token = 'OK';
     existUser.verification_email_status = 'verified';
     await existUser.save();
+
+    const token = await authService.generateToken({
+      id: existUser.id,
+      email: existUser.email
+    });
+
     res.status(HttpStatus.OK).send({
+      token:token,
       message: "Congratulations, Email successfully verified!",
       status: HttpStatus.OK
     });
