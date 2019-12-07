@@ -172,8 +172,8 @@ exports.create = async (req, res, next) => {
     where: { id: user.id },
     attributes: ['id', 'name', 'email', 'country_code', 'phone_no', 'user_type', 'verification_email_status', 'verification_phone_status', 'createdAt'],
   });
-  payload.token = token;
-  payload.result = newuser;
+  // payload.token = token;
+  payload.result = newuser;console.log(payload)
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
