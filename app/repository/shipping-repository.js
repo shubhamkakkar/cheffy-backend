@@ -48,6 +48,9 @@ exports.listAddress = async (data) => {
     try {
       const existAddress = await ShippingAddress.findAll({
         where: { userId: data.userId },
+        attributes: {
+             exclude: ['UserId']
+           },
         order: [["id", "DESC"]],
         limit: parseInt(data.pageSize)
       });
