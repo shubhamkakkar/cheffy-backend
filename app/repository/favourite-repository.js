@@ -22,6 +22,10 @@ exports.add = async (user,custom,plate,fav_type) => {
   }
 }
 
+exports.delete = async (id) => {
+  await Favourites.destroy({ where: { id: id } });
+}
+
 exports.findPlateinFav = async (data) => {
   const existPlate = await Favourites.findOne({ where: { plateId: data } });
   return existPlate;
