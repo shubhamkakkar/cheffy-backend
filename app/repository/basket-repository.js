@@ -26,10 +26,10 @@ exports.getBasketItensCustom = async (data, id) => {
   return basket;
 }
 
-exports.getBasketItens = async (basketId) => {
+/*exports.getBasketItens = async (basketId) => {
   const basketItems = await BasketItem.findAll({ where: { basketId: basketId} });
   return basketItems;
-}
+}*/
 
 exports.deleteBasketItem = async (data, id) => {
   const basket = await BasketItem.destroy({ where: { id: data } });
