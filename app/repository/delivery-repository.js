@@ -44,10 +44,13 @@ exports.getCompletedDeliveriesByUser = async (data) => {
   let order = await Order.findAll({
     where: {userId:data},
     order: [["id", "DESC"]],
+    attributes: {
+          exclude: ['UserId','BasketId']
+        },
     include: [
       {
         model: OrderPayment,
-        attributes: ["payment_id", "amount", "client_secret", "customer", "payment_method", "status"]
+        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
         model: OrderItem,
