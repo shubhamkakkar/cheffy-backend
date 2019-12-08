@@ -567,3 +567,20 @@ exports.deleteKitchenImage = async (data) => {
     return { message: "Fail the plates", error: e }
   }
 };
+
+exports.getPlateSearch = async (data) => {
+  try {
+    const response = await Plates.findAll({
+      where: {
+        name:{[Op.like]:'%'+data+'%'}
+      },
+      attributes: {
+          exclude: ['UserId']
+        },
+    });
+    return response;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};

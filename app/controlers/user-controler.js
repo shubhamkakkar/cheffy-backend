@@ -742,3 +742,34 @@ exports.getUserBalanceHistory = async (req, res, next) => {
     });
   }
 };
+
+exports.search = async (req, res, next) => {
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  try {
+
+    const existUser = await User.findOne({ where: { id: token_return.id } });
+    if (!existUser) {
+      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
+      return 0;
+    }
+
+  let contract = new ValidationContract();
+
+    try {
+      let plates = await repository.getPlateSearch(req.params.text);
+      let restaurants = await userRepository.getRestaurantSearch(req.params.text);
+      let payload = {};
+      payload.status = HttpStatus.OK;
+      payload.plates = plates;
+      payload.restaurants = restaurants;
+      res.status(payload.status).send(payload);
+    } catch (error) {
+      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
+    }
+
+  } catch (e) {
+    res.status(500).send({
+      message: 'Failed to process your request'
+    });
+  }
+};

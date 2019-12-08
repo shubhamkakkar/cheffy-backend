@@ -1,4 +1,6 @@
 const {sequelize, User, ShippingAddress} = require('../models/index')
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 
 exports.findDriversInsideArea = async (latitude,longitude,radiusMiles) => {
     let strQuery = "SELECT id, ( 3959 * acos( cos( radians("+latitude+") ) * cos( radians( CAST(SUBSTRING_INDEX(location, ',', 1) AS DECIMAL(10,6)) ) ) "+
@@ -54,3 +56,21 @@ function getUserFavoritePlates(userID) {
 
     return sequelize.query(favoriteSQL,{raw:true,nest:true});        
 }
+
+exports.getRestaurantSearch = async (data) => {
+  try {
+    const response = await User.findAll({
+      where: {
+        restaurant_name:{[Op.like]:'%'+data+'%'}
+      },
+      attributes: [
+         'id','restaurant_name','location_lat','location_lon','createdAt','updatedAt'
+        ],
+    });
+
+    return response;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};

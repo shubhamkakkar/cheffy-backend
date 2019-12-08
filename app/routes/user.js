@@ -41,4 +41,7 @@ router.get('/messages/users', messageController.list);
 router.post('/messages/users/:to_userID', messageController.new);
 router.get('/messages/users/:to_userID', messageController.messages);
 
+//Search - food/restaurant
+router.get('/search/:text', authService.authorize, controller.search);
+
 module.exports = router;
