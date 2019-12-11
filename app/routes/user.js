@@ -25,6 +25,7 @@ router.post('/verifypassword', authService.authorize, controller.verifyChangePas
 router.post('/changepassword', controller.changePassword);
 router.post('/confirmchangepassword', authService.authorize, controller.confirmChangePassword);
 router.put('/edit', authService.authorize, controller.put);
+router.post('/forgot-password', authService.authorize, controller.forgotPassword);
 
 router.put('/balance', authService.authorize, controller.getUserBalance);
 //router.put('/balance/history', authService.authorize, controller.getUserBalanceHistory);

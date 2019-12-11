@@ -773,3 +773,43 @@ exports.search = async (req, res, next) => {
     });
   }
 };
+
+
+exports.forgotPassword = async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    return 0;
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+  if (!existUser) {
+    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND});
+    return 0;
+  }
+
+  let template = "forget/forgot";
+
+  let token = (""+Math.random()).substring(2,6);
+  existUser.verification_email_token = token;
+  existUser.verification_email_status = 'pending';
+  await existUser.save();
+  
+  let args = {
+    to: existUser.email,
+    from: "Cheffy contact@cheffy.com",
+    replyTo: "contact@cheffy.com",
+    subject: `Email Token`,
+    template,
+    context: { token, user: existUser.name }
+  };
+
+  mailer.sendMail(args);
+  res.status(HttpStatus.OK).send({
+    message: "Congratulations, an email with verification code has been sent!",
+    status: HttpStatus.OK
+  });
+  return 0;
+}

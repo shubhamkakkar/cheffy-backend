@@ -17,7 +17,7 @@ exports.findDriversInsideArea = async (latitude,longitude,radiusMiles) => {
     return result;
 }
 
-exports.getUserById = async (userId) => {
+exports.getUserById = async (userId) => {console.log(userId)
     let user = await User.findOne({
         where: {id:userId},
         include:[
