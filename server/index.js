@@ -46,6 +46,7 @@ const delivery = require("../app/routes/delivery");
 const order = require("../app/routes/order");
 const driver = require("../app/routes/driver");
 const customPlate = require("../app/routes/customPlate");
+const favourite = require("../app/routes/favourite");
 
 app.use('/user', user);
 app.use('/plate', plate);
@@ -59,5 +60,6 @@ app.use("/delivery", delivery);
 app.use("/order", order);
 app.use("/driver", driver);
 app.use("/custom-plate", customPlate);
+app.use("/favourite", favourite);
 
 module.exports = app;
