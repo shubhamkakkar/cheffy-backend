@@ -34,7 +34,5 @@ router.get('/custom-plate/:id', controller.customPlate);
 router.get('/latest/:amount', controller.searchLatestPlates);
 router.get('/chef/:id', authService.authorize, controller.getChefPlates);
 router.get('/:id/receipt', authService.authorize, controller.listReceipt);
-router.post('/addfavourite', authService.authorize, controller.favourite);
-router.delete('/removefavourite', authService.authorize, controller.removeFavourite);
     
 module.exports = router;
