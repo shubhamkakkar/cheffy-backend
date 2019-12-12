@@ -25,6 +25,8 @@ Please also mark features as one of: done, incomplete, doing, unsure
 16. `/messages/users`: List User messages: unsure
 17. `/messages/users/:to_userID`: Create User Messages: unsure
 18. `/messages/users/:to_userID`: Messages from user: unsure
+19. Social Login Facebook: ongoing
+20. Social Login Google: ongoing
 
 **Driver**
 `/driver`
