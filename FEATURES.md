@@ -107,6 +107,7 @@ Please also mark features as one of: done, incomplete, doing, unsure
 4. `/delete/:basketItemId`: Delete basket item: done
 5. `/add/:basketItemId`: Add 1 to basket item quantity : done
 6. User also bought API: ongoing
+7. Shipping fee calculation: todo | i don't see any field to store shipping fee for plate, custom_plate.
 
 **Card**
 `/card`
