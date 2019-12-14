@@ -75,10 +75,21 @@ exports.createBasketItem = async (data) => {
   }
 }
 
+exports.delBasketItem = async (data) => {
+  try {
+    const basket = await BasketItem.destroy({
+      where: { id: data }
+    });
+    return basket;
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 exports.listBasket = async (data) => {
   try {
     let existBasket = await Basket.findByPk(data, {
-      attributes: [ ],
+      attributes: [ 'id'],
       include: [
         {
           model: BasketItem,

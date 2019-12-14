@@ -69,6 +69,8 @@ exports.addItem = async (req, res, next) => {
   }
 }
 
+
+
 exports.list = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
@@ -213,3 +215,29 @@ exports.sumIten = async ( req, res, next) => {
   });
   res.status(HttpStatus.ACCEPTED).send(arrayNew);
 }
+
+
+exports.delItem = async ( req, res, next) => {
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  if (!token_return) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "You must be logged in to delete itens to cart",
+      error: true
+    });
+  }
+  let basket = await repository.getOneUserBasket(token_return.id)
+  let basket_itens = await repository.getBasketItens(basket.id, req.params.id)
+  if (basket_itens.length === 0) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "We didn't find this plate in the cart!",
+      error: true
+    });
+    return 0;
+  }
+  await repository.delBasketItem(basket_itens[0].id)
+  basket = await repository.getUserBasket(token_return.id)
+  let basket_list = await repository.listBasket(basket[0].id)
+  
+  res.status(HttpStatus.ACCEPTED).send(basket_list);
+}
+
