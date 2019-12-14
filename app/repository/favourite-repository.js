@@ -1,7 +1,7 @@
 
 'use strict';
 const Sequelize = require('sequelize');
-const {Favourites, sequelize,OrderItem, ShippingAddress,PlateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
+const {CustomPlate, CustomPlateImage,Favourites, sequelize,OrderItem, ShippingAddress,PlateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
 const Op = Sequelize.Op;
 
 
@@ -34,4 +34,29 @@ exports.findPlateinFav = async (data) => {
 exports.findCustomPlateinFav = async (data) => {
   const existPlate = await Favourites.findOne({ where: { CustomplateId: data } });
   return existPlate;
+}
+
+exports.getUserFavourites = async (data) => {
+  const favourites = await Favourites.findAll({
+    include: [
+    {
+      model: Plates,
+      include: [{
+        model: PlateImage,
+        attributes: ['id', 'url'],
+      }]
+    },
+
+    {
+      model: CustomPlate,
+      as:'custom_plates' ,
+      include: [{
+        model: CustomPlateImage,
+        attributes: ['id', 'url'],
+      }]
+    },
+    ]
+
+  });
+  return favourites;
 }

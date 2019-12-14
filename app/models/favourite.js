@@ -30,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
   Favourite.associate = function(models) {
     Favourite.belongsTo(models.User, {foreignKey: 'userId', as: 'chef', onDelete: 'cascade'})
     Favourite.belongsTo(models.CustomPlate, {foreignKey: 'CustomplateID', as: 'custom_plates'})
+    Favourite.belongsTo(models.Plates, {foreignKey: 'plateId'})
         
   }
   return Favourite;

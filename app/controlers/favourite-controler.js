@@ -179,3 +179,29 @@ exports.removeFavourite = async (req, res, next) => {
     });
   }
 };
+
+
+exports.list = async (req, res, next) => {
+  const token_return =  await authService.decodeToken(req.headers['x-access-token'])
+  if (!token_return) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "You must be logged in to check your favourites",
+      error: true
+    });
+  }
+  try {
+    const user_favourites = await repoFav.getUserFavourites(token_return.id)
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Here are your favourites!',
+      data: user_favourites
+    });
+    return 0;
+  } catch (e) {
+    console.log(e)
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'Fail to get your favourites!',
+      error: true
+    });
+    return 0;
+  }
+}
