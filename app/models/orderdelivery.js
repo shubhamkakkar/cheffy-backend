@@ -19,8 +19,8 @@ module.exports = (sequelize, DataTypes) => {
     pickup_time: DataTypes.DATE,
     dropoff_time: DataTypes.DATE,
     state_type: {
-      type: DataTypes.ENUM('created', 'canceled', 'on_course', 'delivered','driver_not_found','picked_up'),
-      defaultValue: "created"
+      type: DataTypes.ENUM('pending', 'canceled', 'on_course', 'delivered','driver_not_found','picked_up'),
+      defaultValue: "pending"
     },
   }, {});
   OrderDelivery.associate = function(models) {
