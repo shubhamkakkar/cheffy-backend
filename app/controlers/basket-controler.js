@@ -114,7 +114,7 @@ exports.list = async (req, res, next) => {
   });
 
   let basket_return = {
-    id: basket.id,
+    id: basket[0].id,
     sub_total: basket_subtotal,
     delivery_fee: basket_delivery_fee,
     total: basket_total,
