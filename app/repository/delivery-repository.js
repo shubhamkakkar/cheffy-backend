@@ -7,7 +7,7 @@ exports.createOrderDelivery = async (orderId) => {
     try {
         const order = await OrderDelivery.create({
           orderId:orderId,
-          state_type:'created'});
+          state_type:'pending'});
         return order;
       } catch (e) {
         console.log(e)
@@ -111,7 +111,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"],
-    where: {state_type: 'created'}
+    where: {state_type: 'pending'}
    }]
   });
   return order;
