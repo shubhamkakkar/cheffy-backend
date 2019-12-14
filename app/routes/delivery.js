@@ -7,6 +7,7 @@ const authService = require("../services/auth");
 
 router.get('/', authService.authorize,controller.list);
 router.get('/complete', authService.authorize,controller.listCompleteDeliveries);
+router.get('/pending', authService.authorize,controller.listPendingDeliveries);
 router.get('/:id',authService.authorize, controller.getById);
 router.post('/edit/:id',authService.authorize, controller.edit);
 router.post('/accept/:id',authService.authorize, controller.accept);

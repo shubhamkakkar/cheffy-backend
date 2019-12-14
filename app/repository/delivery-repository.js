@@ -78,6 +78,47 @@ exports.getCompletedDeliveriesByUser = async (data) => {
 
 }
 
+
+exports.getPendingDeliveriesByUser = async (data) => {
+  let order = await Order.findAll({
+    where: {userId:data},
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+      },
+      
+      {
+        model: OrderItem,
+        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+        include:[{
+          model: Plates,
+          as:'plate',
+          include: [{
+            model: User,
+            as:'chef',
+            include:[{model:ShippingAddress, as: 'address'}]
+
+          },
+        
+          {
+            model: PlateImage
+        }]
+      }]
+    },
+    {
+    model: OrderDelivery,
+    required: true,
+    attributes: ["id"],
+    where: {state_type: 'created'}
+   }]
+  });
+  return order;
+
+}
+
+
   //TODO waiting OrderDelivey to be implemented
   exports.getById = async (data) => {
     try {

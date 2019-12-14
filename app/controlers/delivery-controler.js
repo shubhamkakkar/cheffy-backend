@@ -58,6 +58,32 @@ exports.listCompleteDeliveries = async (req, res, next) => {
   }
 }
 
+exports.listPendingDeliveries = async (req, res, next) => {
+  const token_return =  await authService.decodeToken(req.headers['x-access-token'])
+  if (!token_return) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "You must be logged in to check your orders",
+      error: true
+    });
+  }
+  try {
+    const user_orders = await deliveryRepository.getPendingDeliveriesByUser(token_return.id)
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Here are your orders!',
+      data: user_orders
+    });
+    return 0;
+  } catch (e) {
+    console.log(e)
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'Fail to get your orders!',
+      error: true
+    });
+    return 0;
+  }
+}
+
+
 exports.edit = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
