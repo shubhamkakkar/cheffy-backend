@@ -2,6 +2,7 @@
 
 This repository hosts the Cheffy App Api.
 
+
 *Shortlink https://git.io/JeOjk*
 
 ## Table of Contents
@@ -70,3 +71,7 @@ With that in mind you can start creating tests on the `test/` folder then use th
 
 [Backoffice to validate and approve chefs' documents](http://backoffice.thecheffy.com)
 > AcessToken: 206591b861ce530ab28355d0a0f56222
+
+
+## Features List
+[Features](./FEATURES.md)
