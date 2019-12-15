@@ -9,7 +9,7 @@ const controller = require('../controlers/favourite-controler');
 const router = express.Router();
 
 router.post('/add', authService.authorize, controller.favourite);
-router.delete('/remove', authService.authorize, controller.removeFavourite);
+router.delete('/remove/:fav_type/:id', authService.authorize, controller.removeFavourite);
 router.get('/', authService.authorize, controller.list);
     
 module.exports = router;

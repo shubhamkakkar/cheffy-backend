@@ -110,7 +110,7 @@ exports.removeFavourite = async (req, res, next) => {
   }
 
   let contract = new ValidationContract();
-  contract.isRequired(req.body.fav_type, 'fav_type is required!');
+  contract.isRequired(req.params.fav_type, 'fav_type is required!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
@@ -122,21 +122,21 @@ exports.removeFavourite = async (req, res, next) => {
 
     let response;
 
-    if(req.body.fav_type == 'plate'){
+    if(req.params.fav_type == 'plate'){
 
-    contract.isRequired(req.body.plateId, 'plateId is required!');
+    contract.isRequired(req.params.id, 'plateId is required!');
 
     if (!contract.isValid()) {
       res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
       return 0;
     }
-    let existPlate = await repository.findPlate(req.body.plateId);
+    let existPlate = await repository.findPlate(req.params.id);
     if (!existPlate) {
       res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
       return 0;
     }
 
-    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId);
+    let existPlateInFav = await repoFav.findPlateinFav(req.params.id);
     if (!existPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Cann't find in favourites", status: HttpStatus.CONFLICT});
       return 0;
@@ -147,20 +147,20 @@ exports.removeFavourite = async (req, res, next) => {
 
     }
 
-    if(req.body.fav_type == 'custom_plate'){
-    contract.isRequired(req.body.CustomplateId, 'CustomplateId is required!');
+    if(req.params.fav_type == 'custom_plate'){
+    contract.isRequired(req.params.id, 'CustomplateId is required!');
 
     if (!contract.isValid()) {
       res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
       return 0;
     }
-    let existPlate = await repoCustom.getPlate(req.body.CustomplateId);
+    let existPlate = await repoCustom.getPlate(req.params.id);
     if (!existPlate) {
       res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
       return 0;
     }
 
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId);
+    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.params.id);
     if (!existCustomPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Can't find in favourites", status: HttpStatus.CONFLICT});
       return 0;
