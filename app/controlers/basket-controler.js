@@ -80,14 +80,23 @@ exports.list = async (req, res, next) => {
     });
   }
   let basket = await repository.getUserBasket(token_return.id)
+
   let basket_list = await repository.listBasket(basket[0].id)
+
+  let basket_list_custom = await repository.listBasketCustom(basket[0].id)
+
   let arrayNew = []
+  let chefId = "";
   let basket_total = 0.0;
   let basket_subtotal = 0.0;
   let basket_delivery_fee = 0.0;
   let basket_total_items = 0.0;
 
+
   basket_list.BasketItems.forEach(function (value) {
+
+    if(value.plate!=undefined){
+
     if (value['dataValues'].itens > 1) {
       value.quantity = value['dataValues'].itens;
       value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
@@ -112,16 +121,60 @@ exports.list = async (req, res, next) => {
     basket_delivery_fee += 0;
     basket_total += (basket_delivery_fee + parseFloat(value.total));
 
-    
+    }
   });
+
+
+  basket_list_custom.BasketItems.forEach(function (value) {
+
+    if(value.custom_plate!=undefined){
+
+    if (value['dataValues'].itens > 1) {
+      value.quantity = value['dataValues'].itens;
+      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.custom_plate.price)).toFixed(2);
+
+      arrayNew.push({
+        quantity: value.quantity,
+        total_value: parseFloat(value.total),
+        custom_plate: value['dataValues'].custom_plate
+      })
+    } else {
+      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.custom_plate.price)).toFixed(2);
+
+      arrayNew.push({
+        quantity: value.quantity,
+        total_value: parseFloat(value.total),
+        custom_plate: value['dataValues'].custom_plate
+      })
+    }
+
+    basket_total_items = value.quantity;
+    basket_subtotal += parseFloat(value.total);
+    basket_delivery_fee += 0;
+    basket_total += (basket_delivery_fee + parseFloat(value.total));
+
+    }
+  });
+
+  if(arrayNew[0].plate.userId != undefined){
+    chefId = arrayNew[0].plate.userId;
+
+  }
+  else if(arrayNew[0].custom_plate.userId != undefined){
+    chefId = arrayNew[0].custom_plate.userId;
+
+  }
+
 
   let basket_return = {
     id: basket[0].id,
+    chefId:chefId,
     sub_total: basket_subtotal,
     delivery_fee: basket_delivery_fee,
     total: basket_total,
     items: arrayNew
   }
+
 
   res.status(HttpStatus.ACCEPTED).send(basket_return);
 }
@@ -171,6 +224,7 @@ exports.subtractIten = async ( req, res, next) => {
       })
     }
   });
+
   res.status(HttpStatus.ACCEPTED).send(arrayNew);
 }
 
@@ -240,4 +294,3 @@ exports.delItem = async ( req, res, next) => {
   
   res.status(HttpStatus.ACCEPTED).send(basket_list);
 }
-
