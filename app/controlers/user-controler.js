@@ -655,12 +655,13 @@ exports.authenticate = async (req, res, next) => {
 exports.put = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   try {
-    const { password } = req.body;
+
     const existUser = await User.findOne({ where: { id: token_return.id } });
     if (!existUser) {
       res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
       return 0;
     }
+    console.log(existUser)
 
     existUser.name = req.body.name || existUser.name;
     existUser.email = req.body.email || existUser.email;
@@ -670,7 +671,7 @@ exports.put = async (req, res, next) => {
     existUser.location = req.body.location  || existUser.location;
     existUser.imagePath = req.body.image_path || existUser.imagePath;
 
-    (password) ? existUser.password = await generateHash(password) : null ;
+    // (password) ? existUser.password = await generateHash(password) : null ;
 
     await existUser.save();
 
@@ -679,7 +680,8 @@ exports.put = async (req, res, next) => {
       data: existUser
     });
   } catch (e) {
-    res.status(500).send({
+    res.status(500).send({ 
+      error: e,
       message: 'Failed to process your request'
     });
   }
