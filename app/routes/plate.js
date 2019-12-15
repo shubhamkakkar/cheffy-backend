@@ -23,6 +23,7 @@ router.post(
 router.delete('/images/:type_image/:id', authService.authorize, controller.deleteImage);
 router.post('/edit/:id', controller.edit);
 router.get("/search/:text", controller.searchPlates);
+router.get("/searchByChefId/:id", controller.searchPlatesByChefId);
 router.get('/show/:id', controller.getPlate);
 router.get('/:id/kitchen', controller.imagePlateKitchen);
 router.get('/:id/review', controller.getPlateReview);
