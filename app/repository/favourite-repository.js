@@ -44,7 +44,10 @@ exports.getUserFavourites = async (data) => {
       include: [{
         model: PlateImage,
         attributes: ['id', 'url'],
-      }]
+      }],
+      attributes:{
+        exclude:['UserId']
+      }
     },
 
     {
@@ -53,7 +56,10 @@ exports.getUserFavourites = async (data) => {
       include: [{
         model: CustomPlateImage,
         attributes: ['id', 'url'],
-      }]
+      }],
+      attributes:{
+        exclude:['UserId']
+      }
     },
     ]
 
