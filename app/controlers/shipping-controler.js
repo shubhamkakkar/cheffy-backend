@@ -87,6 +87,7 @@ exports.edit = async (req, res, next) => {
     existAddress.zipCode = req.body.zipCode;
     existAddress.lat = req.body.lat;
     existAddress.lon = req.body.lon;
+    existAddress.deliveryNote = req.body.deliveryNote;
     await existAddress.save();
 
     const updatedAddress = await repository.getExistAddress(req.params.id);

@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     zipCode: DataTypes.STRING,
     lat: DataTypes.STRING,
     lon: DataTypes.STRING,
+    deliveryNote: DataTypes.STRING,
     userId: {
       type: DataTypes.INTEGER,
       references: {
