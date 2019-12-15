@@ -1,7 +1,7 @@
 'use strict';
 var HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents } = require('../models/index');
+const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents,PlateCategory } = require('../models/index');
 const repositoryDoc = require('../repository/docs-repository');
 const repository = require('../repository/plate-repository');
 const repositoryCategory = require('../repository/category-repository');
@@ -765,6 +765,42 @@ exports.search = async (req, res, next) => {
       payload.restaurants = restaurants;
       res.status(payload.status).send(payload);
     } catch (error) {
+      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
+    }
+
+  } catch (e) {
+    res.status(500).send({
+      message: 'Failed to process your request'
+    });
+  }
+};
+
+exports.searchPredictions = async (req, res, next) => {
+  try {
+
+    try {
+      let type_plate = await Plates.findAll({ attributes:['id','name'] } );
+
+      let type_chef = await Plates.findAll({
+       attributes:['userId'] ,
+       include:{
+        model:User,
+        as:"chef",
+        
+        attributes:['restaurant_name']
+
+       }
+
+     });
+      let type_category = await PlateCategory.findAll({ attributes:['id','name'] } );
+
+      let payload = {};
+      payload.status = HttpStatus.OK;
+      payload.type_plate = type_plate;
+      payload.type_chef = type_chef;
+      payload.type_category = type_category;
+      res.status(payload.status).send(payload);
+    } catch (error) {console.log(error)
       res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
     }
 
