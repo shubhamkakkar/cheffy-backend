@@ -661,7 +661,6 @@ exports.put = async (req, res, next) => {
       res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
       return 0;
     }
-    console.log(existUser)
 
     existUser.name = req.body.name || existUser.name;
     existUser.email = req.body.email || existUser.email;
