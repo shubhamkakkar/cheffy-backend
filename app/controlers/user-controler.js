@@ -745,16 +745,16 @@ exports.getUserBalanceHistory = async (req, res, next) => {
 };
 
 exports.search = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  // const token_return = await authService.decodeToken(req.headers['x-access-token'])
   try {
 
-    const existUser = await User.findOne({ where: { id: token_return.id } });
+    /*const existUser = await User.findOne({ where: { id: token_return.id } });
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
       return 0;
-    }
+    }*/
 
-  let contract = new ValidationContract();
+  // let contract = new ValidationContract();
 
     try {
       let plates = await repository.getPlateSearch(req.params.text);
