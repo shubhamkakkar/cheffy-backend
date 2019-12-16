@@ -3,8 +3,8 @@ const HttpStatus = require('http-status-codes');
 
 const paginator = (req) => {
 
-  let page = req.query.page ? req.query.page : 1;
-  let pageSize = req.query.pageSize ? req.query.pageSize : 10;
+  let page = req.query.page ? (Number(req.query.page)-1) : 0;
+  let pageSize = req.query.pageSize ? Number(req.query.pageSize) : 10;
 
   const offset = page * pageSize;
   const limit = pageSize;

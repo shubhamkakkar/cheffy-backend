@@ -7,5 +7,6 @@ module.exports = require(path.resolve('app/inputfilters/whitelist'))([
   'description',
   'price',
   'delivery_time',
-  'delivery_type'
+  'delivery_type',
+  'chefDeliveryAvailable'
 ]);

@@ -15,6 +15,8 @@ exports.isOwner = (req, orderItem) => {
     return false;
   if (orderItem.user_id && utils.equals(req.user.id, orderItem.user_id))
     return true;
+  if (orderItem.user && orderItem.user.id && utils.equals(req.user.id, orderItem.user.id))
+    return true;
   return false;
 
 };
@@ -24,15 +26,15 @@ exports.isOrderItemChef = (req, orderItem) => {
 
   if (!orderItem || !req.user)
     return false;
-  if (orderItem.plate && orderItem.plate.userId && utils.equals(req.user.id, orderItem.orderItem.plate.userId))
+  if (orderItem.chef_id && utils.equals(req.user.id, orderItem.chef_id))
     return true;
-  if (orderItem.custom_plate_order && orderItem.custom_plate_order.chefID && utils.equals(req.user.id, orderItem.custom_plate_order.chefID))
+  if (orderItem.chef && orderItem.chef.id && utils.equals(req.user.id, orderItem.chef.id))
     return true;
   return false;
 };
 
 
-exports.isOwnerMiddleware = (app) => {
+exports.isOwnerMiddleware = () => {
   return [
     middlewares.authorization((req) => {
       return exports.isOwner(req);
@@ -40,10 +42,20 @@ exports.isOwnerMiddleware = (app) => {
   ];
 };
 
-exports.isOrderItemChefMiddleware = (app) => {
+exports.isOrderItemChefMiddleware = () => {
   return [
     middlewares.authorization((req) => {
       return exports.isOrderItemChef(req);
     })
   ];
 };
+
+//checks if user or chef of an order
+exports.orderItemViewPolicyMiddleware = () => {
+  return [
+    middlewares.authorization((req) => {
+      console.log('middleware');
+      return exports.isOwner(req) || exports.isOrderItemChef(req);
+    })
+  ];
+}

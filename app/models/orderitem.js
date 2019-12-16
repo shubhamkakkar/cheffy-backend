@@ -38,6 +38,12 @@ module.exports = (sequelize, DataTypes) => {
       },
       allowNull: true,
     },
+    item_type: {
+      type: DataTypes.ENUM(
+        basketConstants.BASKET_TYPE_PLATE,
+        basketConstants.BASKET_TYPE_CUSTOM_PLATE
+      ),
+    },
     state_type: {
       type: DataTypes.ENUM(
         orderItemConstants.STATE_TYPE_PENDING,
@@ -49,10 +55,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     //user_id here refers to user who ordered the item
     user_id: DataTypes.INTEGER,
-    state_type: {
-      type: DataTypes.ENUM(orderItemConstants.STATUS_PREPARING, orderItemConstants.STATUS_COMPLETED, orderItemConstants.STATUS_WAITING, orderItemConstants.STATUS_DELIVERED),
-      defaultValue: orderItemConstants.STATUS_PREPARING
-    },
+    //chef_id is the chef which this item belongs to
+    chef_id: DataTypes.INTEGER,
     chef_location: DataTypes.STRING,
     name: DataTypes.STRING,
     description: DataTypes.STRING,
@@ -65,6 +69,8 @@ module.exports = (sequelize, DataTypes) => {
     //OrderItem.belongsTo(models.Wallet, {foreignKey: 'walletId', as: 'wallet'})
     OrderItem.belongsTo(models.Plates, {foreignKey: 'plate_id', as: 'plate'})
     OrderItem.belongsTo(models.CustomPlateOrder, {foreignKey: 'customPlateId', as: 'custom_plate_order'})
+    OrderItem.belongsTo(models.User, {foreignKey: 'user_id', as: 'user'})
+    OrderItem.belongsTo(models.User, {foreignKey: 'chef_id', as: 'chef'})
   };
   return OrderItem;
 };

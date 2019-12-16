@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DOUBLE,
     },
+    chefDeliveryAvailable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     winner: {
       type: DataTypes.BOOLEAN,
       defaultValue: false

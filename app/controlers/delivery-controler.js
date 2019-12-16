@@ -10,6 +10,16 @@ const authService = require("../services/auth");
 const NotificationServices = require('../services/notification');
 const userConstants = require(path.resolve('app/constants/users'));
 const asyncHandler = require('express-async-handler');
+const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+const paginator = require(path.resolve('app/services/paginator'));
+
+
+exports.orderDeliveryByIdMiddleware = asyncHandler(async(req, res, next, orderDeliveryId) => {
+  const orderDelivery = deliveryRepository.findByPk(orderDeliveryId);
+  if(!orderDelivery) return res.status(HttpStatus.NOT_FOUND).send({message: `Order Delivery Not Found by id ${orderDeliveryId}`});
+  req.orderDelivery = orderDelivery;
+  next();
+});
 
 //Is this the pending deliveries of a user
 exports.list = asyncHandler(async (req, res, next) => {
@@ -32,13 +42,13 @@ exports.list = asyncHandler(async (req, res, next) => {
   res.status(payload.status).send(payload);
 });
 
+/*
 exports.pendingList = asyncHandler(async (req, res, next) => {
   const user = req.user;
 
   if (user.user_type !== userConstants.USER_TYPE_DRIVER && user.user_type !== userConstants.USER_TYPE_CHEF) {
     return res.status(HttpStatus.CONFLICT).send({ message: "Only drivers and cheffs can have deliveries", error: true}).end();
   }
-
 
   let deliveries = await deliveryRepository.getOrderDeliveriesPendingByUserId(user.id)
 
@@ -51,7 +61,7 @@ exports.pendingList = asyncHandler(async (req, res, next) => {
   payload.deliveries = deliveries;
   res.status(payload.status).send(payload);
 });
-
+*/
 
 exports.listCompleteDeliveries = async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
@@ -78,30 +88,19 @@ exports.listCompleteDeliveries = async (req, res, next) => {
   }
 }
 
-exports.listPendingDeliveries = async (req, res, next) => {
-  const token_return =  await authService.decodeToken(req.headers['x-access-token'])
-  if (!token_return) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to check your orders",
-      error: true
-    });
-  }
-  try {
-    const user_orders = await deliveryRepository.getPendingDeliveriesByUser(token_return.id)
-    res.status(HttpStatus.ACCEPTED).send({
-      message: 'Here are your orders!',
-      data: user_orders
-    });
-    return 0;
-  } catch (e) {
-    console.log(e)
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'Fail to get your orders!',
-      error: true
-    });
-    return 0;
-  }
-}
+exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
+  const pagination = paginator.paginateQuery(req);
+  const query = { userId: req.userId, pagination};
+
+  const user_orders = await deliveryRepository.getPendingDeliveriesByUser(query);
+
+  res.status(HttpStatus.ACCEPTED).send({
+    message: 'Here are your orders!',
+    data: user_orders,
+    ...pagination.paginateInfo(query);
+  });
+
+});
 
 
 exports.edit = async (req, res, next) => {
@@ -184,33 +183,35 @@ exports.pickupDelivery = async (req, res, next) => {
 
 }
 
-exports.createDelivery = async (req, res, next) => {
-  try {
+exports.createDelivery = asyncHandler(async (req, res, next) => {
+
     let contract = new ValidationContract();
-    contract.isRequired(req.params.id, 'The order ID is required!');
+    contract.isRequired(req.params.orderId, 'The order ID is required!');
 
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
-      return 0;
+      return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     }
 
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    if (!token_return) {
-      res.status(HttpStatus.CONFLICT).send({
-        message: "You must be logged in to add items to cart",
-        error: true
-      });
+    const existUser = req.user;
+
+    const payload = {
+      orderId: req.order.id,
+      order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER,
+      userId: req.order.userId,
+      driverId: req.userId,
+      state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+
+    };
+
+    if(req.body.pickup_time) {
+        payload.pickup_time = req.body.pickup_time;
     }
 
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-      return 0;
+    if(req.body.dropoff_time) {
+        payload.dropoff_time = req.body.dropoff_time;
     }
 
-    let orderId = req.params.id;
-    let createdOrderDelivery = await deliveryRepository.createOrderDelivery(orderId);
+    let createdOrderDelivery = await deliveryRepository.createOrderDelivery(payload);
 
     //demandService.sendToDelivery(orderId,loc,shipping)
 
@@ -219,13 +220,7 @@ exports.createDelivery = async (req, res, next) => {
     payload.orderDelivery = createdOrderDelivery;
     res.status(payload.status).send(payload);
 
-  } catch (e) {
-    console.log(e)
-    res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", e: true}).end();
-    throw e;
-  }
-
-}
+});
 
 exports.decline = async (req, res, next) => {
   try {
@@ -369,36 +364,7 @@ exports.pickupDelivery = async (req, res, next) => {
   }
 }
 
-exports.getOrderDeliveriesByUserId = async (req, res, next) => {
-  try {
-      const deliveries = await OrderDelivery.findAll(
-        {
-          where: {
-            driverId: token_return.id
-          }
-        });
-
-      return deliveries;
-    } catch (e) {
-      console.log(e)
-      throw e;
-    }
-
-}
-
-exports.getById = async (req, res, next) => {
-  try {
-    const order = await deliveryRepository.getById(req.params.id);
-    if(order){
-      res.status(200).send(order);
-    }else{
-      res.status(404).send({
-        message: 'Order not found'
-      });
-    }
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-}
+exports.getById = asyncHandler(async (req, res, next) => {
+  const orderDelivery = req.orderDelivery;
+  res.status(HttpStatus.OK).send(orderDelivery.get({plain: true}));
+});
