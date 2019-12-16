@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: PlateReview
+* review of a plate by a user
+*/
 module.exports = (sequelize, DataTypes) => {
   const PlateReview = sequelize.define('PlateReview', {
     userId: {
@@ -8,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Users',
         key: 'id'
       }
-    }, 
+    },
     plateId: {
       type: DataTypes.INTEGER,
       AllowNull: false,
@@ -16,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Plates',
         key: 'id'
       }
-    }, 
+    },
     orderId:{
       type: DataTypes.INTEGER,
       references:{

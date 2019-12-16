@@ -1,12 +1,12 @@
+'use strict';
+/**
+* @Model: ReceiptImage
+* Stores receipt image url
+*/
 module.exports = (sequelize, DataTypes) => {
   const ReceiptImage = sequelize.define('ReceiptImage', {
     name: DataTypes.STRING,
-    url: {
-      type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/receipt_image/${this.getDataValue('url')}`;
-      }
-    },
+    url: DataTypes.STRING,
     plateId: {
       type: DataTypes.INTEGER,
       references: {

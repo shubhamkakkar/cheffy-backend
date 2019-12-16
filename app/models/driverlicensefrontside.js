@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: DriverLicenseFrontSide
+* As the model name suggests it stores url of driver license image front side.
+*/
 module.exports = (sequelize, DataTypes) => {
   const DriverLicenseFrontSide = sequelize.define('DriverLicenseFrontSide', {
     name: DataTypes.STRING,

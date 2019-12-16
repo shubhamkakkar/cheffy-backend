@@ -1,50 +1,102 @@
 'use strict';
-var HttpStatus = require('http-status-codes');
+const path = require('path');
+const HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
 const repository = require("../repository/customPlate-repository");
-const repoBasket = require('../repository/basket-repository');
 const repositoryOrderPayment = require("../repository/orderPayment-repository");
+const repositoryWallet = require("../repository/wallet-repository");
 const repositoryShip = require("../repository/shipping-repository");
-const repositoryCart = require('../repository/basket-repository');
+const basketRepository = require('../repository/basket-repository');
 const repositoryOrder = require("../repository/order-repository");
 const authService = require('../services/auth');
 const paymentService = require("../services/payment");
 const helpers = require('./controler-helper');
-const { User, CustomPlateOrder } = require('../models/index');
-const TransactionsService = require("../services/transactions")
+const { User, CustomPlate, CustomPlateOrder } = require('../models/index');
+const TransactionsService = require("../services/transactions");
+const asyncHandler = require('express-async-handler');
+const customPlateInputFilter = require(path.resolve('app/inputfilters/custom-plate'));
+const userConstants = require(path.resolve('app/constants/users'));
+const paginator = require(path.resolve('app/services/paginator'));
+const basketConstants = require(path.resolve('app/constants/baskets'));
+const customPlateConstants = require(path.resolve('app/constants/custom-plates'));
+const debug = require('debug')('custom-plate');
+const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+const orderPaymentConstants = require(path.resolve('app/constants/order-payment'));
+const orderConstants = require(path.resolve('app/constants/order'));
 
+/**
+* Helper method
+* add one day for closing date of the custom plate auction.
+*/
 function addDays() {
   var result = new Date();
   result.setDate(result.getDate() + 1);
   return result;
 }
 
-exports.addCustomPlate = async (req, res, next) => {
+function dollarToCents(dollar) {
+  return dollar * 100;
+}
+
+function centsToDollar(cents) {
+  return cents/100;
+}
+
+function orderPaymentErrorResponseBuilder({error, create_order, total_cart, req}) {
+
+  let orderPayment = {
+    orderId: create_order.id,
+    payment_id: null,
+    amount: total_cart,
+    client_secret: null,
+    customer: error.raw && error.raw.requestId,
+    payment_method: null,
+    status: error.raw.code,
+    receipt_url: null,
+    card_brand: null,
+    card_country: null,
+    card_exp_month: null,
+    card_exp_year: null,
+    card_fingerprint: null,
+    card_last: null,
+    network_status: null,
+    risk_level: null,
+    risk_score: null,
+    seller_message: error.raw.message,
+    type: error.raw.type,
+    paid: false,
+  }
+  return orderPayment;
+}
+
+/**
+* Method: POST
+* Add Custom plate by 'user' role type
+*/
+exports.addCustomPlate = asyncHandler(async (req, res, next) => {
+  debug('req.body', req.body);
   let contract = new ValidationContract();
   contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
   contract.isRequired(req.body.description, 'Plate description is required!');
   contract.isRequired(req.body.price_min, 'Minimum price is required!');
   contract.isRequired(req.body.price_max  , 'The maximum price is required!');
   contract.isRequired(req.body.quantity, 'The amount of plates is obligatory!');
+
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
 
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
+  const user = req.user;
 
-  if (existUser == null || existUser.user_type == 'chef' || existUser == undefined) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "There was a problem validating the data!",
-      error: true
-    });
-    return 0;
+  if(user.user_type !== userConstants.USER_TYPE_USER) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Only 'user' role can create custom plate.`, status: HttpStatus.BAD_REQUEST});
   }
 
-  let data_received = req.body;
+  let data_received = customPlateInputFilter.filter(req.body);
   let images, images_create;
-  data_received.userId = existUser.id;
+
+  data_received.userId = user.id;
   data_received.close_date = addDays();
 
   if (data_received.images) {
@@ -52,319 +104,331 @@ exports.addCustomPlate = async (req, res, next) => {
     delete data_received.images;
   }
 
-  try {
-    const retorno = await repository.create(data_received)
-    if (images) {
-      let images_data = []
-      images.forEach(elem => {
-        elem.CustomPlateID = retorno.id;
-        images_data.push(elem);
-      })
-      images_create = await repository.createPlateImage(images_data)
-    }
-    const auction = await repository.createAuction({CustomPlateID: retorno.id});
+  const customPlate = await repository.create(data_received)
 
-    let payload = {};
-    payload.status = HttpStatus.CREATED;
-    payload.plate = retorno;
-    payload.auction = auction;
-    payload.images = images_create;
+  if (images) {
 
-    res.status(HttpStatus.CREATED).send({
-      message: "The custom plate was successfully added!",
-      data: payload
+    let images_data = []
+    images.forEach(elem => {
+      elem.customPlateId = customPlate.id;
+      images_data.push(elem);
     });
-    return 0;
-  } catch (e) {
-    console.log("Error: ", e);
-    res.status(HttpStatus.CONFLICT).send({
-      message: "Failed to create a new plate!",
-      error: true,
-      data: e
-    });
-    return 0;
+
+    images_create = await repository.createPlateImage(images_data)
   }
-}
 
-exports.bidCustomPlate = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-  if (existUser == null || existUser.user_type !== 'chef' || existUser == undefined) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "There was a problem validating the data!",
+  //create auction for the plate
+  const auction = await repository.createAuction({customPlateId: customPlate.id, userId: user.id});
+
+  const payload = {};
+  payload.status = HttpStatus.CREATED;
+  //should we name the property plate or custom plate
+  payload.customPlate = customPlate;
+  payload.auction = auction;
+  payload.images = images_create;
+  debug('res payload', payload);
+  res.status(HttpStatus.CREATED).send({
+    message: "The custom plate was successfully added!",
+    data: payload
+  });
+
+})
+
+/**
+* Method: POST
+* Place custom bid by chef user for a custom plate
+*/
+exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
+  const authUser = req.user;
+  debug('req body', req.body);
+  if (authUser.user_type !== userConstants.USER_TYPE_CHEF) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: `Only 'chef' user can place a bid for a custom plate.`,
       error: true
     });
-    return 0;
   }
+
   if (!req.body.auction) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We couldn't find the Auction!",
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to send auction(customPlateId)",
       status: HttpStatus.CONFLICT
     });
-    return 0;
   }
+
   if (!req.body.price) {
-    res.status(HttpStatus.CONFLICT).send({
+    return res.status(HttpStatus.CONFLICT).send({
       message: "You need to give a price!",
       status: HttpStatus.CONFLICT
     });
-    return 0;
   }
+
   if (!req.body.preparation_time) {
-    res.status(HttpStatus.CONFLICT).send({
+    return res.status(HttpStatus.CONFLICT).send({
       message: "You need to estimate a preparation time!",
       status: HttpStatus.CONFLICT
     });
-    return 0;
   }
 
   let context = {
     CustomPlateAuctionID: req.body.auction,
-    chefID: existUser.id,
+    chefID: authUser.id,
     price: req.body.price,
     preparation_time: req.body.preparation_time
   };
-  try {
-    const data = await repository.bidCustomPlate(context);
 
-    res.status(HttpStatus.CREATED).send({
-      message: "Your bid was registered!",
-      data: data
-    });
-  } catch (e) {
-    console.log("Error: ", e);
-    res.status(HttpStatus.CONFLICT).send({
-      message: "Failed to place your bid!",
-      error: true,
-      data: e
-    });
-    return 0;
-  }
-}
+  //check if auction is closed;
+  const auction = await repository.getCustomPlateAuction(req.body.auction);
 
-exports.acceptCustomPlateBid = async (req, res, next) => {
-  let token_return
-  try {
-    token_return = await authService.decodeToken(req.headers['x-access-token'])
-  } catch (e) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "There was a problem validating the data!",
-      error: true
-    });
-    return 0;
+  if(!auction) {
+    return res.status(HttpStatus.NOT_FOUND).send({message: 'Auction Not Found'});
   }
 
-  if (token_return == null || token_return == undefined) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "There was a problem validating the data!",
-      error: true
-    });
-    return 0;
+  //check auction closing date
+  //TODO use moment library
+  const customPlate = await repository.getCustomPlate(auction.customPlateId);
+  if(new Date() >= customPlate.close_date) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Auction Date Expired'});
   }
 
-  try {
-    let retorno = await repository.getCustomPlateBid(req.params.id);
-    let custom_order = await repository.createCustomOrder(retorno);
-    let basket = await repoBasket.getUserBasket(token_return.id)
+  if(auction.state_type === customPlateConstants.STATE_TYPE_CLOSED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Auction Already Closed'});
+  }
 
-    let body = {
-      quantity: retorno.quantity,
-      basket_type: 'custom_plate',
-      basketId: basket[0].id,
-      customPlateId: custom_order.id
-    }
-    basket = JSON.stringify(basket);
-    basket = JSON.parse(basket);
-    basket = basket[0]
-    await repoBasket.createBasketItem(body);
-    res.status(HttpStatus.CREATED).send({
-      message: "Bid accepted, let's checkout now!",
-      plate_data: custom_order,
-      basket: basket
-    });
-    return 0;
-  } catch (e) {
-    console.log("Error: ", e)
-    res.status(HttpStatus.CONFLICT).send({
-      message: "Failed to select bid!",
-      error: true,
-      data: e
-    });
-    return 0;
-  }
-}
+  const data = await repository.bidCustomPlate(context);
+  debug('bid data', data);
+  res.status(HttpStatus.CREATED).send({
+    message: "Your bid was registered!",
+    data: data
+  });
 
-exports.payCustomPlate = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  let existUser = await User.findOne({ where: { id: token_return.id } });
-  if (existUser == null || existUser.user_type !== 'user' || existUser == undefined) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "There was a problem validating the data!",
-      error: true
-    });
-    return 0;
+});
+
+/**
+* Method: POST
+* User accept auction bid for a chef
+* CustomPlateOrder is created when user accepts auction bid
+*/
+exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
+  //get bid document by id
+  let customPlateAuctionBid = await repository.getCustomPlateBid(req.params.auctionBidId);
+
+  if(!customPlateAuctionBid)  {
+    return res.status(HttpStatus.NOT_FOUND).send({message: 'Bid Not Found'});
   }
-  const user_address = await repositoryShip.getExistAddress(req.body.shipping_id)
-  if (user_address === null || user_address === '' || user_address === undefined) {
-    res
-    .status(HttpStatus.CONFLICT)
-    .send({ message: "Fail to get user address!", error: true });
-    return 0;
+
+  let customPlateAuction = await repository.getCustomPlateAuction(customPlateAuctionBid.auctionId);
+
+  if(customPlateAuction.state_type === customPlateConstants.STATE_TYPE_CLOSED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Auction Already Closed'});
   }
-  let user_basket = await repositoryCart.getOneUserBasket(token_return.id)
-  let basket_content = await repositoryCart.listBasketCustom(user_basket.id)
-  if (basket_content === null || basket_content === '' || basket_content === undefined) {
-    res
-    .status(HttpStatus.CONFLICT)
-    .send({ message: "Fail to get user shopping cart!", error: true });
-    return 0;
+
+  //check date
+  if(new Date() >= customPlateAuctionBid.custom_plate.close_date) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Auction Date Expired'});
   }
-  let itens = basket_content.BasketItems;
-  let cart_itens = itens.map( async ( elem ) => {
+
+  const customPlateOrderPayload = {
+    ...customPlateAuctionBid,
+    customPlateId: customPlateAuctionBid.custom_plate.id,
+    chefID: customPlateAuctionBid.chefID,
+    userId: req.userId
+  };
+
+  let custom_order = await repository.createCustomOrder(customPlateOrderPayload);
+
+  let basket = await basketRepository.getOrCreateUserBasket(req.userId);
+
+  let body = {
+    quantity: customPlateAuctionBid.quantity,
+    basket_type: basketConstants.BASKET_TYPE_CUSTOM_PLATE,
+    basketId: basket[0].id,
+    customPlateId: custom_order.id
+  }
+  debug('user basket', basket);
+  basket = basket[0].get({plain: true});
+  // basket = JSON.stringify(basket);
+  // basket = JSON.parse(basket);
+  // basket = basket[0];
+  await basketRepository.createBasketItem(body);
+
+  debug('user basket', basket);
+  debug('custom order', custom_order);
+
+  res.status(HttpStatus.CREATED).send({
+    message: "Bid accepted, let's checkout now!",
+    plate_data: custom_order,
+    basket: basket
+  });
+
+  //close the auction and set winner
+  await customPlateAuction.update({state_type: customPlateConstants.STATE_TYPE_CLOSED, winner: customPlateAuctionBid.userId});
+
+
+});
+
+
+
+/**
+* Method: POST
+* Pay for custom plate, once the bid is accepted and the custom plate is in the basket items.
+* This handles both plate and custom plate checkout
+* payment is done through stripe
+* transfer basket to order and basketItems to orderItems
+* Process:
+* Get User basket
+* Get Basket Items
+* Check if user BasketItems is empty. If empty send No Items Response
+* Payment is done through stripe so check if user exists as customer in stripe
+* If Customer User doesn't exist create one.
+* Get User card from stripe if no card information is sent in request body
+* Create New Card in Stripe and attach it to user in stripe if new card information is sent in request body
+* Pay through card
+* If Payment is successfull, Create Order and OrderPayment
+* Create OrderItems
+* Remove BasketItems
+* Send Back Response
+*/
+exports.pay = asyncHandler(async (req, res, next) => {
+
+  let existUser = req.user;
+
+  //user shipping address. if req.body.shipping_id is sent, it is that shipping address,
+  //otherwise it is set to default user shipping address
+  const user_address = req.userShippingAddress;
+
+  //get user basket items
+  let user_basket = await basketRepository.getOneUserBasket(req.userId);
+  let basket_content = await basketRepository.getBasketItemsDetail(user_basket.id);
+  if (basket_content.length === 0) {
+    return res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user shopping cart!", error: true });
+  }
+
+  let basketItems = basket_content;
+  let cart_items = basketItems.map( async ( elem ) => {
+
+    const basketType = elem.basket_type;
+
     let element = {
-      chef_id: elem.custom_plate.userId,
-      name: elem.custom_plate.name,
-      description: elem.custom_plate.description,
-      amount: elem.custom_plate.price * 100,
+      name: elem[basketType].name,
+      description: elem[basketType].description,
+      //amount to stripe should be sent in cents. also orderpayment table has amount in cents
+      amount: dollarToCents(elem[basketType].price),
       currency: 'usd',
       quantity: elem.quantity,
     }
     return element;
-  });
-  cart_itens = await Promise.all(cart_itens)
-  let total_cart = cart_itens.reduce( ( prevVal, elem ) => prevVal + parseFloat(elem.quantity * elem.amount), 0 );
-  let payload = {
-    shippingId: req.body.shipping_id,
-    basketId: user_basket.id,
-    userId: token_return.id,
-    total_itens: itens.length,
-    order_total: total_cart / 100,
-  }
 
-  let create_order, card_return, user_return, confirm
+  });
+
+  cart_items = await Promise.all(cart_items)
+  let total_cart = cart_items.reduce( ( prevVal, elem ) => prevVal + parseFloat(elem.quantity * elem.amount), 0 );
+  let payload = {
+    shippingId: user_address.id,
+    basketId: user_basket.id,
+    userId: req.userId,
+    total_items: basketItems.length,
+    //convert back to dollar from cents for storing in order table
+    order_total: centsToDollar(total_cart),
+  };
+
+  let create_order, card_return, stripeCustomerResponse, confirm
   try {
+    //create order
     create_order = await repositoryOrder.create(payload);
+
   } catch (e) {
     console.log("create: ", e)
-    res.status(HttpStatus.CONFLICT).send({
+    return res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to create your order!',
       data: e,
       error: true
     });
-    return 0;
   }
+
   try {
-    if (existUser.user_ip) {
-      user_return = await paymentService.getUser(existUser.user_ip);
+    if (existUser.stripe_id) {
+      stripeCustomerResponse = await paymentService.getUser(existUser.stripe_id);
     } else {
-      user_return = await paymentService.createUser(existUser, user_address);
-      existUser = await User.findOne({ where: { id: token_return.id } });
-      existUser.user_ip = user_return.id
+      stripeCustomerResponse = await paymentService.createUser(existUser, user_address);
+      existUser = await User.findOne({ where: { id: req.userId } });
+      existUser.stripe_id = stripeCustomerResponse.id
       await existUser.save()
     }
   } catch (e) {
     console.log(e);
-    let retorn = {
-      orderId: create_order.id,
-      payment_id: null,
-      amount: total_cart,
-      client_secret: null,
-      customer: e.raw.requestId,
-      payment_method: null,
-      status: e.raw.code,
-      receipt_url: null,
-      card_brand: null,
-      card_country: null,
-      card_exp_month: null,
-      card_exp_year: null,
-      card_fingerprint: null,
-      card_last: null,
-      network_status: null,
-      risk_level: null,
-      risk_score: null,
-      seller_message: e.raw.message,
-      type: e.raw.type,
-      paid: false,
-    }
-    await repositoryOrderPayment.create(retorn);
-    await repositoryOrder.editState(create_order.id, 'declined')
-    res.status(HttpStatus.CONFLICT).send({
+    const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
+    await repositoryOrderPayment.create(orderPaymentFail);
+    await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED);
+
+    return res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to create your payment data!',
       data: e,
       error: true
     });
-    return 0;
+
   }
 
+  let cardAlreadyAttached = false;
   try {
-    card_return = await paymentService.createCard(existUser, user_address, req.body.card);
+    if(!req.body.card) {
+      const cardList = await paymentService.getUserCardsList(existUser.stripe_id, {limit: 1});
+      card_return = cardList.data[0];
+      if(!card_return) {
+        return res.status(HttpStatus.NOT_FOUND).send({message: 'User default card not found'});
+      } else {
+        cardAlreadyAttached = true;
+      }
+    } else {
+      card_return = await paymentService.createCard(existUser, user_address, req.body.card);
+    }
+
   } catch (e) {
     console.log("createCard: ", e)
-    let retorn = {
-      orderId: create_order.id,
-      payment_id: null,
-      amount: total_cart,
-      client_secret: null,
-      customer: e.raw.requestId,
-      payment_method: null,
-      status: e.raw.code,
-      receipt_url: null,
-      card_brand: null,
-      card_country: null,
-      card_exp_month: null,
-      card_exp_year: null,
-      card_fingerprint: null,
-      card_last: null,
-      network_status: null,
-      risk_level: null,
-      risk_score: null,
-      seller_message: e.raw.message,
-      type: e.raw.type,
-      paid: false,
-    }
-    await repositoryOrderPayment.create(retorn);
-    await repositoryOrder.editState(create_order.id, 'declined')
-    res.status(HttpStatus.CONFLICT).send({
+    const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
+    await repositoryOrderPayment.create(orderPaymentFail);
+    await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
+
+    return res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to validate your card!',
       data: e,
       error: true
     });
-    return 0;
   }
 
-  let user_card = await paymentService.attachUser(card_return.id, user_return.id);
+  let user_card = card_return;
+  if(!cardAlreadyAttached) {
+    user_card = await paymentService.attachPaymentMethod(card_return.id, stripeCustomerResponse.id);
+  }
 
   try {
-    confirm = await paymentService.confirmPayment(total_cart, user_card.id, user_return.id);
+    confirm = await paymentService.confirmPayment(total_cart, user_card.id, stripeCustomerResponse.id);
   } catch (e) {
     console.log("confirmPayment: ", e)
-    await repository.editState(create_order.id, 'declined')
-    res.status(HttpStatus.CONFLICT).send({
+    await repository.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
+    return res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to confirm your payment!',
       data: e,
       error: true
     });
-    return 0;
   }
 
   let data_full = await helpers.change_data(create_order.id, confirm);
 
   try {
-    await repositoryOrderPayment.getWallet(existUser.id);
+    await repositoryWallet.getWallet(existUser.id);
   } catch (e) {
-    res.status(HttpStatus.CONFLICT).send({
+    return res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to save your data!',
       data: e,
       error: true
     });
-    return 0;
   }
   const create_orderPayment = await repositoryOrderPayment.create(data_full);
 
-  if (create_orderPayment.status === 'succeeded' && create_orderPayment.type === 'authorized') {
-    await repositoryOrder.editState(create_order.id, 'aproved')
+  if (create_orderPayment.status === orderPaymentConstants.STATUS_SUCCEEDED && create_orderPayment.type === 'authorized') {
+    await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_APPROVED)
 
-    let bulkTransactions = cart_itens.map(elem => (
+    let bulkTransactions = cart_items.map(elem => (
       {
         identifier:'order_payment',
         userId:elem.chef_id,
@@ -377,44 +441,129 @@ exports.payCustomPlate = async (req, res, next) => {
     let transactionsService = new TransactionsService();
     transactionsService.recordBulkCreditTransaction(bulkTransactions)
 
-    res.status(HttpStatus.ACCEPTED).send({
+    //create order items and remove basket items
+    const oderItemsPayload = basketItems.map( async (basketItem) => {
+      const basketType = basketItem.basket_type;
+      const orderItem = {
+        orderId: create_order.id,
+        item_type: basketItem.basket_type,
+        user_id: req.userId,
+        //chef_location: DataTypes.STRING,
+        name: basketItem[basketType].name,
+        description: basketItem[basketType].description,
+        amount: basketItem[basketType].price,
+        quantity: basketItem.quantity
+      }
+      let loc = {};
+
+      if(basketType === basketConstants.BASKET_TYPE_PLATE) {
+        loc = await repositoryOrder.userLocation(basketItem.plate.userId);
+        orderItem.plate_id = basketItem.plate.id;
+        orderItem.chef_id = basketItem.plate.userId;
+      }
+
+      if(basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
+        loc = await repositoryOrder.userLocation(basketItem.custom_plate.chefID);
+        orderItem.customPlateId = basketItem.custom_plate.id;
+        orderItem.chef_id = basketItem.custom_plate.chefID;
+      }
+
+      orderItem.chef_location = `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`;      
+      return orderItem;
+
+    });
+    //create order items
+    await repositoryOrder.createOrderItems(await Promise.all(oderItemsPayload));
+
+    //remove basket items of a user
+    //TODO uncomment this just for testing purpose
+    //await basketRepository.removeBasketItems(user_basket.id);
+
+    return res.status(HttpStatus.ACCEPTED).send({
       message: 'Your order was successfully paid!',
       payment_return: create_orderPayment
     });
-    return 0;
   }
-
-
 
   res.status(HttpStatus.CONFLICT).send({
     message: "There was a problem validating the data!",
     user_address: user_address,
     user_basket: user_basket,
     basket_content: basket_content,
-    cart_itens: cart_itens,
+    cart_items: cart_items,
     total_cart: total_cart,
     payload: payload,
     create_order: create_order
   });
-  return 0;
-}
 
-exports.listCustomOrders = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+});
+
+/**
+* Method: GET
+* Get custom plate orders of a user.
+*/
+exports.listUserCustomOrders = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-  if (existUser == null || existUser.user_type !== 'chef' || existUser == undefined) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "There was a problem validating the data!",
-      error: true
-    });
-    return 0;
-  }
-
-  const retorno = await CustomPlateOrder.findAll({ where: { userId } });
+  const query = { where: { userId }, ...paginator.paginateQuery(req)};
+  const customPlates = await CustomPlateOrder.findAll(query);
   res.status(HttpStatus.ACCEPTED).send({
     message: "Your custom order's",
-    data: retorno
+    ...paginator.paginateInfo(query),
+    data: customPlates
   });
-  return 0;
-};
+});
+
+
+/**
+* Method: GET
+* Get custom plates of a user.
+* don't check for user roles as well. just show empty plates for driver, chef user type
+* All user can see each other custom plates
+*/
+exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
+  const { userId } = req.params;
+  const query = { where: { userId }, ...paginator.paginateQuery(req)};
+  const customPlates = await CustomPlate.findAll(query);
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "Custom Plates",
+    ...paginator.paginateInfo(query),
+    data: customPlates
+  });
+});
+
+/**
+* Method: GET
+* Get custom plates of all users.
+*/
+exports.listAllCustomPlates = asyncHandler(async (req, res, next) => {
+  const query = {...paginator.paginateQuery(req)};
+  const customPlates = await CustomPlate.findAll(query);
+
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "All custom plates from users.",
+    ...paginator.paginateInfo(query),
+    data: customPlates
+  });
+
+});
+
+/**
+* Get all custom plates with all infos like auctions
+*/
+exports.customPlates = asyncHandler(async (req, res, next) => {
+  const result = await repository.chefGetPlates()
+  res.status(HttpStatus.ACCEPTED).send(result);
+});
+
+
+/**
+* Get one custom plate with all infos like auctions
+*/
+exports.customPlate = asyncHandler(async (req, res, next) => {
+  const result = await repository.getPlate(req.params.customPlateId);
+  if(!result) {
+    return res.status(HttpStatus.NOT_FOUND).send({message: 'Custom Plate Not Found'});
+  }
+
+  res.status(HttpStatus.ACCEPTED).send(result);
+});

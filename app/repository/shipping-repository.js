@@ -23,19 +23,19 @@ exports.checkExistAddress = async (data) => {
   }
 };
 
-exports.getUserAddress = async (data) => {
-  try {
-    const existAddress = await ShippingAddress.findOne({ where: { userId: data } });
+exports.getUserAddress = async (data, query = {}) => {
+    const existAddress = await ShippingAddress.findOne({ where: { userId: data }, ...query });
     return existAddress;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to check the shipping address", error: e };
-  }
 };
 
-exports.getExistAddress = async (data) => {
+exports.getUserAddressByShippingId = async ({userId, shippingId}) => {
+    const address = await ShippingAddress.findByPk(shippingId, { where: { userId: userId }});
+    return address;
+};
+
+exports.getExistAddress = async (shippingId) => {
   try {
-    const existAddress = await ShippingAddress.findByPk(data);
+    const existAddress = await ShippingAddress.findByPk(shippingId);
     return existAddress;
   } catch (e) {
     console.log("Error: ", e);
@@ -48,9 +48,6 @@ exports.listAddress = async (data) => {
     try {
       const existAddress = await ShippingAddress.findAll({
         where: { userId: data.userId },
-        attributes: {
-             exclude: ['UserId']
-           },
         order: [["id", "DESC"]],
         limit: parseInt(data.pageSize)
       });

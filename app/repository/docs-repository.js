@@ -1,4 +1,5 @@
 'use strict';
+const path = require('path');
 const {
   Documents,
   ProfilePhoto,
@@ -9,7 +10,7 @@ const {
   DriverLicenseFrontSide,
   DriverVehicleRegistration,
 } = require("../models/index");
-
+const documentConstants = require(path.resolve('app/constants/documents'));
 const uploadService = require('../services/upload');
 
 exports.getUserDocs = async (state, data) => {
@@ -84,6 +85,43 @@ exports.getUserDocs = async (state, data) => {
   return existUserDocs;
 };
 
+exports.getUserDoc = async (userId) => {
+  const existUserDoc = await Documents.findOne({
+    where: { userId: userId },
+    include: [
+      {
+        model: ChefLicense,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: ChefCertificate,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: KitchenPhoto,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: NIDFrontSide,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: ProfilePhoto,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'name', 'url', 'state_type']
+      }
+    ]
+  });
+  return existUserDoc;
+};
+
 exports.getDriverDocs = async (state, data) => {
   if (state && data) {
     const existUserDocs = await Documents.findOne({
@@ -127,41 +165,9 @@ exports.getDriverDocs = async (state, data) => {
   return existUserDocs;
 };
 
-exports.getChefDoc = async (data) => {
+exports.getDriverDoc = async (userId) => {
   const existUserDoc = await Documents.findOne({
-    where: {  userId: data },
-    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-    include: [
-      {
-        model: ProfilePhoto,
-        attributes: ["description", "url", "state_type"]
-      },
-      {
-        model: ChefLicense,
-        attributes: ['id', 'description', 'url', 'state_type']
-      },
-      {
-        model: ChefCertificate,
-        attributes: ['id', 'description', 'url', 'state_type']
-      },
-      {
-        model: NIDFrontSide,
-        attributes: ['id', 'description', 'url', 'state_type']
-      },
-      {
-        model: KitchenPhoto,
-        attributes: ['id', 'description', 'url', 'state_type']
-      },
-    ]
-  });
-  return existUserDoc;
-};
-
-
-exports.getDriverDoc = async (data) => {
-  const existUserDoc = await Documents.findOne({
-    where: { userId: data },
-    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    where: { userId: userId },
     include: [
       {
         model: ProfilePhoto,
@@ -179,6 +185,61 @@ exports.getDriverDoc = async (data) => {
   });
   return existUserDoc;
 };
+
+
+/**
+* Get document by id. Should return all fields for different user types
+*/
+exports.getDocById = async (docId) => {
+  const response = await Documents.findByPk(docId, {
+    include: [
+      {
+        model: ProfilePhoto,
+        attributes: ["description", "url", "state_type"]
+      },
+      {
+        model: DriverLicenseFrontSide,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: DriverVehicleRegistration,
+        attributes: ['id', 'name', 'url', 'state_type']
+      },
+      {
+        model: ChefLicense,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: ChefCertificate,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: KitchenPhoto,
+        attributes: ["id", "description", "url", "state_type"]
+      },
+      {
+        model: NIDFrontSide,
+        attributes: ["id", "description", "url", "state_type"]
+      }
+    ]
+  });
+
+  return response;
+
+}
+
+/**
+* Get doc by id with minimum attributes
+*/
+exports.getDocMin = async(docId) => {
+
+  const response = await Documents.findByPk(docId, {
+    attributes: documentConstants.minSelectFields
+  });
+
+  return response;
+};
+
 
 exports.createDoc = async (data) => {
   let doc = await Documents.create({ ...data });
@@ -199,17 +260,16 @@ exports.updateDoc = async (data) => {
   }
 }
 
-exports.userUpdateDoc = async (documentId) => {
-  try {
-    const response = await Documents.findByPk(documentId);
 
-    response.state_type = 'pending'
-    await response.save();
-    return response;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to update Docs", error: e };
+exports.userUpdateDoc = async (documentId) => {
+  const response = await Documents.findByPk(documentId);
+  if(!response) {
+    throw new Error('User Document Not Found');
   }
+
+  response.state_type = documentConstants.STATUS_PENDING;
+  await response.save();
+  return response;
 }
 
 exports.createChefLicense = async (documentId, data) => {
@@ -228,7 +288,7 @@ exports.updateChefLicense = async (documentId, data) => {
   try {
     const { originalname, key, fieldname } = data;
     const response = await ChefLicense.findOne({ where: { documentId } });
-    
+
     if (response)
       await uploadService.deleteImage(fieldname, response.getDataValue('url'));
     else {
@@ -269,7 +329,7 @@ exports.updateChefCertificate = async (documentId, data) => {
       await uploadService.deleteImage(fieldname, key);
       return 0;
     }
-    
+
     response.description = originalname;
     response.url = key;
     //response.state_type = data.state_type || null

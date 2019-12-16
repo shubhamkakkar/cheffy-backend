@@ -1,12 +1,25 @@
 'use strict';
-const { OrderDelivery, User } = require("../models/index");
+const { OrderDelivery, User, Wallet } = require("../models/index");
+
+exports.getWallet = async (userId) => {
+  const wallet = await Wallet.findOrCreate({
+    defaults: {
+      userId: userId
+    },
+    where: { userId: userId },
+    attributes: [ 'id' ]
+  });
+
+  return wallet;
+}
 
 exports.getUserWallet = async (userId) => {
-  let wallet = {
+  /*let wallet = {
     userId: userId,
     balance: 400.0,
     time: "2019-08-06 02:06:53"
-  }
+  }*/
+
   //TODO to be implemented
   return wallet;
 }

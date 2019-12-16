@@ -1,8 +1,10 @@
 "use strict";
-var HttpStatus = require("http-status-codes");
+const path = require('path');
+const HttpStatus = require("http-status-codes");
 const ValidationContract = require("../services/validator");
 const repository = require("../repository/order-repository");
 const repositoryOrderPayment = require("../repository/orderPayment-repository");
+const repositoryWallet = require("../repository/wallet-repository");
 const plateRepository = require("../repository/orderPayment-repository");
 const repositoryShip = require("../repository/shipping-repository");
 const repositoryCart = require('../repository/basket-repository');
@@ -10,7 +12,10 @@ const md5 = require("md5");
 const authService = require("../services/auth");
 const paymentService = require("../services/payment");
 const controlerHelper = require("./controler-helper");
-const TransactionsService = require("../services/transactions")
+const TransactionsService = require("../services/transactions");
+const asyncHandler = require('express-async-handler');
+const customPlateControllers = require(path.resolve('app/controlers/customPlate-controler'));
+const inputFilters = require(path.resolve('app/inputfilters/order'));
 
 function distance(lat1,lon1,lat2,lon2) {
   var R = 6371;
@@ -53,9 +58,9 @@ const change_data = async (id, data) => {
 }
 
 const post_process = async (user_data, shipping, user_basket, basket_content, confirmation, order_id) => {
-  let cart_itens = basket_content.BasketItems.map( async ( elem ) => {
+  let cart_items = basket_content.BasketItems.map( async ( elem ) => {
     let loc = await repository.userLocation(elem.plate.userId);
-    let wallet = await repositoryOrderPayment.getWallet(elem.plate.userId);
+    let wallet = await repositoryWallet.getWallet(elem.plate.userId);
     let element = {
       orderId: order_id,
       walletId: wallet,
@@ -71,9 +76,9 @@ const post_process = async (user_data, shipping, user_basket, basket_content, co
   });
   let basket_info = {
     id: user_basket.id,
-    itens: await Promise.all(cart_itens)
+    items: await Promise.all(cart_items)
   }
-  await controlerHelper.createOrderItens(basket_info.itens)
+  await controlerHelper.createOrderItens(basket_info.items)
   let user_info = {
     id: user_data.id,
     name: user_data.name,
@@ -95,6 +100,13 @@ const post_process = async (user_data, shipping, user_basket, basket_content, co
 
   return user_info;
 }
+
+exports.orderByIdMiddleware = asyncHandler(async(req, res, next) => {
+  const order = repository.getById(req.params.orderId);
+  if(!order) return res.status(HttpStatus.NOT_FOUND).send({message: `Order Not Found by orderId ${req.params.orderId}`});
+  req.order = order;
+  next();
+});
 
 exports.list = async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
@@ -155,7 +167,7 @@ exports.getOneOrder = async (req, res, next) => {
     });
   }
   try {
-    const user_orders = await repository.getUserOrder(token_return.id, req.params.id)
+    const user_orders = await repository.getUserOrder(token_return.id, req.params.orderId)
     res.status(HttpStatus.ACCEPTED).send({
       message: 'Here are your order!',
       data: user_orders
@@ -170,96 +182,36 @@ exports.getOneOrder = async (req, res, next) => {
     return 0;
   }
 }
-exports.create = async (req, res, next) => {
-  const contract = new ValidationContract();
 
-  contract.isRequired(req.body.shipping_id, "We couldn't find your shipping address!");
-  //contract.isRequired(req.body.card.number, "We couldn't find your card number!");
-  //contract.isRequired(req.body.card.exp_month, "We couldn't find your card expiration month!");
-  //contract.isRequired(req.body.card.exp_year, "We couldn't find your card expiration year!");
-  //contract.isRequired(req.body.card.cvc, "We couldn't find your card CVC!");
-  
-  if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
-    return 0;
-  }
 
-  const token_return = await authService.decodeToken(req.headers['x-access-token']);
-  const user_data = await repository.user(token_return.id);
+/**
+* Create order for plates in basket items.
+* This follows the same process as custom plates
+*/
+exports.create = [
+  customPlateControllers.pay
+];
 
-  if (!user_data) {
-    res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user data!", error: true });
-    return 0;
-  }
 
-  const user_address = await repositoryShip.getExistAddress(req.body.shipping_id);
-  if (!user_address) {
-    res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user address!", error: true });
-    return 0;
-  }
-  let user_basket = await repositoryCart.getOneUserBasket(token_return.id)
-  let basket_content = await repositoryCart.listBasket(user_basket.id)
+/**Edit order state*/
+exports.editOrderStateType = asyncHandler(async(req, res, next) => {
+  const user = req.user;
+  const order = req.order;
 
-  if (!basket_content) {
-    res.status(HttpStatus.CONFLICT).send({ message: "Fail to get user shopping cart!", error: true });
-    return 0;
-  }
+  const updates = inputFilters.orderUpdate.filter(req.body);
 
-  let itens = basket_content.BasketItems;
+  await req.order.update(updates);
 
-  let cart_itens = itens.map( async ( elem ) => {
-    let element = {
-      chef_id: elem.plate.userId,
-      name: elem.plate.name,
-      description: elem.plate.description,
-      amount: elem.plate.price * 100,
-      currency: 'usd',
-      quantity: elem.quantity,
-    }
-    return element;
-  });
-  cart_itens = await Promise.all(cart_itens)
-  let total_cart = cart_itens.reduce( ( prevVal, elem ) => prevVal + parseFloat(elem.quantity * elem.amount), 0 );
-  let payload = {
-    shippingId: req.body.shipping_id,
-    basketId: user_basket.id,
-    userId: token_return.id,
-    total_itens: itens.length,
-    state_type: 'pending',
-    order_total: total_cart / 100,
-  }
+  res.status(HttpStatus.OK).send({message: 'Updated'});
 
-  //create order at database BasketItems --> Basket --> [Create Order]
-  const create_order = await repository
-    .create(payload)
-    .catch( e => {
-      console.log("create: ", e)
-      res.status(HttpStatus.CONFLICT).send({
-        message: 'There was a problem to create your order!',
-        data: e,
-        error: true
-      });
-      return 0;
-    });
-  const data_full = { orderId: create_order.id, amount: payload.order_total, status: 'pending' };
-  await repositoryOrderPayment.getWallet(user_data.id);
-  const create_orderPayment = await repositoryOrderPayment.create(data_full);
-
-  await post_process(user_data, user_address, user_basket, basket_content, data_full, create_order.id)
-
-  res.status(HttpStatus.CONFLICT).send({
-    message: 'Order available for payment!',
-    payment_return: create_orderPayment,
-    error: true
-  });
-}
+});
 
 exports.createOrderReview = async (req, res, next) => {
   try {
     let order,orderItem ,token_return;
 
     try {
-      order = await repository.getById(req.params.id);
+      order = await repository.getById(req.params.orderId);
       orderItem = await repository.getOrderItemById(req.body.orderItemId);
 
       if(!order){
@@ -291,7 +243,7 @@ exports.createOrderReview = async (req, res, next) => {
 
     let full_data = req.body;
     full_data.userId = token_return.id;
-    full_data.orderId = req.params.id;
+    full_data.orderId = req.params.orderId;
 
       const createdPlateReview = await repository.createOrderReview(full_data);
     res.status(200).send({ message: 'Review created!', data: createdPlateReview });
@@ -329,3 +281,41 @@ exports.ordersReadyForDelivery = async (req, res, next) => {
     return 0;
   }
 };
+
+
+/**
+* Order Items
+*/
+
+
+exports.orderItemByIdMiddleware = asyncHandler(async(req, res, next) => {
+  const orderItem = repository.getOrderItemByIdDetails(req.params.orderItemId);
+  if(!orderItem) return res.status(HttpStatus.NOT_FOUND).send({message: `OrderItem Not Found by orderItemId ${req.params.orderItemId}`});
+  req.orderItem = orderItem;
+  next();
+});
+
+
+/**
+* Get Order Item
+*/
+exports.getOrderItem = asyncHandler( async(req, res, next)=>{
+  const user = req.user;
+
+  const orderItem = req.orderItem;
+
+  res.status(HttpStatus.OK).send({orderItem: orderItem.get({plain: true})});
+});
+
+/**
+* Update Order Item Status
+*/
+exports.editOrderItemStatus = asyncHandler( async(req, res, next)=>{
+  const user = req.user;
+
+  const updates = {status: req.body.status};
+
+  const orderItem = req.orderItem.update(updates);
+
+  res.status(HttpStatus.OK).send({message: 'Updated', orderItem: orderItem.get({plain: true})});
+});

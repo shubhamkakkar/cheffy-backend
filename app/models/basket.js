@@ -1,4 +1,9 @@
 'use strict';
+
+/**
+* @Model: Basket
+* User basket for items to be ordered. Only one basket per user.
+*/
 module.exports = (sequelize, DataTypes) => {
   const Basket = sequelize.define('Basket', {
     userId: {

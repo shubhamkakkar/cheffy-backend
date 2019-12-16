@@ -18,6 +18,14 @@ exports.createAuction = async (data) => {
   return plate;
 }
 
+exports.getCustomPlate = async(customPlateId) => {
+  return await CustomPlate.findByPk(customPlateId);
+}
+exports.getCustomPlateAuction = async(auctionId) => {
+  return await CustomPlateAuction.findByPk(auctionId);
+}
+
+
 exports.chefGetPlates = async () => {
   const plate = await CustomPlate.findAll({
      where: {
@@ -103,10 +111,16 @@ exports.acceptCustomPlateBid = async (data) => {
       }
     ]
   });
+
   bid.winner = true;
   await bid.save();
-  bid = JSON.stringify(bid);
-  bid = JSON.parse(bid);
+
+  /*bid = JSON.stringify(bid);
+  bid = JSON.parse(bid);*/
+  //https://stackoverflow.com/questions/21961818/sequelize-convert-entity-to-plain-object
+  //https://sequelize.org/master/manual/instances.html#values-of-an-instance
+  bid = bid.get({plain: true});
+
   bid.plate = bid.custom_plates_id.custom_plates;
   delete bid.custom_plates_id.custom_plates;
   bid.plate_auction = bid.custom_plates_id;
@@ -137,15 +151,27 @@ exports.getCustomPlateBid = async (data) => {
       }
     ]
   });
-  bid = JSON.stringify(bid);
-  bid = JSON.parse(bid);
+
+
+  if(!bid) return null;
+
+  /*bid = JSON.stringify(bid);
+  bid = JSON.parse(bid);*/
+  //TODO we should keep the repository clean and do the hydration stuff in the controller,
+  //so this can be used in multiple places
+
+  bid = bid.get({plain: true});
+
   let plate_data = {
     name: bid.custom_plates_id.custom_plates.name,
     description: bid.custom_plates_id.custom_plates.description,
     quantity: bid.custom_plates_id.custom_plates.quantity,
+    auctionId: bid.custom_plates_id.id,
     price: bid.price,
-    userId: bid.chefID,
+    chefID: bid.chefID,
     preparation_time: bid.preparation_time,
+    custom_plate: bid.custom_plates_id.custom_plates
   }
+
   return plate_data;
 }

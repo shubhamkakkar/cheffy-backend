@@ -1,5 +1,6 @@
 'use strict';
 const jwt = require('jsonwebtoken');
+const debug = require('debug')('auth-service');
 
 exports.generateToken = async (data) => {
   return jwt.sign(data, global.SALT_KEY, { expiresIn: '365d' });
@@ -14,44 +15,59 @@ exports.authorize = function (req, res, next) {
     var token = req.query.token || req.headers['x-access-token'];
 
     if (!token) {
-        res.status(401).json({
-            message: 'Acesso Restrito'
-        });
-    } else {
-      jwt.verify(token, global.SALT_KEY, function (error, decoded) {
-        if (error) {
-          res.status(401).json({
-            message: 'Token Invalid'
-          });
-        } else {
-          next();
-        }
+      return res.status(401).json({
+          message: 'Accesso Restricto'
       });
     }
+
+    jwt.verify(token, global.SALT_KEY, function (error, decoded) {
+      if (error) {
+        return res.status(401).json({
+          message: 'Token Invalid'
+        });
+      }
+
+      if(!decoded.id) {
+        return res.status(401).json({
+          message: 'No id(userId) set in when generating token.'
+        });
+      }
+      //use this req.userId in getAuthUserMiddleware
+      req.userId = decoded.id;
+
+      next();
+
+    });
+
 };
 
 exports.authorizeAdmin = function (req, res, next) {
     var token = req.query.token || req.headers['x-access-token'];
 
     if (!token) {
-        res.status(401).json({
+        return res.status(401).json({
             message: 'Acess denny'
         });
-    } else {
-      jwt.verify(token, global.SALT_KEY, function (error, decoded) {
-        if (error) {
-          res.status(401).json({
-            message: 'Token Invalid'
-          });
-        } else {
-          if (decoded.type === 'admin'){
-            next();
-          } else {
-            res.status(401).json({
-              message: 'You ar not Admin'
-            });
-          }
-        }
-      });
     }
+
+    jwt.verify(token, global.SALT_KEY, function (error, decoded) {
+
+      if (error) {
+        return res.status(401).json({
+          message: 'Token Invalid'
+        });
+      }
+
+      if (decoded.type !== 'admin'){
+        return res.status(401).json({
+          message: 'You ar not Admin'
+        });
+      }
+
+      //use this req.userId in getAuthUserMiddleware
+      req.userId = decoded.id;
+      next();
+
+    });
+
 };

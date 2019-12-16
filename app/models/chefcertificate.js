@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: ChefCertificate
+* Stores chef's certificate document url, state_type. It belongs to particular document of a chef
+*/
 module.exports = (sequelize, DataTypes) => {
   const ChefCertificate = sequelize.define('ChefCertificate', {
     description: DataTypes.STRING,

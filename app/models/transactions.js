@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: Transactions
+* Stores Transactions info of an order
+*/
 module.exports = (sequelize, DataTypes) => {
   const Transactions = sequelize.define('Transactions', {
     entry_type: {
@@ -16,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Users',
         key: 'id'
       }
-    },    
+    },
     orderId:{
       type: DataTypes.INTEGER,
       references:{

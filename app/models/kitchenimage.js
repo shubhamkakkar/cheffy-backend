@@ -1,12 +1,12 @@
+'use strict';
+/**
+* @Model: KitchenImage
+* KitchenImage
+*/
 module.exports = (sequelize, DataTypes) => {
   const KitchenImage = sequelize.define('KitchenImage', {
     name: DataTypes.STRING,
-    url: {
-      type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/kitchen_image/${this.getDataValue('url')}`;
-      }
-    },
+    url: DataTypes.STRING,
     plateId: {
       type: DataTypes.INTEGER,
       references: {

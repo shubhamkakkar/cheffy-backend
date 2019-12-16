@@ -1,9 +1,14 @@
 'use strict';
+/**
+* @Model: CustomPlateImage
+* Stores CustomPlate image url
+* A CustomPlate can have multiple images stored
+*/
 module.exports = (sequelize, DataTypes) => {
   const CustomPlateImage = sequelize.define('CustomPlateImage', {
     name: DataTypes.STRING,
     url: DataTypes.STRING,
-    CustomPlateID: {
+    customPlateId: {
       type: DataTypes.INTEGER,
       references: {
         model: 'CustomPlates',
@@ -12,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {});
   CustomPlateImage.associate = function(models) {
-    CustomPlateImage.belongsTo(models.CustomPlate, {foreignKey: 'CustomPlateID', as: 'custom_plates'})
+    CustomPlateImage.belongsTo(models.CustomPlate, {foreignKey: 'customPlateId', as: 'custom_plates'})
   };
   return CustomPlateImage;
 };

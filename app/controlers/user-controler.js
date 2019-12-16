@@ -1,5 +1,6 @@
-'use strict';
-var HttpStatus = require('http-status-codes');
+'use strict'
+const path = require('path');
+const HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
 const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents,PlateCategory } = require('../models/index');
 const repositoryDoc = require('../repository/docs-repository');
@@ -18,10 +19,76 @@ const crypto = require('crypto');
 const walletRepository = require('../repository/wallet-repository');
 const driverAPI = require('../services/driverApi');
 const bcrypt = require('bcrypt');
+const debug = require('debug')('user');
+const asyncHandler = require('express-async-handler');
+const userConstants = require(path.resolve('app/constants/users'));
+const userInputFilter = require(path.resolve('app/inputfilters/user'));
+const _ = require('lodash');
 
 const { generateHash } = require('../../helpers/password');
 
 const plates = require('../../resources/plates');
+
+/**
+* SendMail helper
+*/
+async function sendMail({req, pass}) {
+  let args = {
+    to: req.body.email,
+    from: "Cheffy contact@cheffy.com",
+    replyTo: "contact@cheffy.com",
+    subject: `Welcome to Cheffy!`,
+    template: "forget/forgot",
+    context: { token: pass, user: ' One more step...' }
+  };
+
+  return await mailer.sendMail(args);
+}
+
+/**
+* Middleware
+* Get currently authenticated user by userId decoded from jsonwebtoken.
+* see services/auth.js
+* Sets user in express req object
+*/
+exports.getAuthUserMiddleware = asyncHandler(async(req, res, next) => {
+
+  const user = await User.findByPk(req.userId , {
+    attributes: userConstants.privateSelectFields,
+    //raw: true
+  });
+
+  if(!user) {
+    return res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND });
+  }
+
+  req.user = user;
+  next();
+
+});
+
+/**
+* Middleware
+* Get params user by userId from route. for e.g /order/list/:userId
+* Sets paramUser in express req object
+*/
+exports.getUserByUserIdParamMiddleware = asyncHandler(async(req, res, next) => {
+  if(!req.params.userId) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Not userId params set in request', status: HttpStatus.BAD_REQUEST });
+  }
+
+  const user = await User.findByPk(req.params.userId , {
+    attributes: userConstants.privateSelectFields
+  });
+
+  if(!user) {
+    return res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND });
+  }
+
+  req.paramUser = user;
+  next();
+
+});
 
 exports.dummy = async (req, res, next) => {
   const category = await repositoryCategory.createCategory({ name: 'Dummy', description: 'Dummy category', url: '#' });
@@ -95,7 +162,7 @@ exports.dummy = async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send({ message: 'Plates are being created', status: HttpStatus.ACCEPTED });
 }
 
-exports.create = async (req, res, next) => {
+exports.create = asyncHandler(async (req, res, next) => {
   let payload = {};
 
   let contract = new ValidationContract();
@@ -113,24 +180,28 @@ exports.create = async (req, res, next) => {
     let pass = (""+Math.random()).substring(2,6);
     existUser.verification_email_token = pass;
     await existUser.save();
-    let args = {
+
+    /*let args = {
       to: req.body.email,
       from: "Cheffy contact@cheffy.com",
       replyTo: "contact@cheffy.com",
       subject: `Welcome to Cheffy!`,
       template: "forget/forgot",
       context: { token: pass, user: ' One more step...' }
-    };
-    mailer.sendMail(args);
-    
+    };*/
+    console.log('user saved');
+    await sendMail({req, pass});
+
+    //mailer.sendMail(args);
+
     const { id, email, verification_email_status, password } = existUser;
-    
+
     res.status(HttpStatus.OK).send({
       message: "Resend token for you email!",
       status: HttpStatus.OK,
       result: { id, email, verification_email_status, password_generated: !!(password), user_doc: !!(doc) }
     });
-  
+
     return 0;
   }
 
@@ -153,16 +224,19 @@ exports.create = async (req, res, next) => {
   let pass = (""+Math.random()).substring(2,6);
   user.verification_email_token = pass;
   await user.save();
-  let args = {
+
+  /*let args = {
     to: req.body.email,
     from: "Cheffy contact@cheffy.com",
     replyTo: "contact@cheffy.com",
     subject: `Welcome to Cheffy!`,
     template: "welcome/welcome",
     context: { token: pass, user: ' One more step...' }
-  };
+  };*/
 
-  mailer.sendMail(args);
+  await sendMail({req, pass});
+
+  //mailer.sendMail(args);
   const token = await authService.generateToken({
     id: user.id,
     email: user.email
@@ -172,12 +246,12 @@ exports.create = async (req, res, next) => {
     where: { id: user.id },
     attributes: ['id', 'name', 'email', 'country_code', 'phone_no', 'user_type', 'verification_email_status', 'verification_phone_status', 'createdAt'],
   });
-  // payload.token = token;
+  payload.token = token;
   payload.result = newuser;
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
-};
+});
 
 exports.getUserBalance = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
@@ -302,40 +376,45 @@ exports.getUser = async (req, res, next) => {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
     const existUser = await User.findByPk(token_return.id, {
       attributes: [ 'id', 'name', 'email', 'country_code', 'phone_no', 'auth_token', 'restaurant_name', 'location_lat', 'location_lon', 'user_type', 'imagePath', 'verification_code', 'verification_email_token', 'verification_email_status', 'verification_phone_token', 'verification_phone_status', 'status', 'user_ip', 'createdAt', 'updatedAt'],
-      // include: [
-      //   {
-      //     model: Favorites,
-      //     attributes: [ 'id', 'name' ]
-      //   }
-      // ]
+      include: [
+        {
+            model:ShippingAddress,
+            as:'address'
+        }
+      ]
     });
     res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: existUser});
   } catch (err) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: 'FAILED', data: err, status: HttpStatus.NON_AUTHORITATIVE_INFORMATION});
+    res.status(HttpStatus.BAD_REQUEST).send({ message: 'FAILED', data: err});
   }
 }
 
-exports.verifyPhone = async (req, res, next) => {
+exports.verifyPhone = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
-  contract.isRequired(req.body.country_code, "E-Mail already in use!");
-  contract.isRequired(req.body.phone_no, 'Phone number not found!');
+  contract.isRequired(req.body.country_code, 'Country Code is Required!');
+  contract.isRequired(req.body.phone_no, 'Phone Number is Required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
 
   const existUser = await User.findOne({ where: { id: token_return.id } });
- 
+
   if (!existUser) {
     res.status(HttpStatus.OK).send({ message: "E-Mail already in use!", status: HttpStatus.OK });
     return 0;
   }
 
-  const phone = req.body.country_code + req.body.phone_no;
   const code = (""+Math.random()).substring(2,6);
+  existUser.verification_phone_token = code;
+  existUser.country_code = req.body.country_code;
+  existUser.phone_no = req.body.phone_no;
+  await existUser.save();
+
+  let phone = req.body.country_code + req.body.phone_no;
 
   if (phone === null && phone === '' && phone === undefined) {
     res.status(HttpStatus.OK).send({ message: 'error when registering: phone not found', status: HttpStatus.OK });
@@ -343,72 +422,61 @@ exports.verifyPhone = async (req, res, next) => {
   }
 
   const retorno = await phoneService.sendMessage(phone, code);
-  const status = (retorno.status) ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
 
-  if (status === HttpStatus.OK) {
-    existUser.verification_phone_token = code;
-    existUser.country_code = req.body.country_code;
-    existUser.phone_no = req.body.phone_no;
-    await existUser.save();
-  }
+  res.status(HttpStatus.OK).send(retorno);
+});
 
-  res.status(status).send(retorno);
-}
 
-exports.completeRegistration = async (req, res, next) => {
+
+exports.completeRegistration = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
   contract.isRequired(req.body.name, 'User password is required!');
   contract.isRequired(req.body.password, 'User password is required!');
   contract.isRequired(req.body.user_type, 'User type is required!');
 
-
-  if (req.body.user_type === 'chef') contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
+  if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
-    return 0;
+    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
   }
-  
+
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
+
   if (!existUser) {
-    res.status(HttpStatus.ACCEPTED).send({ message: `E-Mail already in use, user type: ${existUser.user_type} status: ${existUser.verification_email_status}`, status: HttpStatus.ACCEPTED });
-    return 0;
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: `E-Mail not found, email: ${req.body.email}`, status: HttpStatus.BAD_REQUEST });
+  }
+  debug('existing user', existUser.get({plain: true}));
+
+  debug('email status: ', existUser.verification_email_status);
+  if (existUser.verification_email_status !== userConstants.STATUS_VERIFIED) {
+    return res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
   }
 
-  if (existUser.verification_email_status === 'verified') {
-    existUser.name = req.body.name;
-    existUser.user_type = req.body.user_type;
-    existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
+  existUser.name = req.body.name;
+  existUser.user_type = req.body.user_type;
+  existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
 
-    if (existUser.user_type === 'driver') {
-      try {
-        await driverAPI.createDriver({
-          name: existUser.name,
-          email: existUser.email
-        });
-      } catch (err) {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ message: `Conflict in request Driver API ${err.config.url}` }).end();
-        return 0;
-      }
-    }
-
-    if (existUser.user_type === 'chef') {
-      existUser.restaurant_name = req.body.restaurant_name;
-    }
-
-    await existUser.save();
-    res.status(HttpStatus.CREATED).send({
-      message: `Congratulations, successfully created ${req.body.user_type} type user!`,
-      status: HttpStatus.CREATED,
-      result: existUser
+  if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
+    await driverAPI.createDriver({
+      name: existUser.name,
+      email: existUser.email
     });
-    return 0;
   }
 
-  res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
-}
+  if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
+    existUser.restaurant_name = req.body.restaurant_name;
+  }
+
+  await existUser.save();
+
+  res.status(HttpStatus.CREATED).send({
+    message: `Congratulations, successfully created ${req.body.user_type} type user!`,
+    status: HttpStatus.CREATED,
+    result: existUser
+  });
+});
 
 exports.verifyEmailToken = async (req, res, next) => {
   let contract = new ValidationContract();
@@ -416,28 +484,22 @@ exports.verifyEmailToken = async (req, res, next) => {
   contract.isRequired(req.body.email_token, 'This email token is required!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
-  if (req.body.email_token == existUser.verification_email_token) {
+  if (req.body.email_token === existUser.verification_email_token) {
     //existUser.verification_email_token = 'OK';
-    existUser.verification_email_status = 'verified';
+    existUser.verification_email_status = userConstants.STATUS_VERIFIED;
     await existUser.save();
 
-    const token = await authService.generateToken({
-      id: existUser.id,
-      email: existUser.email
-    });
-
-    res.status(HttpStatus.OK).send({
-      token:token,
+    return res.status(HttpStatus.OK).send({
       message: "Congratulations, Email successfully verified!",
       status: HttpStatus.OK
     });
-    return 0;
+
   }
 
   res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
@@ -448,13 +510,13 @@ exports.resendEmailToken = async (req, res, next) => {
   contract.isEmail(req.body.email, 'This email is correct?');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
   if (!existUser) {
-    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND});
+    res.status(HttpStatus.OK).send({ message: 'User not found!', status: HttpStatus.OK});
     return 0;
   }
 
@@ -468,7 +530,7 @@ exports.resendEmailToken = async (req, res, next) => {
   existUser.verification_email_token = token;
   existUser.verification_email_status = 'pending';
   await existUser.save();
-  
+
   let args = {
     to: existUser.email,
     from: "Cheffy contact@cheffy.com",
@@ -477,7 +539,6 @@ exports.resendEmailToken = async (req, res, next) => {
     template,
     context: { token, user: existUser.name }
   };
-
   mailer.sendMail(args);
   res.status(HttpStatus.OK).send({
     message: "Congratulations, an email with verification code has been sent!",
@@ -543,13 +604,13 @@ exports.changePassword = async (req, res, next) => {
   contract.isRequired(req.body.password, 'This password is required');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
-    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND });
+    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
     return 0;
   }
 
@@ -558,14 +619,13 @@ exports.changePassword = async (req, res, next) => {
     existUser.verification_email_status = 'verified';
     existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
     await existUser.save();
-    res.status(HttpStatus.OK).send({
+    res.status(HttpStatus.ACCEPTED).send({
       message: "Congratulations, password successfully changed!",
-      status: HttpStatus.OK
+      status: HttpStatus.ACCEPTED
     });
     return 0;
   }
-
-  res.status(HttpStatus.UNAUTHORIZED).send({ message: "Invalid email token", status: HttpStatus.UNAUTHORIZED });
+  res.status(HttpStatus.CONFLICT).send({ message: "Error validating data!", status: HttpStatus.CONFLICT });
 }
 
 exports.checkPhone = async (req, res, next) => {
@@ -573,7 +633,7 @@ exports.checkPhone = async (req, res, next) => {
   contract.isRequired(req.body.sms_token, 'SMS code not found!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
@@ -591,12 +651,13 @@ exports.checkPhone = async (req, res, next) => {
     return 0;
   }
 
-  res.status(HttpStatus.NOT_FOUND).send({ message: 'SMS code not found!', status: HttpStatus.NOT_FOUND});
+  res.status(HttpStatus.BAD_REQUEST).send({ message: 'SMS code not found!', status: HttpStatus.BAD_REQUEST});
 }
 
 exports.authenticate = async (req, res, next) => {
   try {
     const { password } = req.body;
+    debug('body', req.body);
 
     let customer
     var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
@@ -625,7 +686,7 @@ exports.authenticate = async (req, res, next) => {
       });
       return 0;
     }
-
+    debug('customer', customer);
     let result = await bcrypt.compare(password, customer.password);
 
     if (!result) {
@@ -652,39 +713,70 @@ exports.authenticate = async (req, res, next) => {
   }
 };
 
-exports.put = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  try {
+exports.put = asyncHandler(async (req, res, next) => {
+    //for accepting form-data as well
+    const body = req.body || {};
+    const { password } = body;
+    const existUser = await User.findOne({ where: { id: req.userId } });
 
-    const existUser = await User.findOne({ where: { id: token_return.id } });
     if (!existUser) {
-      res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
-      return 0;
+      return res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
     }
 
-    existUser.name = req.body.name || existUser.name;
+    const prevPhone = existUser.phone_no;
+    const prevEmail = existUser.email;
+
+    const updates = userInputFilter.filter(req.body, 'form-data');
+
+    if(req.files && req.files['profile_photo']) {
+      updates.imagePath = req.files['profile_photo'][0].key;
+      console.log('image update', updates);
+    }
+
+    //need to send verification email when email change
+    if(req.body.email && prevEmail !== req.body.email) {
+      debug('email changed');
+      let pass = (""+Math.random()).substring(2,6);
+      updates.verification_email_token = pass;
+      updates.verification_email_status = userConstants.STATUS_PENDING;
+    }
+
+    //need to send verification sms when phone change
+    if(req.body.phone_no && prevPhone !== req.body.phone_no) {
+      debug('phone changed');
+      let pass = (""+Math.random()).substring(2,6);
+      updates.verification_phone_token = pass;
+      updates.verification_email_status = userConstants.STATUS_PENDING;
+    }
+
+    /*existUser.name = req.body.name || existUser.name;
     existUser.email = req.body.email || existUser.email;
     existUser.country_code = req.body.country_code || existUser.country_code;
     existUser.phone_no = req.body.phone_no || existUser.phone_no;
     existUser.restaurant_name = req.body.restaurant_name || existUser.restaurant_name;
     existUser.location = req.body.location  || existUser.location;
-    existUser.imagePath = req.body.image_path || existUser.imagePath;
+    existUser.imagePath = req.body.image_path || existUser.imagePath;*/
+    (password) ? updates.password = await generateHash(password) : null ;
 
-    // (password) ? existUser.password = await generateHash(password) : null ;
-
-    await existUser.save();
+    await existUser.update(updates);
 
     res.status(200).send({
       message: 'Profile successfully updated!',
       data: existUser
     });
-  } catch (e) {
-    res.status(500).send({ 
-      error: e,
-      message: 'Failed to process your request'
-    });
-  }
-};
+
+    //only send email/phone sms after request complete
+
+    if(req.body.email && prevEmail !== req.body.email) {
+      await sendMail({req, pass: existUser.verification_email_token});
+    }
+
+    if(req.body.phone_no && prevPhone !== req.body.phone_no) {
+      let phone = existUser.country_code + existUser.phone_no;
+      await phoneService.sendMessage(phone, existUser.verification_phone_token);
+    }
+
+});
 
 exports.getUserBalance = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
@@ -786,7 +878,7 @@ exports.searchPredictions = async (req, res, next) => {
        include:{
         model:User,
         as:"chef",
-        
+
         attributes:['restaurant_name']
 
        }
@@ -833,7 +925,7 @@ exports.forgotPassword = async (req, res, next) => {
   existUser.verification_email_token = token;
   existUser.verification_email_status = 'pending';
   await existUser.save();
-  
+
   let args = {
     to: existUser.email,
     from: "Cheffy contact@cheffy.com",

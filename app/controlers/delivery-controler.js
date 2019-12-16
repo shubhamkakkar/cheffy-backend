@@ -1,5 +1,6 @@
 "use strict";
-var HttpStatus = require("http-status-codes");
+const path = require('path');
+const HttpStatus = require("http-status-codes");
 const {sequelize, User, OrderDelivery } = require('../models/index');
 const ValidationContract = require("../services/validator");
 const orderRepository = require("../repository/order-repository");
@@ -7,31 +8,50 @@ const deliveryRepository = require("../repository/delivery-repository");
 const demandService = require('../services/demands');
 const authService = require("../services/auth");
 const NotificationServices = require('../services/notification');
+const userConstants = require(path.resolve('app/constants/users'));
+const asyncHandler = require('express-async-handler');
 
-exports.list = async (req, res, next) => {
+//Is this the pending deliveries of a user
+exports.list = asyncHandler(async (req, res, next) => {
+  const user = req.user;
 
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-
-  if (existUser.user_type !== 'driver' && existUser.user_type !== 'cheff') {
-      res.status(HttpStatus.CONFLICT).send({ message: "Only drivers and cheffs can have deliveries", error: true}).end();
-    return 0;
+  if (user.user_type !== userConstants.USER_TYPE_DRIVER && user.user_type !== userConstants.USER_TYPE_CHEF) {
+    return res.status(HttpStatus.CONFLICT).send({ message: "Only drivers and cheffs can have deliveries", error: true}).end();
   }
 
 
-  let deliveries = await deliveryRepository.getOrderDeliveriesByUserId(existUser.id)
+  let deliveries = await deliveryRepository.getOrderDeliveriesByUserId(user.id)
 
   if(!deliveries){
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find the user's deliveries", status: HttpStatus.CONFLICT});
-      return 0;
-  }else{
-      let payload = {};
-      payload.status = HttpStatus.CREATED;
-      payload.deliveries = deliveries;
-      res.status(payload.status).send(payload);
+      return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find the user's deliveries", status: HttpStatus.CONFLICT});
   }
 
-}
+  let payload = {};
+  payload.status = HttpStatus.CREATED;
+  payload.deliveries = deliveries;
+  res.status(payload.status).send(payload);
+});
+
+exports.pendingList = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+
+  if (user.user_type !== userConstants.USER_TYPE_DRIVER && user.user_type !== userConstants.USER_TYPE_CHEF) {
+    return res.status(HttpStatus.CONFLICT).send({ message: "Only drivers and cheffs can have deliveries", error: true}).end();
+  }
+
+
+  let deliveries = await deliveryRepository.getOrderDeliveriesPendingByUserId(user.id)
+
+  if(!deliveries){
+      return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find the user's deliveries", status: HttpStatus.CONFLICT});
+  }
+
+  let payload = {};
+  payload.status = HttpStatus.CREATED;
+  payload.deliveries = deliveries;
+  res.status(payload.status).send(payload);
+});
+
 
 exports.listCompleteDeliveries = async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
@@ -88,18 +108,18 @@ exports.edit = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
     const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
       return 0;
-    }    
+    }
 
     let orderDeliveryId = req.params.id;
     const order = await OrderDelivery.findByPk(orderDeliveryId);
     order.driverId = existUser.id;
     order.status_type = 'on_course';
     order.save();
-    
+
     return order;
   } catch (e) {
     console.log(e)
@@ -112,17 +132,17 @@ exports.completeDelivery = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
     const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
       return 0;
-    }    
+    }
 
     let orderDeliveryId = req.params.id;
     const order = await OrderDelivery.findByPk(orderDeliveryId);
     order.status_type = 'delivered';
     order.save();
-    
+
     let payload = {};
     payload.status = HttpStatus.OK;
     payload.message = "Thank you!"
@@ -130,7 +150,7 @@ exports.completeDelivery = async (req, res, next) => {
 
   } catch (e) {
     console.log(e)
-    res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();    
+    res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
     throw e;
   }
 
@@ -140,17 +160,17 @@ exports.pickupDelivery = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
     const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
       return 0;
-    }    
+    }
 
     let orderDeliveryId = req.params.id;
     let order = await OrderDelivery.findByPk(orderDeliveryId);
     order.state_type = 'picked_up';
     order.save();
-    
+
     let payload = {};
     payload.status = HttpStatus.OK;
     payload.message = "Great! The costumer is waiting for you!"
@@ -158,7 +178,7 @@ exports.pickupDelivery = async (req, res, next) => {
     res.status(payload.status).send(payload);
   } catch (e) {
     console.log(e)
-    res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();    
+    res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
     throw e;
   }
 
@@ -168,9 +188,9 @@ exports.createDelivery = async (req, res, next) => {
   try {
     let contract = new ValidationContract();
     contract.isRequired(req.params.id, 'The order ID is required!');
-  
+
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
       return 0;
     }
 
@@ -183,17 +203,17 @@ exports.createDelivery = async (req, res, next) => {
     }
 
     const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
       return 0;
-    }    
+    }
 
     let orderId = req.params.id;
     let createdOrderDelivery = await deliveryRepository.createOrderDelivery(orderId);
-    
+
     //demandService.sendToDelivery(orderId,loc,shipping)
-    
+
     let payload = {};
     payload.status = HttpStatus.CREATED;
     payload.orderDelivery = createdOrderDelivery;
@@ -201,7 +221,7 @@ exports.createDelivery = async (req, res, next) => {
 
   } catch (e) {
     console.log(e)
-    res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", e: true}).end();    
+    res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", e: true}).end();
     throw e;
   }
 
@@ -211,11 +231,11 @@ exports.decline = async (req, res, next) => {
   try {
       const token_return = await authService.decodeToken(req.headers['x-access-token'])
       const existUser = await User.findOne({ where: { id: token_return.id } });
-    
+
       if (!existUser) {
         res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
         return 0;
-      }    
+      }
 
       let orderDeliveryId = req.params.id;
       const order = await OrderDelivery.findByPk(orderDeliveryId);
@@ -243,11 +263,11 @@ exports.accept = async (req, res, next) => {
   try {
       const token_return = await authService.decodeToken(req.headers['x-access-token'])
       const existUser = await User.findOne({ where: { id: token_return.id } });
-    
+
       if (!existUser) {
         res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
         return 0;
-      }    
+      }
 
       let orderDeliveryId = req.params.id;
       const order = await OrderDelivery.findByPk(orderDeliveryId);
@@ -275,11 +295,11 @@ exports.completeDelivery = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
     const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
       return 0;
-    }    
+    }
 
     try{
       let orderDeliveryId = req.params.id;
@@ -302,7 +322,7 @@ exports.completeDelivery = async (req, res, next) => {
       res.status(HttpStatus.ACCEPTED).send(orderDelivery).end();
 
     }catch(err){
-      res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", error: true}).end();      
+      res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", error: true}).end();
     }
     return order;
   } catch (e) {
@@ -315,11 +335,11 @@ exports.pickupDelivery = async (req, res, next) => {
   try {
     const token_return = await authService.decodeToken(req.headers['x-access-token'])
     const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
       return 0;
-    }    
+    }
 
     try{
       let orderDeliveryId = req.params.id;
@@ -341,7 +361,7 @@ exports.pickupDelivery = async (req, res, next) => {
       res.status(HttpStatus.ACCEPTED).send(orderDelivery).end();
 
     }catch(err){
-      res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", error: true}).end();      
+      res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", error: true}).end();
     }
   } catch (e) {
     console.log(e)
@@ -352,10 +372,10 @@ exports.pickupDelivery = async (req, res, next) => {
 exports.getOrderDeliveriesByUserId = async (req, res, next) => {
   try {
       const deliveries = await OrderDelivery.findAll(
-        { 
-          where: { 
-            driverId: token_return.id 
-          } 
+        {
+          where: {
+            driverId: token_return.id
+          }
         });
 
       return deliveries;

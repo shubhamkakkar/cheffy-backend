@@ -1,6 +1,4 @@
 const {sequelize, User, ShippingAddress} = require('../models/index')
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
 
 exports.findDriversInsideArea = async (latitude,longitude,radiusMiles) => {
     let strQuery = "SELECT id, ( 3959 * acos( cos( radians("+latitude+") ) * cos( radians( CAST(SUBSTRING_INDEX(location, ',', 1) AS DECIMAL(10,6)) ) ) "+
@@ -23,12 +21,14 @@ exports.getUserById = async (userId) => {
         include:[
             {
                 model:ShippingAddress,
-                as:'address'}
+                as:'address'
+            }
         ]
     });
+
     if(user){
         try {
-            let userFavoritePlates = await getUserFavoritePlates(userId);            
+            let userFavoritePlates = await getUserFavoritePlates(userId);
             let userWithFavPlates = JSON.parse(JSON.stringify(user));
             userWithFavPlates.favorite_plates = JSON.parse(JSON.stringify(userFavoritePlates));
             return userWithFavPlates;
@@ -51,26 +51,8 @@ function getUserFavoritePlates(userID) {
                         inner join ( SELECT plate_id, count(plate_id) as total
                                         from OrderItems
                                         GROUP BY plate_id) c ON oi.plate_id = c.plate_id
-                        where oi.user_id = ${userID}                                        
+                        where oi.user_id = ${userID}
                         LIMIT 3`;
 
-    return sequelize.query(favoriteSQL,{raw:true,nest:true});        
+    return sequelize.query(favoriteSQL,{raw:true,nest:true});
 }
-
-exports.getRestaurantSearch = async (data) => {
-  try {
-    const response = await User.findAll({
-      where: {
-        restaurant_name:{[Op.like]:'%'+data+'%'}
-      },
-      attributes: [
-         'id','restaurant_name','location_lat','location_lon','createdAt','updatedAt'
-        ],
-    });
-
-    return response;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail the plates", error: e }
-  }
-};

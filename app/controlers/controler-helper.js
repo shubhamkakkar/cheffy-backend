@@ -9,9 +9,14 @@ exports.createOrderItens = async (data) => {
     item.walletId = item.walletId[0].id
     return item
   });
+  
   const response = await OrderItem.bulkCreate(recovery_data);
 
 }
+
+/**
+* order payment helper
+*/
 exports.change_data = async (id, data) => {
   let base = {
     orderId: id,

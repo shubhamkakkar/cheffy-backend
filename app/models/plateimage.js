@@ -1,3 +1,8 @@
+'use strict';
+/**
+* @Model: PlateImage
+* Stores image url of a plate
+*/
 module.exports = (sequelize, DataTypes) => {
   const PlateImage = sequelize.define('PlateImage', {
     name: DataTypes.STRING,

@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: ChefLicense
+* Stores chef's license document url, state_type. It belongs to particular document of a chef
+*/
 module.exports = (sequelize, DataTypes) => {
   const ChefLicense = sequelize.define('ChefLicense', {
     description: DataTypes.STRING,

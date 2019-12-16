@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: CustomPlateAuctionBid
+* It represents a bid of a chef for CustomPlateAuction. When user accepts the bid, winner is set to 'true'
+*/
 module.exports = (sequelize, DataTypes) => {
   const CustomPlateAuctionBid = sequelize.define('CustomPlateAuctionBid', {
     CustomPlateAuctionID: {

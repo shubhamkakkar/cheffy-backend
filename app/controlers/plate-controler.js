@@ -1,33 +1,33 @@
 'use strict';
-var HttpStatus = require('http-status-codes');
+const path = require('path');
+const HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { Plates, User, PlateImage, ReceiptImage, KitchenImage, Documents } = require('../models/index');
+const { Plates, User, PlateImage, ReceiptImage, KitchenImage } = require('../models/index');
 const repository = require('../repository/plate-repository');
 const repoCustom = require('../repository/customPlate-repository');
-const repoFav = require('../repository/favourite-repository');
 const repositoryDocs = require('../repository/docs-repository');
+const repositoryOrder = require(path.resolve('app/repository/order-repository'));
 const md5 = require('md5');
 const authService = require('../services/auth');
 const upload = require('../services/upload');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+const documentConstants = require(path.resolve('app/constants/documents'));
+const asyncHandler = require('express-async-handler');
+const plateInputFilter = require(path.resolve('app/inputfilters/plate'));
+const _ = require('lodash');
 
 
-exports.create = async (req, res, next) => {
+exports.create = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
   contract.isRequired(req.body.description, 'Plate description is required!');
   contract.isRequired(req.body.price, 'Plate price is required!');
   contract.isRequired(req.body.delivery_time, 'Plate delivery time is required!');
   contract.isRequired(req.body.delivery_type, 'Plate delivery type is required!');
-  contract.isRequired(req.body.categoryId, 'Caregory id is required!');
-  contract.isRequired(req.body.ingredients, 'Igredients is required!');
-  req.body.ingredients.map( elem => {
-    contract.isRequired(elem.name, 'Igredient name is required!');
-    contract.isRequired(elem.purchase_date, 'Igredient purchase date is required!');
-  });
+
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
 
@@ -35,21 +35,25 @@ exports.create = async (req, res, next) => {
   const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (existUser.user_type !== 'chef') {
-    res.status(HttpStatus.NOT_FOUND).send({ message: "Only chefs can create plates", error: true}).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
     return 0;
   }
   if (existUser.verification_email_status !== 'verified') {
-    res.status(HttpStatus.NOT_FOUND).send({ message: "Your email was not verified", error: true}).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Your email was not verified", error: true}).end();
     return 0;
   }
   if (existUser.verification_phone_status !== 'verified') {
-    res.status(HttpStatus.NOT_FOUND).send({ message: "Your phone number was not verified", error: true}).end();
+    res.status(HttpStatus.CONFLICT).send({ message: "Your phone number was not verified", error: true}).end();
     return 0;
   }
-  /*const validate_docs = await Documents.findOne({ where: { userId: existUser.id } })
-  if (validate_docs === null || validate_docs.state_type !== "validated") {
-    res.status(HttpStatus.FORBIDDEN).send({ message: "Before creating a new plate you need to validate your documents!", error: true });
-    return 0;
+  const validate_docs = await repositoryDocs.getUserDocs(existUser.id)
+  if (validate_docs === null || validate_docs.state_type !== documentConstants.STATUS_APPROVED) {
+    return res.status(HttpStatus.CONFLICT).send({ message: "Before creating a new plate you need to validate your documents!", error: true });
+  }
+
+  /*const loc = await repositoryOrder.userLocation(existUser.id);
+  if(!loc) {
+    return res.status(HttpStatus.CONFLICT).send({message: 'Before creating a new plate you need to create shipping address', error: true});
   }*/
 
   let full_data = req.body;
@@ -80,9 +84,9 @@ exports.create = async (req, res, next) => {
   payload.plate = plate;
   payload.ingredients = ingred_create;
   res.status(payload.status).send(payload);
-}
+});
 
-exports.list = async (req, res, next) => {
+exports.list = asyncHandler(async (req, res, next) => {
   let retorno
   if (req.query.page && req.query.pageSize) {
     //retorno = await repository.listPlates({page: req.query.page, pageSize: req.query.pageSize})
@@ -94,76 +98,47 @@ exports.list = async (req, res, next) => {
     retorno = await repository.listPlates2(data)
   }
   res.status(HttpStatus.ACCEPTED).send(retorno);
-}
+});
 
-exports.listNear = async (req, res, next) => {
+exports.listNear = asyncHandler(async (req, res, next) => {
   let retorno = await repository.listNear({ latitude: req.query.latitude, longitude: req.query.longitude, radiusMiles: req.query.radius })
   res.status(HttpStatus.ACCEPTED).send(retorno);
-}
+})
 
-exports.edit = async (req, res, next) => {
-  try {
-    let existPlate = await repository.findPlate(req.params.id);
-    if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-      return 0;
-    }
+exports.edit = asyncHandler(async (req, res, next) => {
 
-    existPlate.name = req.body.name || existPlate.name;
-    existPlate.description = req.body.description || existPlate.description;
-    existPlate.price = req.body.price  || existPlate.price;
-    existPlate.delivery_time = req.body.delivery_time || existPlate.delivery_time;
-    existPlate.delivery_type = req.body.delivery_type || existPlate.delivery_type;
-    await existPlate.save();
+  let existPlate = await repository.findPlate(req.params.id);
 
-    const updatedPlate = await repository.findPlate(req.params.id);
-
-    res.status(200).send({ message: 'Plate successfully updated!', data: updatedPlate });
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
+  if (!existPlate) {
+    return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
   }
-};
 
-exports.customPlates = async (req, res, next) => {
-  try {
-    const retorno = await repoCustom.chefGetPlates()
-    res.status(HttpStatus.ACCEPTED).send(retorno);
-    return 0;
-  } catch (e) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to get the custom plates",
-      error: true, data: e
-    });
-    return 0;
-  }
-};
+  const updates = plateInputFilter.filter(req.body);
 
-exports.customPlate = async (req, res, next) => {
-  try {
-    const retorno = await repoCustom.getPlate(req.params.id)
-    res.status(HttpStatus.ACCEPTED).send(retorno);
-    return 0;
-  } catch (e) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "Fail to get the custom plates",
-      error: true, data: e
-    });
-    return 0;
-  }
-};
+  await existPlate.update(updates);
 
-exports.getPlateReview = async (req, res, next) => {
-  try {
-    const existPlate = await repository.getPlateReviewByPlateId(req.params);
-    res.status(200).send(existPlate);
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
+  const updatedPlate = await repository.findPlate(req.params.id);
+
+  res.status(200).send({ message: 'Plate successfully updated!', data: updatedPlate });
+
+});
+
+exports.delete = asyncHandler(async (req, res, next) => {
+
+  let existPlate = await repository.findPlate(req.params.id);
+
+  if (!existPlate) {
+    return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
   }
-};
+
+  //TODO
+});
+
+exports.getPlateReview = asyncHandler(async (req, res, next) => {
+  const existPlate = await repository.getPlateReviewByPlateId(req.params);
+  res.status(200).send(existPlate);
+});
+
 
 exports.getRelatedPlates = async (req, res, next) => {
   try {
@@ -303,7 +278,7 @@ exports.uploadImages = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   const { id } = req.params;
   const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
   if (existUser.user_type !== 'chef') {
     res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
     return 0;
@@ -317,11 +292,11 @@ exports.uploadImages = async (req, res, next) => {
         await uploadService.deleteImage(fieldname, key);
       });
     });
-    
+
     res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
     return 0;
   }
-  
+
   if (req.files.plate_image.length > 0) {
     let plateImages = [];
     let kitchenImages = [];
@@ -350,7 +325,7 @@ exports.uploadImages = async (req, res, next) => {
     if (receiptImages.length > 0)
       returnReceiptImages = await repository.createReceiptImage(receiptImages);
 
-    res.status(200).send({ 
+    res.status(200).send({
       message: "Plates images created!",
       data: {
         plate_image: returnPlateImages,
@@ -364,7 +339,7 @@ exports.deleteImage = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   const { id, type_image } = req.params;
   const existUser = await User.findOne({ where: { id: token_return.id } });
-  
+
   if (existUser.user_type !== 'chef') {
     res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can create plates", error: true}).end();
     return 0;
@@ -399,7 +374,7 @@ exports.deleteImage = async (req, res, next) => {
     res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
     return 0;
   }
-  
+
   await upload.deleteImage(type_image, actualImage.getDataValue('url'));
 
   switch (type_image) {
@@ -417,171 +392,4 @@ exports.deleteImage = async (req, res, next) => {
   }
 
   res.status(200).send({ message: message, data: actualImage });
-};
-
-exports.favourite = async (req, res, next) => {
-
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-
-  const existUser = await User.findOne({
-    where: { id: token_return.id }
-  })
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-
-  let contract = new ValidationContract();
-  contract.isRequired(req.body.fav_type, 'fav_type is required!');
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
-  
-
-  try {
-
-    let response;
-
-    if(req.body.fav_type == 'plate'){
-
-    contract.isRequired(req.body.plateId, 'plateId is required!');
-
-    if (!contract.isValid()) {
-      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-      return 0;
-    }
-    let existPlate = await repository.findPlate(req.body.plateId);
-    if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId);
-    if (existPlateInFav) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Already exists in favourites", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    response = await repoFav.add(token_return.id,null, req.body.plateId,req.body.fav_type);
-
-
-    }
-
-    if(req.body.fav_type == 'custom_plate'){
-    contract.isRequired(req.body.CustomplateId, 'CustomplateId is required!');
-
-    if (!contract.isValid()) {
-      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-      return 0;
-    }
-    let existPlate = await repoCustom.getPlate(req.body.CustomplateId);
-    if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId);
-    if (existCustomPlateInFav) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Already exists in favourites", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-
-    response = await repoFav.add(token_return.id,req.body.CustomplateId,null,req.body.fav_type);
-
-
-    }
-
-    res.status(200).send({ message: 'favourite successfully added!', data: response });
-  } catch (e) {console.log(e)
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-
-exports.removeFavourite = async (req, res, next) => {
-
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-
-  const existUser = await User.findOne({
-    where: { id: token_return.id }
-  })
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-
-  let contract = new ValidationContract();
-  contract.isRequired(req.body.fav_type, 'fav_type is required!');
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
-  
-
-  try {
-
-    let response;
-
-    if(req.body.fav_type == 'plate'){
-
-    contract.isRequired(req.body.plateId, 'plateId is required!');
-
-    if (!contract.isValid()) {
-      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-      return 0;
-    }
-    let existPlate = await repository.findPlate(req.body.plateId);
-    if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId);
-    if (!existPlateInFav) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Cann't find in favourites", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    response = await repoFav.delete(existPlateInFav.id);
-
-
-    }
-
-    if(req.body.fav_type == 'custom_plate'){
-    contract.isRequired(req.body.CustomplateId, 'CustomplateId is required!');
-
-    if (!contract.isValid()) {
-      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-      return 0;
-    }
-    let existPlate = await repoCustom.getPlate(req.body.CustomplateId);
-    if (!existPlate) {
-      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId);
-    if (!existCustomPlateInFav) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Can't find in favourites", status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-
-    response = await repoFav.delete(existCustomPlateInFav.id);
-
-
-    }
-
-    res.status(200).send({ message: 'favourite successfully deleted!', data: response });
-  } catch (e) {console.log(e)
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
 };

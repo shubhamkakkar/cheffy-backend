@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: KitchenPhoto
+* KitchenPhoto
+*/
 module.exports = (sequelize, DataTypes) => {
   const KitchenPhoto = sequelize.define('KitchenPhoto', {
     description: DataTypes.STRING,

@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: NIDFrontSide
+* National ID front side image url
+*/
 module.exports = (sequelize, DataTypes) => {
   const NIDFrontSide = sequelize.define('NIDFrontSide', {
     description: DataTypes.STRING,

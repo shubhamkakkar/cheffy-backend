@@ -1,4 +1,11 @@
 'use strict';
+const path = require('path');
+const orderPaymentConstants = require(path.resolve('app/constants/order-payment'));
+
+/**
+* @Model: OrderPayment
+* Stores payment for a particular order
+*/
 module.exports = (sequelize, DataTypes) => {
   const OrderPayment = sequelize.define('OrderPayment', {
     orderId: {
@@ -8,15 +15,24 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    //amount in cents
     amount: DataTypes.INTEGER,
+    
     client_secret: DataTypes.STRING,
     created: DataTypes.STRING,
     customer: DataTypes.STRING,
     payment_method: DataTypes.STRING,
     status: {
-      allowNull: true,
-      type: DataTypes.ENUM('created', 'declined', 'canceled', 'pending', 'aproved'),
-      defaultValue: "created",
+      allowNull: false,
+      type: DataTypes.ENUM(
+        orderPaymentConstants.STATUS_PROCESSING,
+        orderPaymentConstants.STATUS_REQUIRES_PAYMENT_METHOD,
+        orderPaymentConstants.STATUS_REQUIRES_CONFIRMATION,
+        orderPaymentConstants.STATUS_REQUIRES_CAPTURE,
+        orderPaymentConstants.STATUS_CANCELED,
+        orderPaymentConstants.STATUS_SUCCEEDED
+      ),
+      defaultValue: orderPaymentConstants.STATUS_PROCESSING,
     },
     receipt_url: DataTypes.STRING,
     card_brand: DataTypes.STRING,

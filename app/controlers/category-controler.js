@@ -10,7 +10,7 @@ exports.create = async (req, res, next) => {
   contract.isRequired(req.body.name, 'The name is required!');
   contract.isRequired(req.body.url, 'Image URL is required!');
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
   const existCategory = await repository.findExist(req.body.name);
@@ -38,7 +38,7 @@ exports.edit = async (req, res, next) => {
   contract.isRequired(req.body.name, 'The name is required!');
   contract.isRequired(req.body.url, 'Image URL is required!');
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     return 0;
   }
 

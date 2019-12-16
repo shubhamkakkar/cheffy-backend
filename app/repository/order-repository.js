@@ -1,5 +1,5 @@
 'use strict';
-const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const {sequelize, Plates, CustomPlate, CustomPlateOrder, PlateReview,PlateImage, CustomPlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 
 exports.getById = async (orderId) => {
     try {
@@ -13,17 +13,66 @@ exports.getById = async (orderId) => {
 
   }
 
-  exports.getOrderItemById = async (orderItemId) => {
-    try {
-        const order = await OrderItem.findByPk(orderItemId);
+exports.getOrderItemById = async (orderItemId) => {
+  try {
+      const order = await OrderItem.findByPk(orderItemId);
+      return order;
+    } catch (e) {
+      console.log(e)
+      throw e;
+    }
+}
 
-        return order;
-      } catch (e) {
-        console.log(e)
-        throw e;
-      }
 
-  }
+exports.getOrderItemByIdDetails = async (orderItemId) => {
+  const order = await OrderItem.findByPk(orderItemId, {
+    include:[{
+      model: Plates,
+      as:'plate',
+      include: [{
+        model: User,
+        as:'chef'
+      },
+      {
+        model: PlateImage
+      }]
+    },{
+      model: CustomPlateOrder,
+      as:'custom_plate_order',
+      include: [{
+        model: User,
+        as:'user'
+      },{
+        model: CustomPlate,
+        as:'custom_plate',
+        include: [{
+          model: CustomPlateImage
+        }]
+      }]
+    }]
+  });
+
+  return order;
+}
+
+
+exports.createOrderItem = async(data) => {
+  return await OrderItem.create(data);
+}
+
+/**
+* TODO use bulk create in future
+* my bulk create implementation was not creating orderitems
+*/
+exports.createOrderItems = async(dataArray) => {
+//  return await OrderItem.bulkCreate(dataArray);
+console.log(dataArray);
+  const orderItems = dataArray.map(async(data) => {
+    return await exports.createOrderItem(data);
+  });
+
+  return Promise.all(orderItems);
+}
 
 exports.editOrder = async (orderId,data) => {
     try {
@@ -57,7 +106,7 @@ exports.editOrder = async (orderId,data) => {
         throw e;
       }
 
-  }
+}
 
 exports.create = async (data) => {
   let doc = await Order.create({ ...data });
@@ -78,21 +127,34 @@ exports.getUserOrders = async (data) => {
     include: [
       {
         model: OrderPayment,
-        attributes: ["amount", "client_secret", "customer", "payment_method", "status"]
+        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
         model: OrderItem,
-        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+        attributes: ["id", "plate_id", "customPlateId", "item_type", "chef_location", "name", "description", "amount", "quantity"],
         include:[{
           model: Plates,
           as:'plate',
           include: [{
             model: User,
-            as:'chef'            
+            as:'chef'
           },
           {
             model: PlateImage
-        }]
+          }]
+        },{
+          model: CustomPlateOrder,
+          as:'custom_plate_order',
+          include: [{
+            model: User,
+            as:'user'
+          },{
+            model: CustomPlate,
+            as:'custom_plate',
+            include: [{
+              model: CustomPlateImage
+            }]
+          }]
       }]
     }]
   });
@@ -110,17 +172,31 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
       },
       {
         model: OrderItem,
-        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+        attributes: ["plate_id", "customPlateId", "item_type", "chef_location", "name", "description", "amount", "quantity"],
         include:[{
           model: Plates,
           as:'plate',
           include: [{
             model: User,
-            as:'chef'            
+            as:'chef'
           },
           {
             model: PlateImage
         }]
+        },{
+          model: CustomPlateOrder,
+          as:'custom_plate_order',
+          include: [{
+            model: User,
+            as:'user'
+          },{
+            model: CustomPlate,
+            as:'custom_plate',
+            include: [
+            {
+              model: CustomPlateImage
+            }]
+          }]
       }]
     },
     {
@@ -131,6 +207,7 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
   });
   return order;
 }
+
 exports.getUserOrder = async (data, id) => {
   let order = await Order.findOne({
     where: { userId: data, id: id },
@@ -141,7 +218,7 @@ exports.getUserOrder = async (data, id) => {
       },
       {
         model: OrderItem,
-        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"]
+        attributes: ["plate_id","customPlateId", "item_type", "chef_location", "name", "description", "amount", "quantity"]
       },
     ]
   });

@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: Message
+* Stores messages of user
+*/
 module.exports = (sequelize, DataTypes) => {
   const Message = sequelize.define('Message', {
     from_userid: DataTypes.INTEGER,

@@ -14,18 +14,3 @@ exports.user = async (data) => {
     return { message: "Erro to return user!", error: e}
   }
 }
-
-exports.getWallet = async (data) => {
-  try {
-    const wallet = await Wallet.findOrCreate({
-      defaults: {
-        userId: data
-      },
-      where: { userId: data },
-      attributes: [ 'id' ]
-    });
-    return wallet; 
-  } catch (error) {
-    return { message: 'There was a problem to save your data!', error: e}
-  }
-}

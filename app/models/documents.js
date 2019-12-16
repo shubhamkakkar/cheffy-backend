@@ -1,10 +1,22 @@
 'use strict';
+const path = require('path');
+const documentConstants = require(path.resolve('app/constants/documents'));
+/**
+* @Model: Documents
+* User document table
+* stores ssn, licenses, profile_photo etc.
+*/
 module.exports = (sequelize, DataTypes) => {
   const Documents = sequelize.define('Documents', {
     comment: DataTypes.STRING,
     state_type: {
-      type: DataTypes.ENUM('validated', 'invalid', 'pending'),
-      defaultValue: 'pending'
+      type: DataTypes.ENUM(
+        documentConstants.STATUS_SUBMITTED,
+        documentConstants.STATUS_PENDING,
+        documentConstants.STATUS_APPROVED,
+        documentConstants.STATUS_REJECTED
+      ),
+      defaultValue: documentConstants.STATUS_PENDING
     },
     userId: {
       type: DataTypes.INTEGER,
@@ -14,7 +26,13 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     social_security_number: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'Social security number is empty!'
+        }
+      }
     },
   }, {});
   Documents.associate = function(models) {
@@ -27,5 +45,6 @@ module.exports = (sequelize, DataTypes) => {
     Documents.hasOne(models.DriverLicenseFrontSide);
     Documents.hasOne(models.DriverVehicleRegistration);
   };
+
   return Documents;
 };

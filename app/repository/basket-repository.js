@@ -1,71 +1,101 @@
 'use strict';
 const { Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder } = require('../models/index');
 
-exports.getUserBasket = async (data) => {
+exports.getOrCreateUserBasket = async (userId) => {
   const basket = await Basket.findOrCreate({
     defaults: {
-      userId: data
+      userId: userId
     },
-    where: { userId: data }
+    where: { userId: userId }
   });
   return basket;
 }
 
-exports.getOneUserBasket = async (data) => {
-  const basket = await Basket.findOne({ where: { userId: data } });
+exports.getOneUserBasket = async (userId) => {
+  const basket = await Basket.findOne({ where: { userId: userId } });
   return basket;
 }
 
-exports.getBasketItens = async (data, id) => {
-  const basket = await BasketItem.findAll({ where: { basketId: data, plateId: id } });
+/**
+* get plate from baske-item
+* there will be only one unique plate in the basket
+*/
+exports.getBasketItemsPlate = async (basketId, plateId) => {
+  const basket = await BasketItem.findOne({ where: { basketId: basketId, plateId: plateId } });
   return basket;
 }
 
-exports.getBasketItensCustom = async (data, id) => {
+
+exports.getBasketItemsCustom = async (data, id) => {
   const basket = await BasketItem.findAll({ where: { basketId: data, customPlateId: id } });
   return basket;
 }
 
-/*exports.getBasketItens = async (basketId) => {
+
+exports.getBasketItems = async (basketId) => {
   const basketItems = await BasketItem.findAll({ where: { basketId: basketId} });
   return basketItems;
-}*/
-
-exports.deleteBasketItem = async (data, id) => {
-  const basket = await BasketItem.destroy({ where: { id: data } });
-  return basket;
 }
 
-exports.subtractBasketItem = async (data) => {
-  let basket = await BasketItem.findByPk(data);
-  basket.quantity = parseInt(basket.quantity - 1)
-  console.log("Resultado: ", basket.quantity)
-  if (basket.quantity > 0 ) {
-    await basket.save();
-    return basket;
+/**
+* Get basketItem by id
+*/
+exports.getSingleBasketItem = async (basketItemId) => {
+  const basketItem = await BasketItem.findByPk(basketItemId);
+  return basketItem;
+}
+
+
+/**
+* Destory BasketItem
+* basketItem -> instance
+*/
+exports.deleteBasketItem = async (basketItem) => {
+  return await basketItem.destroy();
+}
+
+/**
+* Remove basket items related to basketId
+*/
+exports.removeBasketItems = async (basketId) => {
+  return await BasketItem.destroy({where: {basketId: basketId}});
+}
+
+/**
+* subtract 1 quantity from basketItem
+* basketItem -> instance
+*/
+exports.subtractBasketItem = async (basketItem) => {
+  const item = await basketItem.decrement('quantity', {by: 1});
+  if (item.quantity > 0 ) {
+    return item;
   }
-  await BasketItem.destroy({ where: { id: data } });
+
+  await item.destroy();
+
   return {
     message: "Item removed from cart!",
     error: false
   };
 }
 
-exports.addBasketItem = async (data) => {
-  let basket = await BasketItem.findByPk(data);
-  basket.quantity = parseInt(basket.quantity + 1)
-  await basket.save();
-  return basket;
+/**
+* add 1 quantity to basketItem
+* basketItem -> instance
+*/
+exports.addBasketItem = async (basketItem) => {
+  return await basketItem.increment('quantity', {by: 1});
 }
-
-exports.addBasketItens = async (data, quant) => {
+/*
+duplicate definition
+exports.getBasketItems = async (data, quant) => {
   let basket = await BasketItem.findByPk(data);
   let ammount = quant || 1;
   basket.quantity = parseInt(basket.quantity + ammount)
   await basket.save();
   return basket;
 }
-
+*/
 exports.createBasketItem = async (data) => {
   try {
     const basket = await BasketItem.create({...data});
@@ -86,29 +116,33 @@ exports.delBasketItem = async (data) => {
   }
 }
 
+//deprecated
+//use getBasketItemsDetail
 exports.listBasket = async (data) => {
-  try {
-    let existBasket = await Basket.findByPk(data, {
-      attributes: [ 'id'],
-      include: [
-        {
-          model: BasketItem,
-          attributes: [ 'id', 'quantity', 'plateId' ],
-          include: [
-            {
-              model: Plates,
-              as: 'plate',
-              attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'userId' ]
-            }
-          ],
-        }
-      ],
-    });
-    return existBasket;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to get your Basket!", error: e };
-  }
+
+  let existBasket = await Basket.findByPk(data, {
+    attributes: [ ],
+    include: [
+      {
+        model: BasketItem,
+        attributes: [ 'id', 'quantity', 'plateId', 'customPlateId', 'basket_type' ],
+        include: [
+          {
+            model: Plates,
+            as: 'plate',
+            attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'userId' ]
+          },
+          //added custom plate in listBasket as well
+          {
+            model: CustomPlateOrder,
+            as: 'custom_plate',
+            attributes: [ 'id', 'name', 'description', 'userId', 'price' ]
+          }
+        ],
+      }
+    ],
+  });
+
 }
 
 exports.listBasketCustom = async (data) => {
@@ -134,4 +168,33 @@ exports.listBasketCustom = async (data) => {
     console.log("Error: ", e);
     return { message: "Fail to get your Basket!", error: e };
   }
+}
+
+
+/**
+* Get Basket Items in detail
+* both plates and custom plate orders
+*/
+exports.getBasketItemsDetail = async (basketId) => {
+
+  let existBasket = await BasketItem.findAll({
+    where: { basketId: basketId },
+    attributes: [ 'id', 'quantity', 'plateId', 'customPlateId', 'basket_type' ],
+    include: [
+      {
+        model: Plates,
+        as: 'plate',
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'userId' ]
+      },
+      //added custom plate in listBasket as well
+      //TODO may be we should name as custom_plate_order. it would be confused with the actual custom_plate table
+      {
+        model: CustomPlateOrder,
+        as: 'custom_plate',
+        attributes: [ 'id', 'name', 'description', 'price', 'userId', 'chefID']
+      }
+    ]
+  });
+
+  return existBasket;
 }

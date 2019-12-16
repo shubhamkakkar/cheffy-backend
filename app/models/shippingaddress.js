@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: ShippingAddress
+* Stores shipping address of a user. For now a user can have only one shipping address
+*/
 module.exports = (sequelize, DataTypes) => {
   const ShippingAddress = sequelize.define('ShippingAddress', {
     addressLine1: DataTypes.STRING,

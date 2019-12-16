@@ -1,274 +1,225 @@
 'use strict';
-var HttpStatus = require('http-status-codes');
+const path = require('path');
+const HttpStatus = require('http-status-codes');
 const { User } = require('../models/index');
 const ValidationContract = require('../services/validator');
 const repository = require('../repository/basket-repository');
 const md5 = require('md5');
 const authService = require('../services/auth');
+const asyncHandler = require('express-async-handler');
+const basketConstants = require(path.resolve('app/constants/baskets'));
+const debug = require('debug')('basket');
 
-exports.addItem = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    if (!token_return) {
-      res.status(HttpStatus.CONFLICT).send({
-        message: "You must be logged in to add items to cart",
-        error: true
-      });
-    }
 
-    let contract = new ValidationContract();
-    contract.isRequired(req.body.plateId, 'The plate identifier code is required!');
-    contract.isRequired(req.body.quantity, 'Quantity field is required!');
+/**
+* Method: POST
+* req body: plateId, quantity
+* Add plate to user basket
+* create new BasketItems if no plate exists
+* update quantity of BasketItems if plate exists in basket
+*/
+exports.addItem = asyncHandler(async (req, res, next) => {
 
-    if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
-      return 0;
-    }
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.plateId, 'The plate identifier code is required!');
+  contract.isRequired(req.body.quantity, 'Quantity field is required!');
 
-    let basket = await repository.getUserBasket(token_return.id)
-    let basket_itens = await repository.getBasketItens(basket[0].id, req.body.plateId)
-    let item;
-    if (basket_itens.length === 0) {
-      let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId: basket[0].id }
-      item = await repository.createBasketItem(body);
-    } else {
-      await repository.addBasketItens(basket_itens[0].id, req.body.quantity)
-      let basket = await repository.getUserBasket(token_return.id)
-      item = await repository.listBasket(basket[0].id)
-    }
-
-    basket = await repository.getUserBasket(token_return.id)
-    let basket_list = await repository.listBasket(basket[0].id)
-    let arrayNew = []
-    basket_list.BasketItems.forEach(function (value) {
-      if (value['dataValues'].itens > 1) {
-        value.quantity = value['dataValues'].itens;
-        value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-        arrayNew.push({
-          quantity: value.quantity,
-          total_value: parseFloat(value.total),
-          plate: value['dataValues'].plate
-        })
-      } else {
-        value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-        arrayNew.push({
-          quantity: value.quantity,
-          total_value: parseFloat(value.total),
-          plate: value['dataValues'].plate
-        })
-      }
-    });
-    res.status(HttpStatus.ACCEPTED).send(arrayNew);
-
-  } catch (e) {
-    console.log("Error: ", e)
-    res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to remove itens to cart",
-      error: e
-    });
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send(contract.errors());
   }
-}
+
+  //get user basket. create on if it doesn't exists yet.
+  let basket = await repository.getOrCreateUserBasket(req.userId);
+
+  let basket_item_plate = await repository.getBasketItemsPlate(basket[0].id, req.body.plateId)
+
+  let item;
+  //if no plate is found in basket item, add it to basket item.
+  if (!basket_item_plate) {
+    let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId: basket[0].id }
+    item = await repository.createBasketItem(body);
+  } else {
+    item = await basket_item_plate.increment('quantity', {by: req.body.quantity});
+  }
+  //after finished updating or adding plate to basket item, get the basket list
+  //calculate price and send as response
+  let basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id);
+
+  const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
+
+  res.status(HttpStatus.ACCEPTED).send(result);
+});
 
 
+/**
+* Method: GET
+* List BasketItems of a user
+* Both plate and customPlate can be listed at once
+* send basketItemId as well in the response. it is required to change the quantity of plates/customPlate
+*/
+exports.list = asyncHandler(async (req, res, next) => {
 
-exports.list = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  if (!token_return) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to add items to cart",
+  let basket = await repository.getOrCreateUserBasket(req.userId)
+  let basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id);
+
+  const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket[0]});
+
+  res.status(HttpStatus.ACCEPTED).send(result);
+});
+
+
+/**
+* Method: PUT
+* req params: basketItemId
+* Subtract 1 quantity from specific basket item
+* Both plate and customPlate can be subtracted
+*/
+exports.subtractItem = asyncHandler(async ( req, res, next) => {
+
+  let basket = await repository.getOneUserBasket(req.userId)
+  let basketItem = await repository.getSingleBasketItem(req.params.basketItemId);
+
+  if (!basketItem) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "We didn't find this plate/item in the cart!",
       error: true
     });
   }
-  let basket = await repository.getUserBasket(token_return.id)
 
-  let basket_list = await repository.listBasket(basket[0].id)
+  if (basketItem.quantity >= 1){
+    await repository.subtractBasketItem(basketItem)
+  } else {
+    await repository.deleteBasketItem(basketItem)
+  }
 
-  let basket_list_custom = await repository.listBasketCustom(basket[0].id)
+  //TODO why creating basket again?
+  //calling this api infers, there's already a user basket
+  //basket = await repository.getOrCreateUserBasket(req.userId);
 
-  let arrayNew = []
-  let chefId = "";
+  let basketItemsListDetail = await repository.getBasketItemsDetail(basket.id);
+
+  const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
+  res.status(HttpStatus.ACCEPTED).send(result);
+});
+
+/**
+* Method: DELTE
+* req params: basketItemId
+* Delete plate/custom-plate by basketItemId
+*/
+exports.deleteItem = asyncHandler(async ( req, res, next) => {
+
+  let basket = await repository.getOneUserBasket(req.userId)
+  let basketItem = await repository.getSingleBasketItem(req.params.basketItemId);
+
+  if (!basketItem) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "We didn't find this plate/item in the cart!",
+      error: true
+    });
+  }
+
+  await repository.deleteBasketItem(basketItem);
+
+  //TODO why creating basket again?
+  //calling this api infers, there's already a user basket
+  //basket = await repository.getOrCreateUserBasket(req.userId);
+
+  let basketItemsListDetail = await repository.getBasketItemsDetail(basket.id);
+
+  const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
+  res.status(HttpStatus.ACCEPTED).send(result);
+});
+
+/**
+* Method: PUT
+* req params: basketItemId
+* Add 1 quantity to specific basket item
+* Both plate and customPlate can be added
+*/
+exports.sumItem = asyncHandler(async ( req, res, next) => {
+
+  let basket = await repository.getOneUserBasket(req.userId);
+  let basketItem = await repository.getSingleBasketItem(req.params.basketItemId);
+
+  if (!basketItem) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "We didn't find this plate in the cart!",
+      error: true
+    });
+  }
+
+  await repository.addBasketItem(basketItem);
+
+  //TODO why creating basket again?
+  //calling this api infers, there's already a user basket
+  //basket = await repository.getOrCreateUserBasket(req.userId)
+
+  let basketItemsListDetail = await repository.getBasketItemsDetail(basket.id);
+
+  const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
+
+  res.status(HttpStatus.ACCEPTED).send(result);
+});
+
+/**
+* Helper method
+* Prepare cart response.
+* response : {basket_total, basket_subtotal, basket_delivery_fee, basket_total_items}
+*/
+function prepareCartResponse({basketItems, basket}){
+  let result = [];
+
   let basket_total = 0.0;
   let basket_subtotal = 0.0;
   let basket_delivery_fee = 0.0;
   let basket_total_items = 0.0;
 
-
-  basket_list.BasketItems.forEach(function (value) {
-
-    if(value.plate!=undefined){
-
-    if (value['dataValues'].itens > 1) {
-      value.quantity = value['dataValues'].itens;
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-
-      arrayNew.push({
+  basketItems.forEach(function (value) {
+    /*
+    TODO
+    commented this out. i didn't find any usage of this. if someone finds it please uncomment it.
+    why is the items length checked
+    if (value['dataValues'].items > 1) {
+      value.quantity = value['dataValues'].items;
+      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value[value.basket_type].price)).toFixed(2);
+      return result.push({
+        basketItemId: value.id,
         quantity: value.quantity,
         total_value: parseFloat(value.total),
-        plate: value['dataValues'].plate
-      })
-    } else {
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
+        [value.basket_type]: value['dataValues'][value.basket_type]
+      });
 
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        plate: value['dataValues'].plate
-      })
-    }
+    }*/
+
+    value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value[value.basket_type].price)).toFixed(2);
+    result.push({
+      basketItemId: value.id,
+      quantity: value.quantity,
+      basket_type: value.basket_type,
+      total_value: parseFloat(value.total),
+      [value.basket_type]: value['dataValues'][value.basket_type]
+    });
 
     basket_total_items = value.quantity;
     basket_subtotal += parseFloat(value.total);
+    //TODO basket delivery fee
     basket_delivery_fee += 0;
     basket_total += (basket_delivery_fee + parseFloat(value.total));
 
-    }
   });
-
-
-  basket_list_custom.BasketItems.forEach(function (value) {
-
-    if(value.custom_plate!=undefined){
-
-    if (value['dataValues'].itens > 1) {
-      value.quantity = value['dataValues'].itens;
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.custom_plate.price)).toFixed(2);
-
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        custom_plate: value['dataValues'].custom_plate
-      })
-    } else {
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.custom_plate.price)).toFixed(2);
-
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        custom_plate: value['dataValues'].custom_plate
-      })
-    }
-
-    basket_total_items = value.quantity;
-    basket_subtotal += parseFloat(value.total);
-    basket_delivery_fee += 0;
-    basket_total += (basket_delivery_fee + parseFloat(value.total));
-
-    }
-  });
-
-  if(arrayNew[0].plate.userId != undefined){
-    chefId = arrayNew[0].plate.userId;
-
-  }
-  else if(arrayNew[0].custom_plate.userId != undefined){
-    chefId = arrayNew[0].custom_plate.userId;
-
-  }
-
 
   let basket_return = {
-    id: basket[0].id,
-    chefId:chefId,
+    basketId: basket.id,
     sub_total: basket_subtotal,
     delivery_fee: basket_delivery_fee,
     total: basket_total,
-    items: arrayNew
+    items: result
   }
 
-
-  res.status(HttpStatus.ACCEPTED).send(basket_return);
+  return basket_return;
 }
 
-exports.subtractIten = async ( req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  if (!token_return) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to add items to cart",
-      error: true
-    });
-  }
-  let basket = await repository.getOneUserBasket(token_return.id)
-  let basket_itens = await repository.getBasketItens(basket.id, req.params.id)
-  if (basket_itens.length === 0) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We didn't find this plate in the cart!",
-      error: true
-    });
-    return 0;
-  }
-
-  if (basket_itens[0].quantity >= 1){
-    await repository.subtractBasketItem(basket_itens[0].id)
-  } else {
-    await repository.deleteBasketItem(basket_itens[0].id)
-  }
-
-  basket = await repository.getUserBasket(token_return.id)
-  let basket_list = await repository.listBasket(basket[0].id)
-  let arrayNew = []
-  basket_list.BasketItems.forEach(function (value) {
-    if (value['dataValues'].itens > 1) {
-      value.quantity = value['dataValues'].itens;
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        plate: value['dataValues'].plate
-      })
-    } else {
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        plate: value['dataValues'].plate
-      })
-    }
-  });
-
-  res.status(HttpStatus.ACCEPTED).send(arrayNew);
-}
-
-exports.sumIten = async ( req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  if (!token_return) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to add itens to cart",
-      error: true
-    });
-  }
-  let basket = await repository.getOneUserBasket(token_return.id)
-  let basket_itens = await repository.getBasketItens(basket.id, req.params.id)
-  if (basket_itens.length === 0) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "We didn't find this plate in the cart!",
-      error: true
-    });
-    return 0;
-  }
-  await repository.addBasketItem(basket_itens[0].id)
-  basket = await repository.getUserBasket(token_return.id)
-  let basket_list = await repository.listBasket(basket[0].id)
-  let arrayNew = []
-  basket_list.BasketItems.forEach(function (value) {
-    if (value['dataValues'].itens > 1) {
-      value.quantity = value['dataValues'].itens;
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        plate: value['dataValues'].plate
-      })
-    } else {
-      value.total = parseFloat(parseFloat(value.quantity) * parseFloat(value.plate.price)).toFixed(2);
-      arrayNew.push({
-        quantity: value.quantity,
-        total_value: parseFloat(value.total),
-        plate: value['dataValues'].plate
-      })
-    }
-  });
-  res.status(HttpStatus.ACCEPTED).send(arrayNew);
-}
 
 
 exports.delItem = async ( req, res, next) => {
@@ -291,6 +242,6 @@ exports.delItem = async ( req, res, next) => {
   await repository.delBasketItem(basket_itens[0].id)
   basket = await repository.getUserBasket(token_return.id)
   let basket_list = await repository.listBasket(basket[0].id)
-  
+
   res.status(HttpStatus.ACCEPTED).send(basket_list);
 }

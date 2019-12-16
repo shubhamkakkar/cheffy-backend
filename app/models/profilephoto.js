@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: ProfilePhoto
+* Stores user profile photo url
+*/
 module.exports = (sequelize, DataTypes) => {
   const ProfilePhoto = sequelize.define('ProfilePhoto', {
     description: DataTypes.STRING,

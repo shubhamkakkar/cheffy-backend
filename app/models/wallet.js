@@ -1,4 +1,11 @@
 'use strict';
+const path = require('path');
+const walletConstants = require(path.resolve('app/constants/wallet'));
+
+/**
+* @Model: Wallet
+* Wallet Table
+*/
 module.exports = (sequelize, DataTypes) => {
   const Wallet = sequelize.define('Wallet', {
     userId: {
@@ -9,8 +16,8 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     state_type: {
-      type: DataTypes.ENUM('open', 'locked'),
-      defaultValue: 'open'
+      type: DataTypes.ENUM(walletConstants.WALLET_TYPE_OPEN, walletConstants.WALLET_TYPE_LOCKED),
+      defaultValue: walletConstants.WALLET_TYPE_OPEN
     },
   }, {});
   Wallet.associate = function(models) {

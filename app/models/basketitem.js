@@ -1,7 +1,17 @@
 'use strict';
+
+const path = require('path');
+const basketConstants = require(path.resolve('app/constants/baskets'));
+
+/**
+* @Model: BasketItem
+* User basket item. When user adds plate or custom_plate to basket, BasketItem is created.
+* User has many BasketItems and belongs to plate
+*/
 module.exports = (sequelize, DataTypes) => {
   const BasketItem = sequelize.define('BasketItem', {
     plateId: {
+      allowNull: true,
       type: DataTypes.INTEGER,
       references: {
         model: 'Plates',
@@ -10,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     quantity: DataTypes.INTEGER,
     basket_type: {
-      type: DataTypes.ENUM('plate', 'custom_plate'),
-      defaultValue: 'plate'
+      type: DataTypes.ENUM(basketConstants.BASKET_TYPE_PLATE, basketConstants.BASKET_TYPE_CUSTOM_PLATE),
+      defaultValue: basketConstants.BASKET_TYPE_PLATE
     },
     basketId: {
       type: DataTypes.INTEGER,
@@ -21,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     customPlateId: {
+      allowNull: true,
       type: DataTypes.INTEGER,
       references: {
         model: 'CustomPlateOrders',

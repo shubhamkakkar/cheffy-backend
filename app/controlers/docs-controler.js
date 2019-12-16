@@ -1,52 +1,76 @@
 "use strict";
-var HttpStatus = require("http-status-codes");
+const path = require('path');
+const HttpStatus = require("http-status-codes");
 const ValidationContract = require("../services/validator");
 const repository = require("../repository/docs-repository");
 const md5 = require("md5");
 const authService = require("../services/auth");
 const uploadService = require('../services/upload');
-const {
-  User,
-  Documents,
-  ProfilePhoto,
-  NIDFrontSide,
-  KitchenPhoto,
-  ChefLicense,
-  ChefCertificate,
-  DriverLicenseFrontSide,
-  DriverVehicleRegistration } = require("../models/index");
+const { User } = require("../models/index");
+const debug = require('debug')('docs');
+const asyncHandler = require('express-async-handler');
+const userConstants = require(path.resolve('app/constants/users'));
+const documentConstants = require(path.resolve('app/constants/documents'));
 
-exports.create = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token']);
-  const actualUser = await User.findByPk(token_return.id);
+exports.getAuthUserDocMiddleware = asyncHandler(async(req, res, next) => {
+  //extract id, user_type from session
+  const { id, user_type } = req.user;
 
-  if (!actualUser) {
-    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
-    return 0;
+  if (user_type === userConstants.USER_TYPE_DRIVER) {
+    const doc = await repository.getDriverDoc(id);
+    req.authUserDoc = doc;
   }
 
+  if (user_type === userConstants.USER_TYPE_CHEF) {
+    const doc = await repository.getDriverDoc(id);
+    req.authUserDoc = doc;
+  }
+
+  if(!req.authUserDoc) {
+    return res.status(HttpStatus.NOT_FOUND).send({message: 'Doc Not Found', status: HttpStatus.NOT_FOUND});
+  }
+
+  next();
+
+});
+
+
+exports.getDocByIdMiddleware = asyncHandler(async(req, res, next, docId) => {
+  const doc = await repository.getDocById(docId);
+  if(!doc) {
+    return res.status(HttpStatus.NOT_FOUND).send({message: 'Doc Not Found', status: HttpStatus.NOT_FOUND});
+  }
+  req.doc = doc;
+  next();
+
+})
+
+exports.create = asyncHandler(async (req, res, next) => {
+
+  const actualUser = req.user;
   let actualDocs;
-  if (actualUser.user_type === 'driver')
-    actualDocs = await repository.getDriverDoc(token_return.id);
-  if (actualUser.user_type === 'chef')
-    actualDocs = await repository.getChefDoc(token_return.id);
-  
+
+  if (actualUser.user_type === userConstants.USER_TYPE_DRIVER)
+    actualDocs = await repository.getDriverDoc(actualUser.id);
+  if (actualUser.user_type === userConstants.USER_TYPE_CHEF)
+    actualDocs = await repository.getDriverDoc(actualUser.id);
+
   if (actualDocs) {
-    res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
+    res.status(HttpStatus.OK).send({ message: "You already have documents applied", data: actualDocs });
     return 0;
   }
-  
+
   let contract = new ValidationContract();
-  if (actualUser.user_type === 'chef') {
-    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
-    contract.isRequired(req.files['chef_license'], "Chef's license is missing!");
-    contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing!");
-    contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing!");
-    contract.isRequired(req.files['front_side'], "Front side document is missing");
-    contract.isRequired(req.files['profile_photo'], "User photo is missing");
+  if (actualUser.user_type === userConstants.USER_TYPE_CHEF) {
+    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect! field: social_security_number');
+    contract.isRequired(req.files['chef_license'], "Chef's license is missing! field: chef_license ");
+    contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing! field: chef_certificate");
+    contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing! field: kitchen_photo");
+    contract.isRequired(req.files['front_side'], "Front side document is missing. field: front_side");
+    contract.isRequired(req.files['profile_photo'], "User photo is missing. field: profile_photo");
   }
 
-  if (actualUser.user_type === 'driver') {
+  if (actualUser.user_type === userConstants.USER_TYPE_DRIVER) {
     contract.isRequired(req.files['profile_photo'], "User photo is missing");
     contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
     contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");
@@ -54,13 +78,13 @@ exports.create = async (req, res, next) => {
   }
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
   let new_doc = await repository.createDoc({
     comment: "",
-    userId: token_return.id,
+    userId: actualUser.id,
     social_security_number: req.body.social_security_number
   });
 
@@ -72,8 +96,11 @@ exports.create = async (req, res, next) => {
     await repository.createKitchenPhoto(new_doc.id, req.files.kitchen_photo.shift());
   if (actualUser.user_type === 'chef' && req.files['front_side'])
     await repository.createNIDFrontSide(new_doc.id, req.files.front_side.shift());
-  if (req.files['profile_photo'])
-    await repository.createProfilePhoto(new_doc.id, req.files.profile_photo.shift());
+  if (req.files['profile_photo']) {
+    const photoResponse = await repository.createProfilePhoto(new_doc.id, req.files.profile_photo.shift());
+    await actualUser.update({'imgPath': photoResponse.url});
+  }
+
   if (actualUser.user_type === 'driver' && req.files['driver_license_front_side'])
     await repository.createDriverLicense(new_doc.id, req.files.driver_license_front_side.shift());
   if (actualUser.user_type === 'driver' && req.files['driver_vehicle_registration'])
@@ -82,100 +109,123 @@ exports.create = async (req, res, next) => {
   let saved_data;
 
   if (actualUser.user_type === 'driver')
-    saved_data = await repository.getDriverDoc(token_return.id);
+    saved_data = await repository.getUserDoc(actualUser.id);
   if (actualUser.user_type === 'chef')
-    saved_data = await repository.getChefDoc(token_return.id);
-  new_doc.state_type = 'validated';
-  new_doc.save();
-  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+    saved_data = await repository.getDriverDoc(actualUser.id);
 
+  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", data: saved_data });
+});
 
-exports.list = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token']);
-  const actualUser = await User.findOne({ where: { id: token_return.id } });
+/**
+* //TODO since a user only has one document, should we use list method
+*/
+exports.list = asyncHandler(async (req, res, next) => {
+  const userId = req.userId;
+  let user_docs;
 
-  if (!actualUser) {
-    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
-    return 0;
+  if (req.query.state) {
+    user_docs = await repository.getUserDocs(req.query.state, userId);
+  } else {
+    user_docs = await repository.getUserDocs(userId);
   }
 
-  let actualDocs;
-  if (actualUser.user_type === 'driver')
-    actualDocs = await repository.getDriverDoc(token_return.id);
-  if (actualUser.user_type === 'chef')
-    actualDocs = await repository.getChefDoc(token_return.id);
-
-  if (!actualDocs) {
-    res.status(HttpStatus.NOT_FOUND).send({
+  if (!user_docs) {
+    return res.status(HttpStatus.NOT_FOUND).send({
       message: "No documents found!",
-      status: HttpStatus.NOT_FOUND
+      error: false
     });
+  }
+
+  return res.status(HttpStatus.ACCEPTED).send(user_docs);
+
+});
+
+/**
+* Get auth user document
+*/
+exports.getMyDoc = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  let userDoc = {};
+
+  if (user.user_type === userConstants.USER_TYPE_CHEF) {
+    userDoc = await repository.getUserDoc(user.id);
+  }
+
+  if (user.user_type === userConstants.USER_TYPE_DRIVER) {
+    userDoc = await repository.getDriverDoc(user.id);
+  }
+
+  res.status(HttpStatus.OK).send({data: userDoc });
+});
+
+/**
+* Get document by docId
+*/
+exports.getOne = asyncHandler(async (req, res, next) => {
+  res.status(HttpStatus.OK).send({data: req.doc });
+});
+
+//TODO while editing docs. I thought the id we get was documentId.
+//But infact what is used here is userId.
+exports.edit = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+
+  let existDocs;
+  if (user.user_type === userConstants.USER_TYPE_CHEF)
+    existDocs = await repository.getUserDoc(req.params.id);
+  if (user.user_type === userConstants.USER_TYPE_DRIVER)
+    existDocs = await repository.getDriverDoc(req.params.id);
+
+  if (!existDocs) {
+    await Object.keys(req.files).map(async keyObject => {
+      const { fieldname, key } = req.files[keyObject].shift();
+
+      await uploadService.deleteImage(fieldname, key);
+    });
+    res.status(HttpStatus.CONFLICT).send({ message: "We couldn't find your docs", status: HttpStatus.CONFLICT});
     return 0;
   }
 
-  res.status(HttpStatus.ACCEPTED).send({ message: "Documents found successfully", result: actualDocs });  
-};
-
-exports.edit = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token']);
-    const actual = await User.findByPk(token_return.id);
-
-    if (!actual) {
-      res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
-      return 0;
-    }
-
-    let existDocs;
-    if (actual.user_type === 'chef')
-      existDocs = await repository.getChefDoc(actual.id);
-    if (actual.user_type === 'driver')
-      existDocs = await repository.getDriverDoc(actual.id);
-
-    if (!existDocs) {
-      await Object.keys(req.files).map(async keyObject => {
-        const { fieldname, key } = req.files[keyObject].shift();
-  
-        await uploadService.deleteImage(fieldname, key);
-      });
-
-      res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: "We couldn't find your docs", status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
-      return 0;
-    }
-
-    if (existDocs.id && req.files['chef_license'])
-      await repository.updateChefLicense(existDocs.id, req.files.chef_license.shift());
-    if (existDocs.id && req.files['chef_certificate'])
-      await repository.updateChefCertificate(existDocs.id, req.files.chef_certificate.shift());
-    if (existDocs.id && req.files['kitchen_photo'])
-      await repository.updateKitchenPhoto(existDocs.id, req.files.kitchen_photo.shift());
-    if (existDocs.id && req.files['front_side'])
-      await repository.updateNIDFrontSide(existDocs.id, req.files.front_side.shift());
-    if (existDocs.id && req.files['profile_photo'])
-      await repository.updateProfilePhoto(existDocs.id, req.files.profile_photo.shift());
-    if (existDocs.id && req.files['driver_license_front_side'])
-      await repository.updateDriverLicense(existDocs.id, req.files.driver_license_front_side.shift());
-    if (existDocs.id && req.files['driver_vehicle_registration'])
-      await repository.updateDriverVehicleRegistration(existDocs.id, req.files.driver_vehicle_registration.shift());
-
-    await repository.userUpdateDoc(req.params.id)
-
-    let updatedDocs;
-
-    if (actual.user_type === 'driver')
-      updatedDocs = await repository.getDriverDoc(token_return.id);
-    if (actual.user_type === 'chef')
-      updatedDocs = await repository.getChefDoc(token_return.id);
-
-    res.status(200).send({ message: 'Docs successfully updated!', result: updatedDocs });
-  } catch (e) {
-    console.log("Error: ", e)
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
+  if (existDocs.id && req.files['chef_license'])
+    await repository.updateChefLicense(existDocs.id, req.files.chef_license.shift());
+  if (existDocs.id && req.files['chef_certificate'])
+    await repository.updateChefCertificate(existDocs.id, req.files.chef_certificate.shift());
+  if (existDocs.id && req.files['kitchen_photo'])
+    await repository.updateKitchenPhoto(existDocs.id, req.files.kitchen_photo.shift());
+  if (existDocs.id && req.files['front_side'])
+    await repository.updateNIDFrontSide(existDocs.id, req.files.front_side.shift());
+  if (existDocs.id && req.files['profile_photo']) {
+    const photoResponse = await repository.updateProfilePhoto(existDocs.id, req.files.profile_photo.shift());
+    await user.update({'imgPath': photoResponse.url});
   }
-};
+  if (existDocs.id && req.files['driver_license_front_side'])
+    await repository.updateDriverLicense(existDocs.id, req.files.driver_license_front_side.shift());
+  if (existDocs.id && req.files['driver_vehicle_registration'])
+    await repository.updateDriverVehicleRegistration(existDocs.id, req.files.driver_vehicle_registration.shift());
+
+  //TODO this line sends userId to update Docs. but the function accepts documentId
+  await repository.userUpdateDoc(req.params.id)
+
+  let updatedDocs;
+
+  if (user.user_type === userConstants.USER_TYPE_CHEF)
+    updatedDocs = await repository.getUserDoc(user.id);
+  if (user.user_type === userConstants.USER_TYPE_DRIVER)
+    updatedDocs = await repository.getDriverDoc(user.id);
+
+
+  res.status(200).send({ message: 'Docs successfully updated!', data: updatedDocs });
+});
+
+/**
+* Get Document status (state_type) of a user
+*/
+exports.getDocumentStatus = [
+exports.getAuthUserDocMiddleware,
+asyncHandler(async (req, res, next) => {
+ res.status(HttpStatus.OK).send({doc_status: req.authUserDoc.state_type, id: req.authUserDoc.id});
+})];
+
 
 exports.createChefLicense = async (req, res, next) => {
   let contract = new ValidationContract();
@@ -589,7 +639,7 @@ exports.insertSocialSecurityNumber = async (req, res, next) => {
     res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND});
     return 0;
   }
-  
+
   if (actualUser.Document && actualUser.Document.social_security_number) {//
     res.status(HttpStatus.OK).send({ message: "You already have social security number applied", result: actualUser.Document });
     return 0;

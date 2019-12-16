@@ -1,16 +1,20 @@
 'use strict';
-const stripe = require('stripe')('sk_test_nHIOvozla47wdKe453nhTzQT009ddvBetD');
+const path = require('path');
+const paymentConfig = require(path.resolve('config/payment'));
+
+const stripe = require('stripe')(paymentConfig.stripe.client_secret);
 const paypal = require('paypal-rest-sdk');
+const debug = require('debug')('payment-service');
 
 stripe.setMaxNetworkRetries(3);
 
-exports.createSession = async (userID, list_itens, address) => {
+exports.createSession = async (userID, list_items, address) => {
 
   const session = await stripe.checkout.sessions.create({
     customer: userID,
     payment_method_types: ['card'],
     submit_type: "pay",
-    line_items: list_itens,
+    line_items: list_items,
     payment_intent_data: {
       shipping: {
         name: 'home',
@@ -23,14 +27,18 @@ exports.createSession = async (userID, list_itens, address) => {
         }
       }
     },
-    success_url: 'http://146a3f91.ngrok.io/payment/success',
-    cancel_url: 'http://146a3f91.ngrok.io/payment/cancel',
+    success_url: paymentConfig.stripe.success_url,
+    cancel_url: paymentConfig.stripe.cancel_url,
   });
   return session;
 }
 
+/**
+* Create Stripe Customer for future recurring payments and saving cards
+* customer_id will be sent by stripe which will be saved in user.stripe_id
+*/
 exports.createUser = async (user, address) => {
-  console.log("STRIPE Create user: ", user.email);
+  debug("STRIPE Create user: ", user.email);
   const user_req = await stripe.customers.create({
     email: user.email,
     name: user.name,
@@ -55,20 +63,59 @@ exports.createUser = async (user, address) => {
   return user_req;
 }
 
-exports.getUser = async (user) => {
-  console.log("STRIPE Get user: ", user)
-  const user_req = await stripe.customers.retrieve(user);
+/**
+* Update Stripe customer
+*/
+exports.updateUser = async (user, updates) => {
+  debug("STRIPE Update user: ", user.email);
+  const updatedResponse = await stripe.customers.update(user.stripe_id, updates);
+  return updatedResponse;
+}
+
+/**
+* Retrieve Stripe Customer by stripeId
+*/
+exports.getUser = async (userStripeId) => {
+  debug("STRIPE Get user: ", userStripeId)
+  const user_req = await stripe.customers.retrieve(userStripeId);
   return user_req;
 }
 
-exports.getUserCardsList = async (user) => {
-  console.log("STRIPE Get user cards: ", user)
-  const user_req = await stripe.paymentMethods.list({ customer: user, type: 'card' });
+/**
+* ADMIN
+* List all customers in stripe
+*/
+exports.listUsers = async (query) => {
+  const data = await stripe.customers.list(query);
+  return data;
+}
+
+
+/**
+* ADMIN
+* Delete Stripe Customer
+*/
+exports.deleteUser = async (user) => {
+  debug("STRIPE Delete user: ", user.stripe_id);
+  const updatedResponse = await stripe.customers.del(user.stripe_id);
+  return updatedResponse;
+}
+
+
+/**
+* List paymentMethods of a user of 'card' type from stripe
+*/
+exports.getUserCardsList = async (stripeCustomerId, queryOptions = {}) => {
+  debug("STRIPE Get user cards: ", stripeCustomerId)
+  const user_req = await stripe.paymentMethods.list({ customer: stripeCustomerId, type: 'card', ...queryOptions });
   return user_req;
 }
 
+/**
+* Creates payment Method of type card for a customer
+*/
 exports.createCard = async (user, address, card) => {
-  console.log("STRIPE Create card: ", card.cvc)
+  debug("STRIPE Create card: ", card.cvc)
   const card_req = await stripe.paymentMethods.create({
     type: "card",
     card: {
@@ -80,6 +127,7 @@ exports.createCard = async (user, address, card) => {
     billing_details: {
       name: user.name,
       email: user.email,
+      phone: user.country_code + user.phone_no,
       address: {
         line1: address.addressLine1,
         line2: address.addressLine2,
@@ -92,13 +140,13 @@ exports.createCard = async (user, address, card) => {
   return card_req;
 }
 
-exports.attachUser = async (card, user) => {
+exports.attachPaymentMethod = async (card, user) => {
   const card_req = await stripe.paymentMethods.attach(card, { customer: user });
   return card_req;
 }
 
 exports.confirmPayment = async (ammount, card, customer) => {
-  console.log("STRIPE Confirm payment: ", card)
+  debug("STRIPE Confirm payment: ", card)
   const paymentIntent = await stripe.paymentIntents.create({
     amount: ammount,
     currency: 'usd',
@@ -127,7 +175,7 @@ exports.confirmPayment = async (ammount, card, customer) => {
     //create Card at Strip system payment
     const card_return = await paymentService.createCard(user_data, user_address, req.body.card);
   } catch (e) {
-    console.log("createCard: ", e)
+    debug("createCard: ", e)
     let retorn = {
       orderId: create_order.id,
       payment_id: null,
@@ -160,12 +208,12 @@ exports.confirmPayment = async (ammount, card, customer) => {
     return 0;
   }
 
-  let user_card = await paymentService.attachUser(card_return.id, user_return.id);
+  let user_card = await paymentService.attachPaymentMethod(card_return.id, user_return.id);
 
   try {
     const confirm = await paymentService.confirmPayment(total_cart, user_card.id, user_return.id);
   } catch (e) {
-    console.log("confirmPayment: ", e)
+    debug("confirmPayment: ", e)
     await repository.editState(create_order.id, 'declined')
     res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to confirm your payment!',

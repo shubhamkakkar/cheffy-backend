@@ -1,7 +1,9 @@
 const path = require('path');
 
+const isDev = process.env.NODE_ENV === 'development' || typeof process.env.NODE_ENV === 'undefined';
+
 module.exports = {
-  'config': path.resolve('config', 'database.js'),
+  'config': path.resolve('config', isDev ? 'local.json' : 'config.json'),
   'models-path': path.resolve('app', 'models'),
   'seeders-path': path.resolve('database', 'seeders'),
   'migrations-path': path.resolve('database', 'migrations'),

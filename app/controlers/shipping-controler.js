@@ -4,7 +4,32 @@ const ValidationContract = require("../services/validator");
 const repository = require("../repository/shipping-repository");
 const md5 = require("md5");
 const authService = require("../services/auth");
+const asyncHandler = require('express-async-handler');
 
+/**
+* Gets one shipping address of a user and attach to req object
+*/
+exports.getAuthUserShippingAddress = asyncHandler(async(req, res, next) => {
+  //check if shipping_id is present in req body or query
+  //if present fetch shipping address by that id instead
+  //incase there are multiple shipping address of user, they can select one.
+  let shippingId = req.body.shipping_id || req.query.shipping_id;
+
+  let shippingAddress = null;
+  if(shippingId) {
+    shippingAddress = await repository.getUserAddressByShippingId({userId: req.userId, shippingId: shippingId});
+  } else {
+    shippingAddress = await repository.getUserAddress(req.userId, {raw: true});
+  }
+
+  if(!shippingAddress) {
+    return res.status(HttpStatus.NOT_FOUND).send({ message: 'User shipping address not found', status: HttpStatus.NOT_FOUND });
+  }
+
+  req.userShippingAddress = shippingAddress;
+
+  next();
+});
 
 exports.create = async (req, res, next) => {
   let contract = new ValidationContract();
@@ -13,13 +38,14 @@ exports.create = async (req, res, next) => {
   contract.isRequired(req.body.state, "The state field is required!");
   contract.isRequired(req.body.zipCode, "The zipcode field is required!");
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
+    res.status(HttpStatus.CONFLICT).send(contract.errors());
     return 0;
   }
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
+  
   const existAddress = await repository.checkExistAddress({
     userId: token_return.id,
-    lat: req.body.lat, 
+    lat: req.body.lat,
     lon: req.body.lon
   });
   if (existAddress) {
@@ -37,7 +63,11 @@ exports.create = async (req, res, next) => {
     .send({ message: "Successfully created shipping address!", data: address });
 
 }
+
+
 exports.list = async (req, res, next) => {
+  //TODO improve pagination query.
+  //see customPlatesController.listAllCustomPlates
   let retorno;
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
   if (req.query.page && req.query.pageSize) {
@@ -76,7 +106,7 @@ exports.edit = async (req, res, next) => {
     contract.isRequired(req.body.state, "The state field is required!");
     contract.isRequired(req.body.zipCode, "The zipcode field is required!");
     if (!contract.isValid()) {
-      res.status(HttpStatus.CONFLICT).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION });
+      res.status(HttpStatus.CONFLICT).send(contract.errors());
       return 0;
     }
 

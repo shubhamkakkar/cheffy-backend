@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: PlateCategory
+* categorize the plates
+*/
 module.exports = (sequelize, DataTypes) => {
   const PlateCategory = sequelize.define('PlateCategory', {
     name: DataTypes.STRING,

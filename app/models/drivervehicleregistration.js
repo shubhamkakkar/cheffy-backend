@@ -1,4 +1,8 @@
 'use strict';
+/**
+* @Model: DriverVehicleRegistration
+* It stores url of driver vehicle registration image.
+*/
 module.exports = (sequelize, DataTypes) => {
   const DriverVehicleRegistration = sequelize.define('DriverVehicleRegistration', {
     name: DataTypes.STRING,

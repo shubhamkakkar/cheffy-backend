@@ -1,3 +1,7 @@
+/**
+* @Model: Plates
+* Plate created by chef
+*/
 module.exports = (sequelize, DataTypes) => {
   const Plate = sequelize.define('Plates', {
     name: DataTypes.STRING,
