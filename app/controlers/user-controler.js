@@ -700,6 +700,9 @@ exports.authenticate = async (req, res, next) => {
       name: customer.name
     });
 
+    customer.auth_token = token;
+    customer.save()
+
     res.status(200).send({
       token: token,
       data: { ...customer.dataValues, user_doc: !!(doc) }
@@ -712,6 +715,25 @@ exports.authenticate = async (req, res, next) => {
     });
   }
 };
+
+exports.logout = asyncHandler(async(req, res, next) =>{
+
+    const existUser = await User.findOne({ where: { id: req.userId } });
+
+    if (!existUser) {
+      return res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
+    }
+
+    existUser.auth_token = null;
+
+    existUser.save();
+
+    res.status(200).send({
+      message: 'successfully logged out!'
+    });
+
+
+})
 
 exports.put = asyncHandler(async (req, res, next) => {
     //for accepting form-data as well
