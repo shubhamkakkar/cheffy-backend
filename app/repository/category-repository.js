@@ -56,7 +56,8 @@ exports.categoriesListPlates = async (data) => {
         model: User,
         as:'chef',
         include: [{
-          model: ShippingAddress
+          model: ShippingAddress,
+          as:"address"
         }]
       }
     ]
