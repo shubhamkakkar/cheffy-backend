@@ -45,11 +45,10 @@ exports.authorize = async (req, res, next) => {
     if(existUser.auth_token!=null){
       next();
     }
-    else{
-      return res.status(401).json({
+    
+    return res.status(401).json({
           message: 'Login required!'
-        });
-    }
+    })
 
     
 
