@@ -42,17 +42,15 @@ exports.authorize = async (req, res, next) => {
 
     const existUser =  await User.findOne({ where: { id: req.userId } });
 
-    if(existUser.auth_token!=null){
-      next();
-    }
-    
-    return res.status(401).json({
+    if(existUser.auth_token==null){
+
+      return res.status(401).json({
           message: 'Login required!'
-          
-    })
 
-    
+      })    
+    }
 
+    next();
 
 };
 
