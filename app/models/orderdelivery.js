@@ -8,15 +8,39 @@ const orderDeliveryConstants = require(path.resolve('app/constants/order-deliver
 */
 module.exports = (sequelize, DataTypes) => {
   const OrderDelivery = sequelize.define('OrderDelivery', {
+    //set if delivery_type is order
     orderId: {
+      allowNull: true,
       type: DataTypes.INTEGER,
       references: {
         model: 'Orders',
         key: 'id'
       }
     },
+    //set if delivery_type is order_item
+    orderItemId: {
+      allowNull: true,
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'OrderItems',
+        key: 'id'
+      }
+    },
+    order_delivery_type: {
+      type: DataTypes.ENUM(
+        orderDeliveryConstants.DELIVERY_TYPE_ORDER,
+        orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM
+      )
+    },
     rating: DataTypes.INTEGER,
     driverId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
+    userId: {
       type: DataTypes.INTEGER,
       references: {
         model: 'Users',
@@ -38,10 +62,13 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: orderDeliveryConstants.STATE_TYPE_PENDING
     }
   }, {});
+
   OrderDelivery.associate = function(models) {
     OrderDelivery.belongsTo(models.Order, {foreignKey: 'orderId', as: 'order'});
+    OrderDelivery.belongsTo(models.OrderItem, {foreignKey: 'orderItemId', as: 'order_item'});
     OrderDelivery.belongsTo(models.User, {foreignKey: 'driverId'});
+    OrderDelivery.belongsTo(models.User, {foreignKey: 'userId'});
   };
-  OrderDelivery.sync();
+  
   return OrderDelivery;
 };

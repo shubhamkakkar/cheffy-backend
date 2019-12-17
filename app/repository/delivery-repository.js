@@ -1,6 +1,7 @@
 'use strict';
-
+const path = require('path');
 const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 
 //TODO waiting OrderDelivey to be implemented
 exports.createOrderDelivery = async (orderId) => {
@@ -92,7 +93,7 @@ exports.getOrderDeliveriesPendingByUserId = async (data,driver) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"],
-    where: {state_type: 'pending'}
+    where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
    }]
   });
 
@@ -127,7 +128,7 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"],
-    where: {state_type: 'delivered'}
+    where: {state_type: orderDeliveryConstants.STATE_TYPE.STATE_TYPE_DELIVERED}
    }]
   });
   return order;
@@ -144,7 +145,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
         model: OrderPayment,
         attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
-      
+
       {
         model: OrderItem,
         attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
@@ -157,7 +158,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
             include:[{model:ShippingAddress, as: 'address'}]
 
           },
-        
+
           {
             model: PlateImage
         }]
@@ -167,7 +168,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"],
-    where: {state_type: 'pending'}
+    where: {state_type: orderDeliveryConstants.STATE_TYPE.STATE_TYPE_PENDING}
    }]
   });
   return order;
@@ -270,7 +271,6 @@ exports.getPendingDeliveriesByUser = async (data) => {
                     deliveryDetails.order_items = resultOrderItemsSQL;
                   }
                 }
-
               return returnMainSQL[0];
             }
 

@@ -135,7 +135,7 @@ exports.acceptCustomPlateBid = async (data) => {
 
 exports.getCustomPlateBid = async (data) => {
   let bid = await CustomPlateAuctionBid.findByPk(data, {
-    attributes: [ 'id', 'CustomPlateAuctionID', 'chefID', 'price', 'preparation_time' ],
+    attributes: [ 'id', 'CustomPlateAuctionID', 'chefID', 'price', 'preparation_time', 'chefDeliveryAvailable' ],
     include : [
       {
         model: CustomPlateAuction,
@@ -170,8 +170,9 @@ exports.getCustomPlateBid = async (data) => {
     price: bid.price,
     chefID: bid.chefID,
     preparation_time: bid.preparation_time,
+    chefDeliveryAvailable: bid.chefDeliveryAvailable,
     custom_plate: bid.custom_plates_id.custom_plates
-  }
+  };
 
   return plate_data;
 }

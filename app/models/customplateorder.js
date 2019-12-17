@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('free', 'paid'),
       defaultValue: 'paid',
     },
+    chefDeliveryAvailable: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     userId: {
       type: DataTypes.INTEGER,
       references: {

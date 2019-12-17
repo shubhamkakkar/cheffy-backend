@@ -16,6 +16,7 @@ const TransactionsService = require("../services/transactions");
 const asyncHandler = require('express-async-handler');
 const customPlateControllers = require(path.resolve('app/controlers/customPlate-controler'));
 const inputFilters = require(path.resolve('app/inputfilters/order'));
+const paginator = require(path.resolve('app/services/paginator'));
 
 function distance(lat1,lon1,lat2,lon2) {
   var R = 6371;
@@ -101,13 +102,17 @@ const post_process = async (user_data, shipping, user_basket, basket_content, co
   return user_info;
 }
 
-exports.orderByIdMiddleware = asyncHandler(async(req, res, next) => {
-  const order = repository.getById(req.params.orderId);
+exports.orderByIdMiddleware = asyncHandler(async(req, res, next, orderId) => {
+  const order = repository.getById(orderId);
   if(!order) return res.status(HttpStatus.NOT_FOUND).send({message: `Order Not Found by orderId ${req.params.orderId}`});
   req.order = order;
   next();
 });
 
+/**
+* Get User Order List
+* Looks into orders table
+*/
 exports.list = async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
@@ -132,6 +137,36 @@ exports.list = async (req, res, next) => {
     return 0;
   }
 }
+
+
+/**
+* Get Chef Order List
+* Looks into orderitems table
+* optional query state_stype
+*/
+exports.chefOrderList = asyncHandler(async (req, res, next) => {
+  const userId = req.userId;
+  const pagination = paginator.paginateQuery(req);
+
+  const query = { chef_id: userId, pagination};
+  const state_type = req.query.state_type;
+
+  if(state_type) {
+    query.state_type = state_type;
+  }
+
+  const orderItems = await repository.getChefOrders(query);
+
+  const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}orders!`;
+
+  res.status(HttpStatus.ACCEPTED).send({
+    message,
+    data: orderItems,
+    ...paginator.paginateInfo(pagination)
+  });
+
+});
+
 
 exports.listTracking = async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
@@ -288,8 +323,8 @@ exports.ordersReadyForDelivery = async (req, res, next) => {
 */
 
 
-exports.orderItemByIdMiddleware = asyncHandler(async(req, res, next) => {
-  const orderItem = repository.getOrderItemByIdDetails(req.params.orderItemId);
+exports.orderItemByIdMiddleware = asyncHandler(async(req, res, next, id) => {
+  const orderItem = await repository.getOrderItemByIdDetails(id);
   if(!orderItem) return res.status(HttpStatus.NOT_FOUND).send({message: `OrderItem Not Found by orderItemId ${req.params.orderItemId}`});
   req.orderItem = orderItem;
   next();
@@ -308,14 +343,16 @@ exports.getOrderItem = asyncHandler( async(req, res, next)=>{
 });
 
 /**
-* Update Order Item Status
+* Update Order Item State Type
 */
-exports.editOrderItemStatus = asyncHandler( async(req, res, next)=>{
+exports.editOrderItemStateType = asyncHandler( async(req, res, next)=>{
   const user = req.user;
 
-  const updates = {status: req.body.status};
+  const updates = {state_type: req.body.state_type};
 
-  const orderItem = req.orderItem.update(updates);
+  await req.orderItem.update(updates);
+
+  const orderItem = await repository.getOrderItemByIdDetails(req.params.orderItemId);
 
   res.status(HttpStatus.OK).send({message: 'Updated', orderItem: orderItem.get({plain: true})});
 });

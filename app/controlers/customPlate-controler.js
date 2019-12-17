@@ -8,6 +8,7 @@ const repositoryWallet = require("../repository/wallet-repository");
 const repositoryShip = require("../repository/shipping-repository");
 const basketRepository = require('../repository/basket-repository');
 const repositoryOrder = require("../repository/order-repository");
+const repositoryOrderDelivery = require("../repository/orderDelivery-repository");
 const authService = require('../services/auth');
 const paymentService = require("../services/payment");
 const helpers = require('./controler-helper');
@@ -20,9 +21,10 @@ const paginator = require(path.resolve('app/services/paginator'));
 const basketConstants = require(path.resolve('app/constants/baskets'));
 const customPlateConstants = require(path.resolve('app/constants/custom-plates'));
 const debug = require('debug')('custom-plate');
-const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+
 const orderPaymentConstants = require(path.resolve('app/constants/order-payment'));
 const orderConstants = require(path.resolve('app/constants/order'));
+const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 
 /**
 * Helper method
@@ -169,11 +171,19 @@ exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
     });
   }
 
+  if (!req.body.chefDeliveryAvailable) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to state whether you deliver or not!",
+      status: HttpStatus.CONFLICT
+    });
+  }
+
   let context = {
     CustomPlateAuctionID: req.body.auction,
     chefID: authUser.id,
     price: req.body.price,
-    preparation_time: req.body.preparation_time
+    preparation_time: req.body.preparation_time,
+    chefDeliveryAvailable: req.body.chefDeliveryAvailable
   };
 
   //check if auction is closed;
@@ -231,6 +241,7 @@ exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
     ...customPlateAuctionBid,
     customPlateId: customPlateAuctionBid.custom_plate.id,
     chefID: customPlateAuctionBid.chefID,
+    chefDeliveryAvailable: customPlateAuctionBid.chefDeliveryAvailable,
     userId: req.userId
   };
 
@@ -243,7 +254,8 @@ exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
     basket_type: basketConstants.BASKET_TYPE_CUSTOM_PLATE,
     basketId: basket[0].id,
     customPlateId: custom_order.id
-  }
+  };
+
   debug('user basket', basket);
   basket = basket[0].get({plain: true});
   // basket = JSON.stringify(basket);
@@ -355,7 +367,6 @@ exports.pay = asyncHandler(async (req, res, next) => {
       await existUser.save()
     }
   } catch (e) {
-    console.log(e);
     const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
     await repositoryOrderPayment.create(orderPaymentFail);
     await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED);
@@ -383,7 +394,6 @@ exports.pay = asyncHandler(async (req, res, next) => {
     }
 
   } catch (e) {
-    console.log("createCard: ", e)
     const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
     await repositoryOrderPayment.create(orderPaymentFail);
     await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
@@ -436,7 +446,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
         orderPaymentId:create_orderPayment.id,
         amount:elem.amount
       }
-    ))
+    ));
 
     let transactionsService = new TransactionsService();
     transactionsService.recordBulkCreditTransaction(bulkTransactions)
@@ -453,7 +463,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
         description: basketItem[basketType].description,
         amount: basketItem[basketType].price,
         quantity: basketItem.quantity
-      }
+      };
       let loc = {};
 
       if(basketType === basketConstants.BASKET_TYPE_PLATE) {
@@ -468,16 +478,44 @@ exports.pay = asyncHandler(async (req, res, next) => {
         orderItem.chef_id = basketItem.custom_plate.chefID;
       }
 
-      orderItem.chef_location = `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`;      
+      orderItem.chef_location = `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`;
       return orderItem;
 
     });
+
     //create order items
-    await repositoryOrder.createOrderItems(await Promise.all(oderItemsPayload));
+    const createdOrderItems = await repositoryOrder.createOrderItems(await Promise.all(oderItemsPayload));
 
     //remove basket items of a user
-    //TODO uncomment this just for testing purpose
-    //await basketRepository.removeBasketItems(user_basket.id);
+    await basketRepository.removeBasketItems(user_basket.id);
+
+    //create delivery for items which offers delivery
+    const oderDeliveryPayload = basketItems.filter((basketItem) => {
+      const basketType = basketItem.basket_type;
+      if(basketItem[basketType].chefDeliveryAvailable) return true;
+      return false;
+    }).map( async (basketItem, index) => {
+      const basketType = basketItem.basket_type;
+      const orderDelivery = {
+        orderItemId: createdOrderItems[index].id,
+        order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM,
+        userId: req.userId,
+        state_type: orderDeliveryConstants.STATE_TYPE_PENDING
+      };
+
+      //set driverId from chef field of plate or custom_plate_order
+      if(basketType === basketConstants.BASKET_TYPE_PLATE) {
+        orderDelivery.driverId = basketItem.plate.userId;
+      }
+
+      if(basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
+        orderDelivery.driverId = basketItem.custom_plate.chefID;
+      }
+      return orderDelivery;
+
+    });
+
+    await repositoryOrderDelivery.createOrderDeliveries(oderDeliveryPayload);
 
     return res.status(HttpStatus.ACCEPTED).send({
       message: 'Your order was successfully paid!',

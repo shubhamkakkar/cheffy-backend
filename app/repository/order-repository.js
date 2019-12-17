@@ -1,5 +1,9 @@
 'use strict';
 const {sequelize, Plates, CustomPlate, CustomPlateOrder, PlateReview,PlateImage, CustomPlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const path = require('path');
+const userConstants = require(path.resolve('app/constants/users'));
+const orderItemConstants = require(path.resolve('app/constants/order-item'));
+
 
 exports.getById = async (orderId) => {
     try {
@@ -25,24 +29,29 @@ exports.getOrderItemById = async (orderItemId) => {
 
 
 exports.getOrderItemByIdDetails = async (orderItemId) => {
-  const order = await OrderItem.findByPk(orderItemId, {
+
+  const orderItem = await OrderItem.findByPk(orderItemId, {
+    attributes: orderItemConstants.selectFields,
     include:[{
+        model: User,
+        foreignKey: 'user_id',
+        as:'user',
+        attributes: userConstants.userSelectFields
+      },{
+        model: User,
+        foreignKey: 'chef_id',
+        as:'chef',
+        attributes: userConstants.userSelectFields
+      },{
       model: Plates,
       as:'plate',
       include: [{
-        model: User,
-        as:'chef'
-      },
-      {
         model: PlateImage
       }]
-    },{
+      },{
       model: CustomPlateOrder,
       as:'custom_plate_order',
       include: [{
-        model: User,
-        as:'user'
-      },{
         model: CustomPlate,
         as:'custom_plate',
         include: [{
@@ -51,8 +60,7 @@ exports.getOrderItemByIdDetails = async (orderItemId) => {
       }]
     }]
   });
-
-  return order;
+  return orderItem;
 }
 
 
@@ -136,19 +144,12 @@ exports.getUserOrders = async (data) => {
           model: Plates,
           as:'plate',
           include: [{
-            model: User,
-            as:'chef'
-          },
-          {
             model: PlateImage
           }]
         },{
           model: CustomPlateOrder,
           as:'custom_plate_order',
           include: [{
-            model: User,
-            as:'user'
-          },{
             model: CustomPlate,
             as:'custom_plate',
             include: [{
@@ -176,10 +177,7 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
         include:[{
           model: Plates,
           as:'plate',
-          include: [{
-            model: User,
-            as:'chef'
-          },
+          include: [
           {
             model: PlateImage
         }]
@@ -187,9 +185,6 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
           model: CustomPlateOrder,
           as:'custom_plate_order',
           include: [{
-            model: User,
-            as:'user'
-          },{
             model: CustomPlate,
             as:'custom_plate',
             include: [
@@ -292,8 +287,6 @@ exports.createOrderReview = async (review) => {
         { where: {id:plateId } }
       )
 
-
-
       } catch (error) {
         throw error;
       }
@@ -328,4 +321,41 @@ exports.getOrdersReadyDelivery = async (data) => {
     console.log(e)
     return { message: "Erro to return orders!", error: e}
   }
+};
+
+/**
+* Get chef orders
+*/
+exports.getChefOrders = async({chef_id, state_type, pagination}) => {  
+  const whereQuery = {chef_id};
+  if(state_type) {
+    whereQuery.state_type = state_type;
+  }
+
+  return OrderItem.findAll({where: whereQuery, ...pagination,
+    attributes: orderItemConstants.selectFields,
+    include:[{
+      model: User,
+      as:'user',
+      attributes: userConstants.userSelectFields
+    },{
+      model: Plates,
+      as:'plate',
+      include: [{
+          model: PlateImage
+      }]
+    },{
+      model: CustomPlateOrder,
+      as:'custom_plate_order',
+      include: [{
+        model: CustomPlate,
+        as:'custom_plate',
+        include: [
+        {
+          model: CustomPlateImage
+        }]
+      }]
+    }]
+  });
+
 };

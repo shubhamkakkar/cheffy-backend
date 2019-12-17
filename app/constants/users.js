@@ -27,6 +27,10 @@ exports.privateSelectFields = exports.publicSelectFields.concat([
   'stripe_id', 'createdAt', 'updatedAt'
 ]);
 
+exports.userSelectFields = exports.publicSelectFields.concat([
+  'email', 'country_code', 'phone_no', 'location_lat', 'location_lon'
+]);
+
 //don't expose to other users. use it only for internal apis
 exports.internalApiSelectFields = exports.publicSelectFields.concat([
   'user_type', 'email', 'phone_no', 'restaurant_name', 'status'
