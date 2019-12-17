@@ -236,18 +236,18 @@ exports.searchPlatesByChefId = async (req, res, next) => {
   const list_plates = await Plates.findAll({
     where: {
       userId: req.params.id
-    }
-    ,
+    },
     attributes:{
       exclude:['UserId']
     }
-  })
+  });
 
   const chef_details = await User.findOne({
     where: {
       id: req.params.id
     }
   })
+
   res.status(200).send({ message: "Plates found!", chefId: req.params.id, chef: chef_details, data: list_plates });
 };
 
