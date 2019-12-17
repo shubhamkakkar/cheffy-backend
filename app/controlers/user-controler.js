@@ -654,6 +654,27 @@ exports.checkPhone = async (req, res, next) => {
   res.status(HttpStatus.BAD_REQUEST).send({ message: 'SMS code not found!', status: HttpStatus.BAD_REQUEST});
 }
 
+
+exports.socialauth = async (req, res, next) => {
+  try {
+
+    const existUser = await User.findOne({ where: { email: req.body.email } });
+    if (!existUser) {
+      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
+      return 0;
+    }
+
+    res.status(200).send({
+      data: existUser 
+    });
+
+  } catch (e) {
+    res.status(500).send({
+      message: 'Failed to process your request'
+    });
+  }
+};
+
 exports.authenticate = async (req, res, next) => {
   try {
     const { password } = req.body;
