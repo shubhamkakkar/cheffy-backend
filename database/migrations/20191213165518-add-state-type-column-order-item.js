@@ -1,4 +1,6 @@
 'use strict';
+const path = require('path');
+const orderItemConstants = require(path.resolve('app/constants/order-item'));
 
 module.exports = {
   up: (queryInterface, Sequelize) => {

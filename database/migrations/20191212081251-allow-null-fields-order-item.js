@@ -10,6 +10,8 @@ module.exports = {
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
   
+    await queryInterface.removeColumn('OrderItems', 'plate_id');
+
     await queryInterface.addColumn('OrderItems', 'plate_id', {
       type: Sequelize.INTEGER,
       allowNull: true,
@@ -19,14 +21,20 @@ module.exports = {
       }
     });
 
-    return queryInterface.addColumn('OrderItems', 'customPlateId', {
+    return 
+    [
+    await queryInterface.removeColumn('OrderItems', 'customPlateId'),
+
+
+    queryInterface.addColumn('OrderItems', 'customPlateId', {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'CustomPlateOrders',
         key: 'id'
       }
-    });
+    })
+    ]
   },
 
   down: async (queryInterface, Sequelize) => {

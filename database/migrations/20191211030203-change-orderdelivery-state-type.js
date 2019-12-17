@@ -13,7 +13,11 @@ module.exports = {
     */
     //await queryInterface.removeColumn('OrderDeliveries',  'state_type');
 
-    return queryInterface.addColumn('OrderDeliveries', 'state_type', {
+    return 
+
+    [queryInterface.removeColumn('OrderDeliveries',  'state_type'),
+
+    queryInterface.addColumn('OrderDeliveries', 'state_type', {
       type: Sequelize.ENUM(
         orderDeliveryConstants.STATE_TYPE_PENDING,
         orderDeliveryConstants.STATE_TYPE_APPROVED,
@@ -21,7 +25,8 @@ module.exports = {
         orderDeliveryConstants.STATE_TYPE_CANCELED
       ),
       defaultValue: orderDeliveryConstants.STATE_TYPE_PENDING
-    });
+    })
+    ]
   },
 
   down: async (queryInterface, Sequelize) => {
