@@ -22,7 +22,6 @@ const basketConstants = require(path.resolve('app/constants/baskets'));
 const customPlateConstants = require(path.resolve('app/constants/custom-plates'));
 const debug = require('debug')('custom-plate');
 
-const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const orderPaymentConstants = require(path.resolve('app/constants/order-payment'));
 const orderConstants = require(path.resolve('app/constants/order'));
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));

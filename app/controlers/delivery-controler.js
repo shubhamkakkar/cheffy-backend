@@ -97,7 +97,7 @@ exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send({
     message: 'Here are your orders!',
     data: user_orders,
-    ...pagination.paginateInfo(query);
+    ...pagination.paginateInfo(query)
   });
 
 });
@@ -215,10 +215,10 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
 
     //demandService.sendToDelivery(orderId,loc,shipping)
 
-    let payload = {};
-    payload.status = HttpStatus.CREATED;
-    payload.orderDelivery = createdOrderDelivery;
-    res.status(payload.status).send(payload);
+    let response = {};
+    response.status = HttpStatus.CREATED;
+    response.orderDelivery = createdOrderDelivery;
+    res.status(response.status).send(response);
 
 });
 

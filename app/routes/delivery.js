@@ -22,6 +22,6 @@ router.post('/complete/:id',authService.authorize, controller.completeDelivery);
 
 
 router.param('orderId', orderController.orderByIdMiddleware);
-router.param('id', orderController.orderDeliveryByIdMiddleware);
+router.param('id', controller.orderDeliveryByIdMiddleware);
 
 module.exports = router;
