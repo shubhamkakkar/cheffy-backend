@@ -39,7 +39,7 @@ router.get('/:id/related', controller.getRelatedPlates);
 router.get('/near', controller.listNear);
 router.get('/latest/:amount', controller.searchLatestPlates);
 
-router.get('/chef/:id', authService.authorize, controller.getChefPlates);
+router.get('/chef/:id', controller.getChefPlates);
 router.get('/:id/receipt', authService.authorize, controller.listReceipt);
 
 module.exports = router;
