@@ -56,3 +56,21 @@ function getUserFavoritePlates(userID) {
 
     return sequelize.query(favoriteSQL,{raw:true,nest:true});
 }
+
+exports.getRestaurantSearch = async (data) => {
+  try {
+    const response = await User.findAll({
+      where: {
+        restaurant_name:{[Op.like]:'%'+data+'%'}
+      },
+      attributes: [
+         'id','restaurant_name','location_lat','location_lon','createdAt','updatedAt'
+        ],
+    });
+
+    return response;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};
