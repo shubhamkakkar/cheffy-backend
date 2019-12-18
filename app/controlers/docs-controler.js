@@ -6,7 +6,10 @@ const repository = require("../repository/docs-repository");
 const md5 = require("md5");
 const authService = require("../services/auth");
 const uploadService = require('../services/upload');
-const { User } = require("../models/index");
+const {
+  User, Documents, NIDFrontSide, ChefLicense, ChefCertificate,
+  DriverVehicleRegistration, DriverLicenseFrontSide, KitchenPhoto,
+ProfilePhoto } = require("../models/index");
 const debug = require('debug')('docs');
 const asyncHandler = require('express-async-handler');
 const userConstants = require(path.resolve('app/constants/users'));
@@ -227,7 +230,7 @@ asyncHandler(async (req, res, next) => {
 })];
 
 
-exports.createChefLicense = async (req, res, next) => {
+exports.createChefLicense = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['chef_license'], "Chef's license is missing!");
 
@@ -282,9 +285,9 @@ exports.createChefLicense = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+});
 
-exports.createChefCertificate = async (req, res, next) => {
+exports.createChefCertificate = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['chef_certificate'], "Chef's license is missing!");//
 
@@ -339,9 +342,9 @@ exports.createChefCertificate = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+});
 
-exports.createKitchenPhoto = async (req, res, next) => {
+exports.createKitchenPhoto = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['kitchen_photo'], "Chef's license is missing!");//
 
@@ -396,9 +399,9 @@ exports.createKitchenPhoto = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+});
 
-exports.createNIDFrontInside = async (req, res, next) => {
+exports.createNIDFrontInside = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['front_side'], "Chef's license is missing!");//
 
@@ -448,9 +451,10 @@ exports.createNIDFrontInside = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
 
-exports.createProfilePhoto = async (req, res, next) => {
+});
+
+exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['profile_photo'], "Chef's license is missing!");//
 
@@ -501,9 +505,9 @@ exports.createProfilePhoto = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+});
 
-exports.createDriverLicense = async (req, res, next) => {
+exports.createDriverLicense = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");//
 
@@ -559,9 +563,9 @@ exports.createDriverLicense = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+});
 
-exports.createDriverVehicleLicense = async (req, res, next) => {
+exports.createDriverVehicleLicense = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.files['driver_vehicle_registration'], "Driver license is missing!");//
 
@@ -617,9 +621,9 @@ exports.createDriverVehicleLicense = async (req, res, next) => {
   saved_data.state_type = 'validated';
   saved_data.save();
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
-}
+});
 
-exports.insertSocialSecurityNumber = async (req, res, next) => {
+exports.insertSocialSecurityNumber = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.body.social_security_number, "Social security number is missing!");//
 
@@ -654,4 +658,4 @@ exports.insertSocialSecurityNumber = async (req, res, next) => {
   new_doc.state_type = 'validated';
   new_doc.save()
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: new_doc });
-}
+});

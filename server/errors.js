@@ -8,6 +8,7 @@ module.exports = (app) => {
   app.use((req, res, next) => {
     req.on('error', (err) => {
       //TODO log error here
+      errorsController.logError(err, req);
       res.end();
     });
     next();

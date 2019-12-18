@@ -7,21 +7,23 @@ const controller = require('../controlers/delivery-controler');
 const authService = require("../services/auth");
 const userController = require(path.resolve('app/controlers/user-controler'));
 const orderController = require(path.resolve('app/controlers/order-controler'));
+const orderDeliveryPolicies = require(path.resolve('app/policies/order-delivery'));
 const middlewares = require(path.resolve('server/middlewares'));
 
+router.post('/createdelivery/:orderId',authService.authorize, userController.getAuthUserMiddleware, middlewares.driverRoleRequired, controller.createDelivery);
 router.get('/', authService.authorize,controller.list);
 router.get('/complete', authService.authorize,controller.listCompleteDeliveries);
 router.get('/pending', authService.authorize,controller.listPendingDeliveries);
-router.get('/:id',authService.authorize, controller.getById);
-router.post('/edit/:id',authService.authorize, controller.edit);
-router.post('/accept/:id',authService.authorize, controller.accept);
-router.post('/decline/:id',authService.authorize, controller.decline);
-router.post('/createdelivery/:orderId',authService.authorize, userController.getAuthUserMiddleware, middlewares.driverRoleRequired, controller.createDelivery);
-router.post('/pickup/:id',authService.authorize, controller.pickupDelivery);
-router.post('/complete/:id',authService.authorize, controller.completeDelivery);
+router.get('/:orderDeliveryId',authService.authorize, controller.getById);
 
+
+//router.put('/edit/:id',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOwnerMiddleware, controller.edit);
+router.put('/accept/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.accept);
+router.put('/reject/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.reject);
+router.put('/pickup/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.pickupDelivery);
+router.put('/complete/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.completeDelivery);
 
 router.param('orderId', orderController.orderByIdMiddleware);
-router.param('id', controller.orderDeliveryByIdMiddleware);
+router.param('orderDeliveryId', controller.orderDeliveryByIdMiddleware);
 
 module.exports = router;

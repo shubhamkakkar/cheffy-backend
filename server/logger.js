@@ -14,7 +14,7 @@ const loggerName = `logs-${logStartDate}`;
 let streams = null;
 
 if (process.env.NODE_ENV === 'production') {
-  streams = [{path: 'log/' + loggerName + '.log'}];
+  streams = [{path: 'logs/' + loggerName + '.log'}];
 } else {
   streams = [{stream: process.stdout}];
 }

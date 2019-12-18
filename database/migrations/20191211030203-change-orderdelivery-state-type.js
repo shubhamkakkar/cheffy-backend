@@ -11,25 +11,22 @@ module.exports = {
       Example:
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
-    //await queryInterface.removeColumn('OrderDeliveries',  'state_type');
+    await queryInterface.removeColumn('OrderDeliveries',  'state_type');
 
-    return 
-
-    [queryInterface.removeColumn('OrderDeliveries',  'state_type'),
-
-    queryInterface.addColumn('OrderDeliveries', 'state_type', {
-      type: Sequelize.ENUM(
-        orderDeliveryConstants.STATE_TYPE_PENDING,
-        orderDeliveryConstants.STATE_TYPE_APPROVED,
-        orderDeliveryConstants.STATE_TYPE_REJECTED,
-        orderDeliveryConstants.STATE_TYPE_CANCELED
-      ),
-      defaultValue: orderDeliveryConstants.STATE_TYPE_PENDING
-    })
-    ]
+    return Promise.all([
+      queryInterface.addColumn('OrderDeliveries', 'state_type', {
+        type: Sequelize.ENUM(
+          orderDeliveryConstants.STATE_TYPE_PENDING,
+          orderDeliveryConstants.STATE_TYPE_APPROVED,
+          orderDeliveryConstants.STATE_TYPE_REJECTED,
+          orderDeliveryConstants.STATE_TYPE_CANCELED
+        ),
+        defaultValue: orderDeliveryConstants.STATE_TYPE_PENDING
+      })
+    ]);
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: (queryInterface, Sequelize) => {
     /*
       Add reverting commands here.
       Return a promise to correctly handle asynchronicity.
@@ -37,7 +34,7 @@ module.exports = {
       Example:
       return queryInterface.dropTable('users');
     */
-    await queryInterface.removeColumn('OrderDeliveries',  'state_type');
+    return queryInterface.removeColumn('OrderDeliveries',  'state_type');
 
     //there was to state_type field before
     /*return queryInterface.addColumn('OrderDeliveries', 'state_type', {

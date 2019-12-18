@@ -3,6 +3,12 @@ const path = require('path');
 const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 
+
+exports.getById = async (orderDeliveryId) => {
+  return await OrderDelivery.findByPk(orderDeliveryId);
+};
+
+
 //TODO waiting OrderDelivey to be implemented
 exports.createOrderDelivery = async (orderId) => {
     try {
@@ -16,6 +22,8 @@ exports.createOrderDelivery = async (orderId) => {
       }
 
   }
+
+
 
 //TODO waiting OrderDelivey to be implemented
 exports.edit = async (data,driver) => {
@@ -177,7 +185,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
 
 
   //TODO waiting OrderDelivey to be implemented
-  exports.getById = async (data) => {
+  exports.getByIdDetails = async (data) => {
     try {
       let deliveryId = parseInt(data);
 

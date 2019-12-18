@@ -36,21 +36,25 @@ exports.authorize = async (req, res, next) => {
       //use this req.userId in getAuthUserMiddleware
       req.userId = decoded.id;
 
+      //check if user with id exists in database
+      return User.findOne({ where: { id: req.userId }, attributes: ['auth_token'] }).then((existUser) => {
+
+        if(!existUser) {
+          return res.status(401).json({
+              message: 'No userfound with the associated with the token!'
+          });
+        }
+        
+        if(existUser.auth_token === null){
+          return res.status(401).json({
+              message: 'Login required!'
+          });
+        }
+
+        next();
+      });
+
     });
-
-    //logout feature
-
-    const existUser =  await User.findOne({ where: { id: req.userId } });
-
-    if(existUser.auth_token==null){
-
-      return res.status(401).json({
-          message: 'Login required!'
-
-      })    
-    }
-
-    next();
 
 };
 

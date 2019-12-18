@@ -15,9 +15,10 @@ const paginator = require(path.resolve('app/services/paginator'));
 
 
 exports.orderDeliveryByIdMiddleware = asyncHandler(async(req, res, next, orderDeliveryId) => {
-  const orderDelivery = deliveryRepository.findByPk(orderDeliveryId);
+  const orderDelivery = await deliveryRepository.getById(orderDeliveryId);
   if(!orderDelivery) return res.status(HttpStatus.NOT_FOUND).send({message: `Order Delivery Not Found by id ${orderDeliveryId}`});
   req.orderDelivery = orderDelivery;
+
   next();
 });
 
@@ -102,87 +103,6 @@ exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
 
 });
 
-
-exports.edit = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-      return 0;
-    }
-
-    let orderDeliveryId = req.params.id;
-    const order = await OrderDelivery.findByPk(orderDeliveryId);
-    order.driverId = existUser.id;
-    order.status_type = 'on_course';
-    order.save();
-
-    return order;
-  } catch (e) {
-    console.log(e)
-    throw e;
-  }
-
-}
-
-exports.completeDelivery = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-      return 0;
-    }
-
-    let orderDeliveryId = req.params.id;
-    const order = await OrderDelivery.findByPk(orderDeliveryId);
-    order.status_type = 'delivered';
-    order.save();
-
-    let payload = {};
-    payload.status = HttpStatus.OK;
-    payload.message = "Thank you!"
-    res.status(payload.status).send(payload);
-
-  } catch (e) {
-    console.log(e)
-    res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-    throw e;
-  }
-
-}
-
-exports.pickupDelivery = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-      return 0;
-    }
-
-    let orderDeliveryId = req.params.id;
-    let order = await OrderDelivery.findByPk(orderDeliveryId);
-    order.state_type = 'picked_up';
-    order.save();
-
-    let payload = {};
-    payload.status = HttpStatus.OK;
-    payload.message = "Great! The costumer is waiting for you!"
-    payload.delivery =  await OrderDelivery.findByPk(orderDeliveryId);
-    res.status(payload.status).send(payload);
-  } catch (e) {
-    console.log(e)
-    res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-    throw e;
-  }
-
-}
-
 exports.createDelivery = asyncHandler(async (req, res, next) => {
 
     let contract = new ValidationContract();
@@ -222,147 +142,75 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
 
 });
 
-exports.decline = async (req, res, next) => {
-  try {
-      const token_return = await authService.decodeToken(req.headers['x-access-token'])
-      const existUser = await User.findOne({ where: { id: token_return.id } });
 
-      if (!existUser) {
-        res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-        return 0;
-      }
+exports.editStateType = (message) => asyncHandler(async (req, res, next) => {
+  const user = req.user;
 
-      let orderDeliveryId = req.params.id;
-      const order = await OrderDelivery.findByPk(orderDeliveryId);
+  const updates = {...req.body};
 
-      if(order){
-        order.driverId = existUser.id;
-        order.state_type = 'declined';
-        order.save();
-        res.status(200).send(order);
-      }else{
-        res.status(404).send({
-          message: 'Order not found'
-         });
-        }
+  await req.orderDelivery.update(updates);
 
-      return order;
-    } catch (e) {
-      console.log(e)
-      throw e;
+  const orderDelivery = await deliveryRepository.getById(req.orderDelivery.id);
+
+  res.status(HttpStatus.OK).send({message: message || 'Updated', orderDelivery: orderDelivery.get({plain: true})});
+
+  //Notify the Cheff
+  new NotificationServices()
+  .sendPushNotificationToUser(orderDelivery.driverId,
+    {
+      type: orderDelivery.state_type,
+      orderDeliveryId: orderDelivery.id
     }
+  );
 
-}
+});
 
-exports.accept = async (req, res, next) => {
-  try {
-      const token_return = await authService.decodeToken(req.headers['x-access-token'])
-      const existUser = await User.findOne({ where: { id: token_return.id } });
-
-      if (!existUser) {
-        res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-        return 0;
-      }
-
-      let orderDeliveryId = req.params.id;
-      const order = await OrderDelivery.findByPk(orderDeliveryId);
-
-      if(order){
-        order.driverId = existUser.id;
-        order.state_type = 'delivering';
-        order.save();
-        res.status(200).send(order);
-      }else{
-        res.status(404).send({
-          message: 'Order not found'
-         });
-        }
-
-      return order;
-    } catch (e) {
-      console.log(e)
-      throw e;
-    }
-
-}
-
-exports.completeDelivery = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-      return 0;
-    }
-
-    try{
-      let orderDeliveryId = req.params.id;
-      let orderDelivery = await OrderDelivery.findByPk(orderDeliveryId);
-      orderDelivery.driverId = existUser.id;
-      orderDelivery.state_type = 'delivered';
-      orderDelivery.dropoff_time = sequelize.literal('CURRENT_TIMESTAMP');
-      orderDelivery.save();
-
-      //Notify the Cheff
-      new NotificationServices()
-      .sendPushNotificationToUser(orderDelivery.chefId,
-        {
-          type:"delivery_complete",
-          orderId:orderDelivery.orderId
-        }
-      );
-
-      orderDelivery = await OrderDelivery.findByPk(orderDeliveryId);
-      res.status(HttpStatus.ACCEPTED).send(orderDelivery).end();
-
-    }catch(err){
-      res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", error: true}).end();
-    }
-    return order;
-  } catch (e) {
-    console.log(e)
-    throw e;
+exports.checkCanceled = (req, res, next) => {
+  if(req.orderDelivery.state_type === orderDeliveryConstants.STATE_TYPE_CANCELED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `OrderDelivery already canceled. orderDeliveryId: ${req.orderDelivery.id}`})
   }
-}
+  next();
 
-exports.pickupDelivery = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findOne({ where: { id: token_return.id } });
+};
 
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: "Driver not found", error: true}).end();
-      return 0;
-    }
+exports.completeDelivery = [
+  exports.checkCanceled,
+  (req, res, next) => {
+    req.body.state_type = orderDeliveryConstants.STATE_TYPE_DELIVERED;
+    req.body.dropoff_time = sequelize.literal('CURRENT_TIMESTAMP');
+    next();
+  },
+  exports.editStateType('Delivery Completed!')
+];
 
-    try{
-      let orderDeliveryId = req.params.id;
-      let orderDelivery = await OrderDelivery.findByPk(parseInt(orderDeliveryId));
-      orderDelivery.driverId = existUser.id;
-      orderDelivery.state_type = 'on_course';
-      orderDelivery.pickup_time = sequelize.Sequelize.literal('CURRENT_TIMESTAMP');
-      orderDelivery.save();
+exports.pickupDelivery = [
+  exports.checkCanceled,
+  (req, res, next) => {
+    req.body.state_type = orderDeliveryConstants.STATE_TYPE_PICKED_UP;
+    req.body.pickup_time = sequelize.literal('CURRENT_TIMESTAMP');
+    next();
+  },
+  exports.editStateType('Great! The costumer is waiting for you!')
+];
 
-      //Notify the Cheff
-      new NotificationServices()
-      .sendPushNotificationToUser(orderDelivery.chefId,
-        {
-          type:"delivery_complete",
-          orderId:orderDelivery.orderId
-        }
-      );
-      orderDelivery = await OrderDelivery.findByPk(parseInt(orderDeliveryId));
-      res.status(HttpStatus.ACCEPTED).send(orderDelivery).end();
+exports.reject = [
+  exports.checkCanceled,
+  (req, res, next) => {
+    req.body.state_type = orderDeliveryConstants.STATE_TYPE_REJECTED;
+    next();
+  },
+  exports.editStateType('Order Delivery Rejected!')
+];
 
-    }catch(err){
-      res.status(HttpStatus.CONFLICT).send({ message: "There was a problem ", error: true}).end();
-    }
-  } catch (e) {
-    console.log(e)
-    throw e;
-  }
-}
+
+exports.accept = [
+  exports.checkCanceled,
+  (req, res, next) => {
+    req.body.state_type = orderDeliveryConstants.STATE_TYPE_APPROVED;
+    next();
+  },
+  exports.editStateType('Order Delivery Approved!')
+];
 
 exports.getById = asyncHandler(async (req, res, next) => {
   const orderDelivery = req.orderDelivery;

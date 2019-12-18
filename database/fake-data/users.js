@@ -35,10 +35,10 @@ async function buildModel() {
     phone_no: faker.phone.phoneNumber(),
     country_code: faker.address.countryCode(),
     user_type: getRandomUserType(),
-    verification_email_status: getRandomVerificationStatus(),
-    verification_email_token: faker.random.number(),
-    verification_phone_status: getRandomVerificationStatus(),
-    verification_phone_token: faker.random.number(),
+    verification_email_status: 'verified',
+    verification_email_token: null,
+    verification_phone_status: 'verified',
+    verification_phone_token: null,
     password: password,
     imagePath: faker.image.imageUrl(300, 300, 'people', undefined, true)
   };
@@ -47,6 +47,7 @@ async function buildModel() {
 }
 
 async function init({}) {
+  
   return await bulkSave({Model: User, buildModel: buildModel, total: 100});
 }
 

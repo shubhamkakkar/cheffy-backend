@@ -1,8 +1,17 @@
 const ProgressBar = require('progress');
 
 
+async function create(Model, data) {
+  return await Model.create(data);
+}
+
 async function bulkExecute(Model, data) {
-  return await Model.bulkCreate(data)
+  //return await Model.bulkCreate(data);
+  const result = data.map(async(singleData) => {
+    return await create(Model, singleData);
+  });
+
+  return Promise.all(result);
 }
 
 function preparation(total) {
@@ -12,7 +21,12 @@ function preparation(total) {
 }
 
 module.exports = async function bulkSave({Model, buildModel, total}) {
-  const BATCH_SIZE = 1000;
+  let BATCH_SIZE = 10;
+
+  if(total < BATCH_SIZE) {
+    BATCH_SIZE = total;
+  }
+
   let bulkData = [];
 
   preparation(total);
@@ -27,14 +41,15 @@ module.exports = async function bulkSave({Model, buildModel, total}) {
   for(let counter=0; counter < total; counter++) {
     const doc = await buildModel(counter);
     bulkData.push(doc);
-    if ( counter % BATCH_SIZE === 0 ) {
+    if ( counter % BATCH_SIZE === 0) {
       try {
         await bulkExecute(Model, bulkData);
       } catch(e) {
         console.log('failed bulkExecute', e);
       }
       progressBar.tick(BATCH_SIZE);
-      bulk = [];
+      //reset bulkData
+      bulkData = [];
     }
   }
   return;

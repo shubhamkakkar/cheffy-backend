@@ -53,8 +53,7 @@ exports.isOrderItemChefMiddleware = () => {
 //checks if user or chef of an order
 exports.orderItemViewPolicyMiddleware = () => {
   return [
-    middlewares.authorization((req) => {
-      console.log('middleware');
+    middlewares.authorization((req) => {      
       return exports.isOwner(req) || exports.isOrderItemChef(req);
     })
   ];

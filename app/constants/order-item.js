@@ -4,6 +4,7 @@ exports.STATE_TYPE_PENDING = 'pending';
 exports.STATE_TYPE_APPROVED = 'approved';
 exports.STATE_TYPE_REJECTED = 'rejected';
 exports.STATE_TYPE_CANCELED = 'canceled';
+exports.STATE_TYPE_READY = 'ready';
 
 exports.selectFields = [
   'id', 'orderId', 'user_id', 'chef_id', 'plate_id', 'customPlateId',

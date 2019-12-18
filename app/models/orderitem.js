@@ -50,6 +50,8 @@ module.exports = (sequelize, DataTypes) => {
         orderItemConstants.STATE_TYPE_APPROVED,
         orderItemConstants.STATE_TYPE_REJECTED,
         orderItemConstants.STATE_TYPE_CANCELED,
+        //when chef finishes preparing the ordered item
+        orderItemConstants.STATE_TYPE_READY,
       ),
       defaultValue: orderItemConstants.STATE_TYPE_PENDING
     },
@@ -65,7 +67,8 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   OrderItem.associate = function(models) {
-    OrderItem.belongsTo(models.Order, {foreignKey: 'orderId', as: 'order'})
+    OrderItem.belongsTo(models.Order, {foreignKey: 'orderId', as: 'order'});
+    OrderItem.hasOne(models.OrderDelivery);
     //OrderItem.belongsTo(models.Wallet, {foreignKey: 'walletId', as: 'wallet'})
     OrderItem.belongsTo(models.Plates, {foreignKey: 'plate_id', as: 'plate'})
     OrderItem.belongsTo(models.CustomPlateOrder, {foreignKey: 'customPlateId', as: 'custom_plate_order'})

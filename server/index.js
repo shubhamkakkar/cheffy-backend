@@ -4,6 +4,7 @@ const payService = require("../app/services/payment");
 const cors = require('cors');
 const conf = require('../configs');
 const nunjucks = require('nunjucks');
+const errors = require('./errors');
 
 var corsOptions = {
   origin: '*',
@@ -61,5 +62,7 @@ app.use("/order", order);
 app.use("/driver", driver);
 app.use("/custom-plate", customPlate);
 app.use("/favourite", favourite);
+
+errors(app);
 
 module.exports = app;

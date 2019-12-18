@@ -3,6 +3,7 @@ const path = require('path');
 const HttpStatus = require("http-status-codes");
 const ValidationContract = require("../services/validator");
 const repository = require("../repository/order-repository");
+const repositoryOrderDelivery = require("../repository/orderDelivery-repository");
 const repositoryOrderPayment = require("../repository/orderPayment-repository");
 const repositoryWallet = require("../repository/wallet-repository");
 const plateRepository = require("../repository/orderPayment-repository");
@@ -17,6 +18,7 @@ const asyncHandler = require('express-async-handler');
 const customPlateControllers = require(path.resolve('app/controlers/customPlate-controler'));
 const inputFilters = require(path.resolve('app/inputfilters/order'));
 const paginator = require(path.resolve('app/services/paginator'));
+const orderItemConstants = require(path.resolve('app/constants/order-item'));
 
 function distance(lat1,lon1,lat2,lon2) {
   var R = 6371;
@@ -165,6 +167,52 @@ exports.chefOrderList = asyncHandler(async (req, res, next) => {
     ...paginator.paginateInfo(pagination)
   });
 
+});
+
+//deliveries to auth user.
+exports.userOrderItemDeliveries = asyncHandler(async (req, res, next) => {
+  const userId = req.userId;
+  const pagination = paginator.paginateQuery(req);
+
+  const query = { userId, pagination};
+  const state_type = req.query.state_type;
+
+  if(state_type) {
+    query.state_type = state_type;
+  }
+
+  const orderDeliveries = await repositoryOrderDelivery.getOrderDeliveriesByUser(query);
+
+  const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}order deliveries!`;
+
+  res.status(HttpStatus.ACCEPTED).send({
+    message,
+    data: orderDeliveries,
+    ...paginator.paginateInfo(pagination)
+  });
+});
+
+//deliveries for chef
+exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
+  const driverId = req.userId;
+  const pagination = paginator.paginateQuery(req);
+
+  const query = { driverId, pagination};
+  const state_type = req.query.state_type;
+
+  if(state_type) {
+    query.state_type = state_type;
+  }
+
+  const orderDeliveries = await repositoryOrderDelivery.getOrderDeliveriesByDriver(query);
+
+  const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}orders deliveries!`;
+
+  res.status(HttpStatus.ACCEPTED).send({
+    message,
+    data: orderDeliveries,
+    ...paginator.paginateInfo(pagination)
+  });
 });
 
 
@@ -317,6 +365,42 @@ exports.ordersReadyForDelivery = async (req, res, next) => {
   }
 };
 
+/**
+* Get all orderitems and their respective orderdeliveries if exists
+* Does left outer join of orderitems with orderdeliveries
+*/
+exports.orderItemsDelivery = asyncHandler(async(req, res, next) => {
+  const userId = req.userId;
+  const pagination = paginator.paginateQuery(req);
+
+  const query = { user_id: userId, pagination};
+  const state_type = req.query.state_type;
+
+  if(state_type) {
+    query.state_type = state_type;
+  }
+
+  const result = await repository.getOrderItemsWithRespectiveDelivery(query);
+
+  const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}order items with respective delieveries!`;
+
+  res.status(HttpStatus.ACCEPTED).send({
+    message,
+    data: result,
+    ...paginator.paginateInfo(pagination)
+  });
+
+});
+
+
+
+
+
+
+
+
+
+
 
 /**
 * Order Items
@@ -356,3 +440,76 @@ exports.editOrderItemStateType = asyncHandler( async(req, res, next)=>{
 
   res.status(HttpStatus.OK).send({message: 'Updated', orderItem: orderItem.get({plain: true})});
 });
+
+
+/**
+* Check if order item is already canceled by user
+*/
+exports.checkOrderItemCanceled = (req, res, next) => {
+  if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Canceled by user. orderItemId: ${req.orderItem.id}`})
+  }
+  next();
+};
+/**
+* Chef Accept Order Item by user
+*/
+exports.chefAcceptOrderItem = [
+  exports.checkOrderItemCanceled,
+  (req, res, next) => {
+    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`})
+    }
+    req.body.state_type = orderItemConstants.STATE_TYPE_APPROVED;
+    next();
+  },
+  exports.editOrderItemStateType
+];
+
+/**
+* Chef Reject Order Item by user
+*/
+exports.chefRejectOrderItem = [
+  exports.checkOrderItemCanceled,
+  (req, res, next) => {
+    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_REJECTED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Rejected. orderItemId: ${req.orderItem.id}`})
+    }
+    req.body.state_type = orderItemConstants.STATE_TYPE_REJECTED;
+    next();
+  },
+  exports.editOrderItemStateType
+];
+
+/**
+* This route should be called when chef finishes preparing the order
+*/
+exports.chefReadyOrderItem = [
+  exports.checkOrderItemCanceled,
+  (req, res, next) => {
+    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_READY) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Ready. orderItemId: ${req.orderItem.id}`})
+    }
+    req.body.state_type = orderItemConstants.STATE_TYPE_READY;
+    next();
+  },
+  exports.editOrderItemStateType
+];
+
+/**
+* This route should be called when user wants to cancel orderitem before chef approves the orderitem
+*/
+exports.userCancelOrderItem = [
+  (req, res, next) => {
+    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Approved by Chef. Cannot cancel order. orderItemId: ${req.orderItem.id}`})
+    }
+
+    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Canceled. orderItemId: ${req.orderItem.id}`})
+    }
+    req.body.state_type = orderItemConstants.STATE_TYPE_CANCELED;
+    next();
+  },
+  exports.editOrderItemStateType
+];

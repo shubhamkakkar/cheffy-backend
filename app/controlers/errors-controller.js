@@ -14,7 +14,6 @@ const logger = require(path.resolve('./server/logger'));
  * @returns {*}
  */
 exports.errorHandler = function(error, req, res, next) {
-
   // If the error object doesn't exists
   if(error === undefined) {
     return;

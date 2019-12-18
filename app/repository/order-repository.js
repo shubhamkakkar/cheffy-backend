@@ -128,6 +128,11 @@ exports.editState = async (data, state) => {
   return order;
 }
 
+/**
+* Main Table: Orders
+*List user orders
+* User orders are contained in orders table with respective items in orderitems table referenced to orderId
+*/
 exports.getUserOrders = async (data) => {
   let order = await Order.findAll({
     where: { userId: data },
@@ -139,7 +144,7 @@ exports.getUserOrders = async (data) => {
       },
       {
         model: OrderItem,
-        attributes: ["id", "plate_id", "customPlateId", "item_type", "chef_location", "name", "description", "amount", "quantity"],
+        attributes: ["id", "plate_id", "customPlateId", "user_id", "chef_id", "item_type", "chef_location", "name", "description", "amount", "quantity"],
         include:[{
           model: Plates,
           as:'plate',
@@ -169,11 +174,11 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
     include: [
       {
         model: OrderPayment,
-        attributes: ["payment_id", "amount", "client_secret", "customer", "payment_method", "status"]
+        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
         model: OrderItem,
-        attributes: ["plate_id", "customPlateId", "item_type", "chef_location", "name", "description", "amount", "quantity"],
+        attributes: ["plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity"],
         include:[{
           model: Plates,
           as:'plate',
@@ -198,7 +203,7 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"]
-   }]
+  }]
   });
   return order;
 }
@@ -324,9 +329,12 @@ exports.getOrdersReadyDelivery = async (data) => {
 };
 
 /**
+* Main Table: OrderItems
 * Get chef orders
+* Chef user orders are in order items table instead of orders because a user can order from multiple chef,
+* so it's not necessary that a wole order can contain the same chef.
 */
-exports.getChefOrders = async({chef_id, state_type, pagination}) => {  
+exports.getChefOrders = async({chef_id, state_type, pagination}) => {
   const whereQuery = {chef_id};
   if(state_type) {
     whereQuery.state_type = state_type;
@@ -359,3 +367,42 @@ exports.getChefOrders = async({chef_id, state_type, pagination}) => {
   });
 
 };
+
+/**
+* Main Table: OrderItems and OrderDeliveries
+* Get user OrderItems with OrderDelivery info if exists
+*/
+exports.getOrderItemsWithRespectiveDelivery = async({user_id, state_type, pagination}) => {
+  const whereQuery = {user_id};
+
+  if(state_type) {
+    whereQuery.state_type = state_type;
+  }
+
+  return OrderItem.findAll({where: whereQuery, ...pagination,
+    attributes: orderItemConstants.selectFields,
+    include:[{
+      model: OrderDelivery,
+      //left outer join with OrderDelivery
+      //show all records of orderitem and existing orderdelivery of that orderitem of a particular user
+      required: false
+    },{
+      model: Plates,
+      as:'plate',
+      include: [{
+          model: PlateImage
+      }]
+    },{
+      model: CustomPlateOrder,
+      as:'custom_plate_order',
+      include: [{
+        model: CustomPlate,
+        as:'custom_plate',
+        include: [
+        {
+          model: CustomPlateImage
+        }]
+      }]
+    }]
+  });
+}

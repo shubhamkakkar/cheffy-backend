@@ -487,14 +487,15 @@ exports.pay = asyncHandler(async (req, res, next) => {
     const createdOrderItems = await repositoryOrder.createOrderItems(await Promise.all(oderItemsPayload));
 
     //remove basket items of a user
-    await basketRepository.removeBasketItems(user_basket.id);
+    //TODO uncomment
+    //await basketRepository.removeBasketItems(user_basket.id);
 
     //create delivery for items which offers delivery
     const oderDeliveryPayload = basketItems.filter((basketItem) => {
       const basketType = basketItem.basket_type;
       if(basketItem[basketType].chefDeliveryAvailable) return true;
       return false;
-    }).map( async (basketItem, index) => {
+    }).map( (basketItem, index) => {
       const basketType = basketItem.basket_type;
       const orderDelivery = {
         orderItemId: createdOrderItems[index].id,
@@ -515,11 +516,12 @@ exports.pay = asyncHandler(async (req, res, next) => {
 
     });
 
-    await repositoryOrderDelivery.createOrderDeliveries(oderDeliveryPayload);
+    const orderDeliveries = await repositoryOrderDelivery.createOrderDeliveries(oderDeliveryPayload);
 
     return res.status(HttpStatus.ACCEPTED).send({
       message: 'Your order was successfully paid!',
-      payment_return: create_orderPayment
+      payment_return: create_orderPayment,
+      orderDeliveries: orderDeliveries
     });
   }
 

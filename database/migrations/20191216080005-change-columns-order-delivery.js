@@ -3,7 +3,7 @@ const path = require('path');
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: async (queryInterface, Sequelize) => {
     /*
       Add altering commands here.
       Return a promise to correctly handle asynchronicity.
@@ -11,12 +11,16 @@ module.exports = {
       Example:
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
+    await queryInterface.removeColumn('OrderDeliveries', 'state_type');
+    await queryInterface.removeColumn('OrderDeliveries', 'orderId');
+    await queryInterface.removeColumn('OrderDeliveries', 'orderItemID');
+    await queryInterface.removeColumn('OrderDeliveries', 'order_delivery_type');
+    await queryInterface.removeColumn('OrderDeliveries', 'userId');
 
-    return [
-      queryInterface.removeColumn('OrderDeliveries', 'state_type'),
-      queryInterface.removeColumn('OrderDeliveries', 'orderId'),
+    return Promise.all([
+
       queryInterface.addColumn('OrderDeliveries', 'state_type', {
-        type: DataTypes.ENUM(
+        type: Sequelize.ENUM(
           orderDeliveryConstants.STATE_TYPE_PENDING,
           orderDeliveryConstants.STATE_TYPE_APPROVED,
           orderDeliveryConstants.STATE_TYPE_REJECTED,
@@ -29,7 +33,7 @@ module.exports = {
       }),
       queryInterface.addColumn('OrderDeliveries', 'orderItemID', {
         allowNull: true,
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         references: {
           model: 'OrderItems',
           key: 'id'
@@ -37,29 +41,29 @@ module.exports = {
       }),
       queryInterface.addColumn('OrderDeliveries', 'orderId', {
         allowNull: true,
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Orders',
           key: 'id'
         }
       }),
       queryInterface.addColumn('OrderDeliveries', 'order_delivery_type', {
-        type: DataTypes.ENUM(
+        type: Sequelize.ENUM(
           orderDeliveryConstants.DELIVERY_TYPE_ORDER,
           orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM
         )
       }),
       queryInterface.addColumn('OrderDeliveries', 'userId', {
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Users',
           key: 'id'
         }
       }),
-    ];
+    ]);
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: async (queryInterface, Sequelize) => {
     /*
       Add reverting commands here.
       Return a promise to correctly handle asynchronicity.
@@ -67,28 +71,30 @@ module.exports = {
       Example:
       return queryInterface.dropTable('users');
     */
+    await queryInterface.removeColumn('OrderDeliveries', 'orderId');
+    await queryInterface.removeColumn('OrderDeliveries', 'orderItemID');
+    await queryInterface.removeColumn('OrderDeliveries', 'order_delivery_type');
+    await queryInterface.removeColumn('OrderDeliveries', 'userId');
 
-    return [
+
+    return Promise.all([
+
       queryInterface.removeColumn('OrderDeliveries', 'state_type'),
-      queryInterface.removeColumn('OrderDeliveries', 'orderId'),
       queryInterface.addColumn('OrderDeliveries', 'state_type', {
-        type: DataTypes.ENUM(
+        type: Sequelize.ENUM(
           'pending','approved','rejected','canceled'
         ),
         defaultValue: 'pending'
       }),
-      queryInterface.removeColumn('OrderDeliveries', 'orderItemID'),
       queryInterface.addColumn('OrderDeliveries', 'orderId', {
         allowNull: false,
-        type: DataTypes.INTEGER,
+        type: Sequelize.INTEGER,
         references: {
           model: 'Orders',
           key: 'id'
         }
-      }),
-      queryInterface.removeColumn('OrderDeliveries', 'order_delivery_type'),
-      queryInterface.removeColumn('OrderDeliveries', 'userId')
-    ];
+      })
+    ]);
 
   }
 };

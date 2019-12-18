@@ -12,22 +12,22 @@ const bulkSave = require('./bulk-save');
 const helpers = require('./helpers');
 const { generateHash } = require(path.resolve('helpers/password'));
 const userConstants = require(path.resolve('app/constants/users'));
-const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents } = require(path.resolve('app/models/index'));
+const { PlateCategory } = require(path.resolve('app/models/index'));
 
 
 async function buildModel() {
   let password = await generateHash('12345678');
   let fakeCategory = {
     name: faker.name.findName(),
-    description: faker.lorem.sentence()
+    description: faker.lorem.sentence(),
     url: faker.image.imageUrl(300, 300, 'people', undefined, true)
   };
 
-  return fakeUser;
+  return fakeCategory;
 }
 
 async function init({}) {
-  return await bulkSave({Model: User, buildModel: buildModel, total: 10000});
+  return await bulkSave({Model: PlateCategory, buildModel: buildModel, total: 100});
 }
 
 async function executeTasks() {

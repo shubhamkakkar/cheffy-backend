@@ -2,6 +2,7 @@ users
 1. james
 2. adam
 3. chris
+4. newton
 
 chefs:
 4. gordon
@@ -9,11 +10,8 @@ chefs:
 6. sanjeev
 
 driver:
-7. nicky
-8. cook
-
-categories:
-1. fast food
+6. nicky
+7. cook
 
 plates (chefId)
 1. french fries, (4) - $1.5, chefDeliveryAvailable: false
@@ -89,26 +87,26 @@ order #1(with two orderitems 1,2), and orderitem 3 of order #2 are still left to
 orderdelivery is created
 orderdelivery
 ————
-1. orderId: 1, driverId: 7, state_type: pending, order_delivery_type: order,
-2. orderItemId: 3, driverId: 8, state_type: pending, order_delivery_type: orderitem
+1. orderId: 1, driverId: 6, state_type: pending, order_delivery_type: order,
+2. orderItemId: 3, driverId: 7, state_type: pending, order_delivery_type: orderitem
 
 
 Nicky accepts his orderdelivery, cook accepts orderitem delivery
 orderdelivery
 ——
-1. orderId: 1, driverId: 7, state_type: approved, order_delivery_type: order
-2. orderItemId: 3, driverId: 8, state_type: approved, order_delivery_type: orderitem
+1. orderId: 1, driverId: 6, state_type: approved, order_delivery_type: order
+2. orderItemId: 3, driverId: 7, state_type: approved, order_delivery_type: orderitem
 
 Nicky picks up both orderitems(1,2) from 2 chefs and updates the status to picked_up
 So does cook. He picks up one orderitem(3) from one chef and updates the status to picked_up
 orderdelivery
 ——
-1. orderId: 1, driverId: 7, state_type: picked_up, order_delivery_type: order
-2. orderItemId: 3, driverId: 8, state_type: picked_up, order_delivery_type: orderitem
+1. orderId: 1, driverId: 6, state_type: picked_up, order_delivery_type: order
+2. orderItemId: 3, driverId: 7, state_type: picked_up, order_delivery_type: orderitem
 
 Finally Nicky reaches the hungry user James.
 Cook reaches user chris
 orderdelivery
 ——
-1. orderId: 1, driverId: 7, state_type: delivered, order_delivery_type: order
-2. orderItemId: 3, driverId: 8, state_type: delivered, order_delivery_type: orderitem
+1. orderId: 1, driverId: 6, state_type: delivered, order_delivery_type: order
+2. orderItemId: 3, driverId: 7, state_type: delivered, order_delivery_type: orderitem
