@@ -658,11 +658,24 @@ exports.checkPhone = async (req, res, next) => {
 exports.socialauth = async (req, res, next) => {
   try {
 
+    const contract = new ValidationContract();
+
+    contract.isRequired(req.body.provider, 'provider is Required');
+    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+    contract.isRequired(req.body.email, 'email is Required');
+
+    if (!contract.isValid()) {
+        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
+    }
     const existUser = await User.findOne({ where: { email: req.body.email } });
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
       return 0;
     }
+
+    existUser.provider = req.body.provider;
+    existUser.provider_user_id = req.body.provider_user_id;
+    await existUser.save();
 
     res.status(200).send({
       data: existUser 
