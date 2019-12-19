@@ -27,7 +27,10 @@ module.exports = (sequelize, DataTypes) => {
     verification_phone_status: DataTypes.ENUM(userConstants.STATUS_PENDING, userConstants.STATUS_VERIFIED),
     status: DataTypes.INTEGER,
     user_ip: DataTypes.STRING,
-    stripe_id: DataTypes.STRING
+    stripe_id: DataTypes.STRING,
+    provider: DataTypes.STRING,
+    provider_user_id: DataTypes.STRING,
+
   });
 
   User.associate = function(models) {

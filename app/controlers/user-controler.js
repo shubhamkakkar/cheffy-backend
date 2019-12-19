@@ -658,15 +658,88 @@ exports.checkPhone = async (req, res, next) => {
 exports.socialauth = async (req, res, next) => {
   try {
 
+    const contract = new ValidationContract();
+
+    contract.isRequired(req.body.provider, 'provider is Required');
+    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+    contract.isRequired(req.body.email, 'email is Required');
+
+    if (!contract.isValid()) {
+        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
+    }
     const existUser = await User.findOne({ where: { email: req.body.email } });
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
       return 0;
     }
 
+    existUser.provider = req.body.provider;
+    existUser.provider_user_id = req.body.provider_user_id;
+    await existUser.save();
+
     res.status(200).send({
       data: existUser 
     });
+
+  } catch (e) {
+    res.status(500).send({
+      message: 'Failed to process your request'
+    });
+  }
+};
+
+
+exports.socialauthRegister = async (req, res, next) => {
+  try {
+
+    const contract = new ValidationContract();
+
+    contract.isRequired(req.body.email, 'email is Required');
+    contract.isRequired(req.body.name, 'name is Required');
+    contract.isRequired(req.body.user_type, 'user_type is Required');
+    contract.isRequired(req.body.password, 'password is Required');
+
+    if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
+
+
+    if (!contract.isValid()) {
+        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
+    }
+    const existUser = await User.findOne({ where: { email: req.body.email } });
+    if (existUser) {
+      res.status(HttpStatus.CONFLICT).send({ message: 'user already exists', status: HttpStatus.CONFLICT});
+      return 0;
+    }
+
+    let user = {};
+
+    user.name = req.body.name;
+    user.email = req.body.email;
+    user.user_type = req.body.user_type;
+    user.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
+
+    if (user.user_type === userConstants.USER_TYPE_DRIVER) {
+      await driverAPI.createDriver({
+        name: user.name,
+        email: user.email
+      });
+    }
+
+    if (user.user_type === userConstants.USER_TYPE_CHEF) {
+      user.restaurant_name = req.body.restaurant_name;
+    }
+
+    let full_data = user;
+    const createdUser = await User.create({ ...full_data });
+
+    res.status(HttpStatus.CREATED).send({
+      message: `Congratulations, successfully created ${req.body.user_type} type user!`,
+      status: HttpStatus.CREATED,
+      result: createdUser
+    });
+
+
+    
 
   } catch (e) {
     res.status(500).send({

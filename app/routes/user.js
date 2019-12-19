@@ -16,6 +16,7 @@ router.post('/login', controller.authenticate);
 router.post('/logout', authService.authorize, controller.logout);
 
 router.post('/socialauth', controller.socialauth);
+router.post('/socialauth/register', controller.socialauthRegister);
 
 router.get('/balance', authService.authorize, controller.getUserBalance);
 router.get('/balance/history?:from:to', authService.authorize, controller.getUserBalanceHistory);

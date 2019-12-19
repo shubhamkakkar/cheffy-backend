@@ -4,7 +4,11 @@ const path = require('path');
 const HttpStatus = require("http-status-codes");
 const debug = require('debug')('errors');
 const logger = require(path.resolve('./server/logger'));
+/*const Slack = require('slack-node');
 
+const bugWebhookURI = config.slack.bugWebhookURI;
+const bugSlack = new Slack();
+bugSlack.setWebhook(bugWebhookURI);*/
 /**
  *
  * @param error

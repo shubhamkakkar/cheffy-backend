@@ -17,5 +17,6 @@ module.exports = (app) => {
   app.use(errorsController.errorHandler);
 
   // Assume 404 since no middleware responded
-  app.use(errorsController.noAPIMiddlewareResponded);
+  //don't send no middleware found for tmp request
+  app.use(/^tmp/, errorsController.noAPIMiddlewareResponded);
 };

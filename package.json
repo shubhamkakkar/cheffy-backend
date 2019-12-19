@@ -47,6 +47,7 @@
     "sendgrid": "^5.2.3",
     "sequelize": "^5.10.2",
     "sequelize-cli": "^5.5.1",
+    "slack-node": "^0.1.8",
     "sqlite3": "^4.0.9",
     "stripe": "^7.6.0",
     "swagger-ui-express": "^4.0.7",
