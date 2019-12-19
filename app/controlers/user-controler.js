@@ -689,7 +689,7 @@ exports.socialauth = async (req, res, next) => {
 };
 
 
-exports.socialauthRegister = async (req, res, next) => {console.log(req.body)
+exports.socialauthRegister = async (req, res, next) => {
   try {
 
     const contract = new ValidationContract();
