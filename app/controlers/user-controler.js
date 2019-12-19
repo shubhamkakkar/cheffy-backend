@@ -667,7 +667,16 @@ exports.socialauth = async (req, res, next) => {
     if (!contract.isValid()) {
         return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
     }
-    const existUser = await User.findOne({ where: { email: req.body.email } });
+    const existUser = await User.findOne({
+     where: { email: req.body.email },
+
+     include: [{
+        model: ShippingAddress,
+        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
+        as:'address'
+      }]
+
+   });
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
       return 0;
@@ -675,9 +684,19 @@ exports.socialauth = async (req, res, next) => {
 
     existUser.provider = req.body.provider;
     existUser.provider_user_id = req.body.provider_user_id;
+
+    const token = await authService.generateToken({
+      id: existUser.id,
+      email: existUser.email,
+      name: existUser.name
+    });
+
+    existUser.auth_token = token;
+
     await existUser.save();
 
     res.status(200).send({
+      token: token,
       data: existUser 
     });
 
