@@ -689,7 +689,7 @@ exports.socialauth = async (req, res, next) => {
 };
 
 
-exports.socialauthRegister = async (req, res, next) => {
+exports.socialauthRegister = async (req, res, next) => {console.log(req.body)
   try {
 
     const contract = new ValidationContract();
@@ -697,7 +697,9 @@ exports.socialauthRegister = async (req, res, next) => {
     contract.isRequired(req.body.email, 'email is Required');
     contract.isRequired(req.body.name, 'name is Required');
     contract.isRequired(req.body.user_type, 'user_type is Required');
-    contract.isRequired(req.body.password, 'password is Required');
+    contract.isRequired(req.body.provider, 'provider is Required');
+    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+    contract.isRequired(req.body.imagePath, 'imagePath id is Required');
 
     if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
 
@@ -716,7 +718,9 @@ exports.socialauthRegister = async (req, res, next) => {
     user.name = req.body.name;
     user.email = req.body.email;
     user.user_type = req.body.user_type;
-    user.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
+    user.provider = req.body.provider;
+    user.provider_user_id = req.body.provider_user_id;
+    user.imagePath = req.body.imagePath;
 
     if (user.user_type === userConstants.USER_TYPE_DRIVER) {
       await driverAPI.createDriver({
