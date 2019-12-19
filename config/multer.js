@@ -31,6 +31,9 @@ module.exports = (fieldsObj) => {
           case 'plate_image':
             cb(null, path.resolve(__dirname, '..', 'tmp', 'plate_image'));
             break;
+          case 'custom_plate_image':
+            cb(null, path.resolve(__dirname, '..', 'tmp', 'custom_plate_image'));
+            break;
           case 'kitchen_image':
             cb(null, path.resolve(__dirname, '..', 'tmp', 'kitchen_image'));
             break;
@@ -47,11 +50,11 @@ module.exports = (fieldsObj) => {
             break;
         }
       },
-      filename: (req, file, cb) => {
+      filename: (req, file, cb) => {        
         crypto.randomBytes(4, (err, hash) => {
           if (err) cb(err);
           file.key = `${Date.now()}-${hash.toString('hex')}-${file.originalname}`;
-    
+
           cb(null, file.key);
         });
       }

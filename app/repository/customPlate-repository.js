@@ -21,8 +21,17 @@ exports.createAuction = async (data) => {
 exports.getCustomPlate = async(customPlateId) => {
   return await CustomPlate.findByPk(customPlateId);
 }
+
+exports.getCustomPlateImage = async(customPlateImageId) => {
+  return await CustomPlateImage.findByPk(customPlateImageId);
+}
+
 exports.getCustomPlateAuction = async(auctionId) => {
   return await CustomPlateAuction.findByPk(auctionId);
+}
+
+exports.getCustomPlateAuctionByCustomPlate = async(customPlateId) => {
+  return await CustomPlateAuction.findOne({where: {CustomPlateID: customPlateId}});
 }
 
 

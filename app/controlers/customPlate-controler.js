@@ -71,6 +71,21 @@ function orderPaymentErrorResponseBuilder({error, create_order, total_cart, req}
   return orderPayment;
 }
 
+exports.customPlateByIdMiddleware = asyncHandler(async(req, res, next, customPlateId) => {
+  const customPlate = await repository.getCustomPlate(customPlateId);
+  if(!customPlate) return res.status(HttpStatus.NOT_FOUND).send({message: `Custom Plate Not Found by id ${customPlateId}`});
+  req.customPlate = customPlate;
+  next();
+});
+
+
+exports.customPlateImageByIdMiddleware = asyncHandler(async(req, res, next, customPlateImageId) => {
+  const customPlateImage = await repository.getCustomPlateImage(customPlateImageId);
+  if(!customPlateImage) return res.status(HttpStatus.NOT_FOUND).send({message: `Custom Plate Image Not Found by id ${customPlateImageId}`});
+  req.customPlateImage = customPlateImage;
+  next();
+});
+
 /**
 * Method: POST
 * Add Custom plate by 'user' role type
@@ -78,11 +93,13 @@ function orderPaymentErrorResponseBuilder({error, create_order, total_cart, req}
 exports.addCustomPlate = asyncHandler(async (req, res, next) => {
   debug('req.body', req.body);
   let contract = new ValidationContract();
+  console.log(req.body);
   contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
   contract.isRequired(req.body.description, 'Plate description is required!');
   contract.isRequired(req.body.price_min, 'Minimum price is required!');
   contract.isRequired(req.body.price_max  , 'The maximum price is required!');
   contract.isRequired(req.body.quantity, 'The amount of plates is obligatory!');
+  //contract.isRequired(req.body.chef_location_radius, 'The amount of plates is obligatory!');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
@@ -95,7 +112,7 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
     return res.status(HttpStatus.BAD_REQUEST).send({message: `Only 'user' role can create custom plate.`, status: HttpStatus.BAD_REQUEST});
   }
 
-  let data_received = customPlateInputFilter.filter(req.body);
+  let data_received = customPlateInputFilter.filter(req.body, 'form-data');
   let images, images_create;
 
   data_received.userId = user.id;
@@ -106,13 +123,19 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
     delete data_received.images;
   }
 
-  const customPlate = await repository.create(data_received)
+  const customPlate = await repository.create(data_received);
+
+  if(req.files && req.files['custom_plate_image']) {
+    //images = req.files['profile_photo'][0].key;
+    images = req.files['custom_plate_image'];
+  }
 
   if (images) {
-
-    let images_data = []
+    let images_data = [];
     images.forEach(elem => {
       elem.customPlateId = customPlate.id;
+      elem.name = customPlate.name;
+      elem.url = elem.key;
       images_data.push(elem);
     });
 
@@ -134,7 +157,118 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
     data: payload
   });
 
-})
+});
+
+/**
+* Edit Custom Plate
+* Don't allow to edit if auction is closed
+*/
+exports.editCustomPlate = [
+  asyncHandler(async(req, res, next) => {
+    const customPlateAuction = await repository.getCustomPlateAuctionByCustomPlate(req.customPlate.id);
+
+    if(!customPlateAuction) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: 'The auction for this is already removed! Contact Support'});
+    }
+
+    if(customPlateAuction.state_type === customPlateConstants.STATE_TYPE_CLOSED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: 'The auction is already closed.'});
+    }
+    next();
+
+  }),
+  asyncHandler(async (req, res, next) => {
+    debug('req.body', req.body);
+    let contract = new ValidationContract();
+
+    if (!contract.isValid()) {
+      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+      return 0;
+    }
+
+    const user = req.user;
+
+    if(user.user_type !== userConstants.USER_TYPE_USER) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Only 'user' role can create custom plate.`, status: HttpStatus.BAD_REQUEST});
+    }
+
+    let data_received = customPlateInputFilter.filter(req.body, 'form-data');
+    let images, images_create;
+
+    if (data_received.images) {
+      images = data_received.images;
+      delete data_received.images;
+    }
+
+    //const customPlate = await repository.create(data_received);
+    const customPlate = await req.customPlate.update(data_received);
+
+    if(req.files && req.files['custom_plate_image']) {
+      //images = req.files['profile_photo'][0].key;
+      images = req.files['custom_plate_image'];
+    }
+
+    if (images) {
+      let images_data = [];
+      images.forEach(elem => {
+        elem.customPlateId = customPlate.id;
+        elem.name = customPlate.name;
+        elem.url = elem.key;
+        images_data.push(elem);
+      });
+
+      images_create = await repository.createPlateImage(images_data)
+    }
+
+    //create auction for the plate
+    const auction = await repository.getCustomPlateAuctionByCustomPlate(customPlate.id);
+
+    const payload = {};
+    payload.status = HttpStatus.CREATED;
+    //should we name the property plate or custom plate
+    payload.customPlate = customPlate;
+    payload.auction = auction;
+    payload.images = images_create;
+    debug('res payload', payload);
+    res.status(HttpStatus.CREATED).send({
+      message: "The custom plate was successfully updated!",
+      data: payload
+    });
+
+})];
+
+
+exports.addImages = asyncHandler(async(req, res, next) => {
+  const customPlate = req.customPlate;
+  let images = null;
+  if(req.files && req.files['custom_plate_image']) {
+    images = req.files['custom_plate_image'];
+  }
+
+  if(!images) return res.status(HttpStatus.BAD_REQUEST).send({message: 'No images sent for upload'});
+
+  let images_data = [];
+  images.forEach(elem => {
+    elem.customPlateId = customPlate.id;
+    elem.name = customPlate.name;
+    elem.url = elem.key;
+    images_data.push(elem);
+  });
+
+  const createdImages = await repository.createPlateImage(images_data)
+
+  return res.status(HttpStatus.OK).send({message: 'Custom Plate images uploaded successfully.', images: createdImages});
+
+});
+
+
+exports.deleteImage = asyncHandler(async(req, res, next) => {
+  const customPlateImage = req.customPlateImage;
+
+  await customPlateImage.destroy();
+
+  return res.status(HttpStatus.OK).send({message: `Custom Plate Image by Id : ${customPlateImage.id} removed`})
+});
 
 /**
 * Method: POST

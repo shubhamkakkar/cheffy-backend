@@ -1,5 +1,5 @@
 'use strict';
-
+const path = require('path');
 const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/user-controler');
@@ -7,6 +7,15 @@ const messageController = require('../controlers/message-controller');
 const authService = require("../services/auth");
 const facebookRouter = require("../routes/facebook");
 const creditCardRouter = require("../routes/card");
+const multerStart = require(path.resolve("config/multer"));
+
+const udpateFields = [
+  'profile_photo',
+];
+
+const fieldsFile = udpateFields.map((field) => {
+  return {name: field, maxCount: 1};
+});
 
 router.get('/dummy', controller.dummy);
 
@@ -32,7 +41,7 @@ router.post('/confirmchangepassword', authService.authorize, controller.confirmC
 router.put('/edit', authService.authorize, controller.put);
 router.post('/forgot-password', controller.forgotPassword);
 
-router.put('/balance', authService.authorize, controller.getUserBalance);
+router.put('/balance', authService.authorize, multerStart(fieldsFile),  controller.getUserBalance);
 //router.put('/balance/history', authService.authorize, controller.getUserBalanceHistory);
 
 //Facebook

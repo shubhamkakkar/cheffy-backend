@@ -16,6 +16,10 @@ module.exports = (sequelize, DataTypes) => {
     price_min: DataTypes.DOUBLE,
     price_max: DataTypes.DOUBLE,
     quantity: DataTypes.DOUBLE,
+    chef_location_radius: {
+      type: DataTypes.DOUBLE,
+      allowNull: true
+    },
     close_date: DataTypes.DATE,
     userId: {
       type: DataTypes.INTEGER,

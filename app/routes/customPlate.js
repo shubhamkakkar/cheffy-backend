@@ -1,17 +1,36 @@
 'use strict';
 const path = require('path');
+
 const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/customPlate-controler');
 const authService = require("../services/auth");
 const userController = require(path.resolve('app/controlers/user-controler'));
 const shippingController = require("../controlers/shipping-controler");
+const multerStart = require(path.resolve("config/multer"));
+const customPlatePolicies = require(path.resolve('app/policies/custom-plate'));
 
-router.post('/', authService.authorize, userController.getAuthUserMiddleware, controller.addCustomPlate);
+const addFields = [
+  'custom_plate_image',
+];
+
+const fieldsFile = addFields.map((field) => {
+  return {name: field, maxCount: 5};
+});
+
+router.post('/', authService.authorize, userController.getAuthUserMiddleware, multerStart(fieldsFile), controller.addCustomPlate);
+router.put('/:customPlateId', authService.authorize, userController.getAuthUserMiddleware, customPlatePolicies.isOwnerMiddleware(), multerStart(fieldsFile), controller.editCustomPlate);
 
 /*get user custom plate with bids from chef*/
 router.get('/', controller.customPlates);
 router.get('/:customPlateId', controller.customPlate);
+
+
+router.post('/:customPlateId/images', authService.authorize, userController.getAuthUserMiddleware, customPlatePolicies.isOwnerMiddleware(), multerStart(fieldsFile), controller.addImages);
+router.delete('/:customPlateId/images/:customPlateImageId', authService.authorize, userController.getAuthUserMiddleware, customPlatePolicies.isOwnerMiddleware(), controller.deleteImage);
+
+router.param('customPlateId', controller.customPlateByIdMiddleware);
+router.param('customPlateImageId', controller.customPlateImageByIdMiddleware);
 
 
 router.post('/pay', authService.authorize, userController.getAuthUserMiddleware, shippingController.getAuthUserShippingAddress, controller.pay);

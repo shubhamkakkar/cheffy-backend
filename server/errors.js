@@ -18,5 +18,8 @@ module.exports = (app) => {
 
   // Assume 404 since no middleware responded
   //don't send no middleware found for tmp request
-  app.use(/^tmp/, errorsController.noAPIMiddlewareResponded);
+  app.use('/api', errorsController.noAPIMiddlewareResponded);
+
+  //this is giving problem for static route /tmp
+  //app.use(errorsController.noAPIMiddlewareResponded);
 };

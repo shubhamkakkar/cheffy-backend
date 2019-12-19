@@ -8,5 +8,5 @@ module.exports = require(path.resolve('app/inputfilters/whitelist'))([
   'price_min',
   'price_max',
   'quantity',
-  'images'
-]);
+  'chef_location_radius'
+], 'form-data');

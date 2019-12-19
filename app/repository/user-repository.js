@@ -61,7 +61,7 @@ exports.getRestaurantSearch = async (data) => {
   try {
     const response = await User.findAll({
       where: {
-        restaurant_name:{[Op.like]:'%'+data+'%'}
+        restaurant_name:{[sequelize.Op.like]:'%'+data+'%'}
       },
       attributes: [
          'id','restaurant_name','location_lat','location_lon','createdAt','updatedAt'

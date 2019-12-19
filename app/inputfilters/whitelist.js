@@ -11,7 +11,7 @@ function WhiteListInputFilter(fields) {
 
 WhiteListInputFilter.prototype.filter = function(data, reqType) {
   const result = {};
-  this.fields.forEach(function(field) {
+  this.fields.forEach(function(field) {    
     if(reqType === 'form-data') {
       if (data[field]) {
         result[field] = data[field];
