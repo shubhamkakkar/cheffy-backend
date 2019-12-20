@@ -10,6 +10,11 @@ const basketConstants = require(path.resolve('app/constants/baskets'));
 */
 module.exports = (sequelize, DataTypes) => {
   const BasketItem = sequelize.define('BasketItem', {
+    //order item note like extra napkins
+    note: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     plateId: {
       allowNull: true,
       type: DataTypes.INTEGER,

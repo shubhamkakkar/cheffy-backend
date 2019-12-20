@@ -2,7 +2,7 @@
 /*users*/
 INSERT INTO `Users`
 (`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`createdAt`,`updatedAt`)
-VALUES (1,'james','james@gmail.com', '977','9826572342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','user','https://lorempixel.com/300/300/people',null,'verified',null,'verified','2019-12-17','2019-12-17');
+VALUES (1000,'james','james@gmail.com', '977','9826572342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','user','https://lorempixel.com/300/300/people',null,'verified',null,'verified','2019-12-17','2019-12-17');
 
 INSERT INTO `Users`
 (`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`createdAt`,`updatedAt`)
@@ -107,8 +107,8 @@ VALUES (8,'apt 1','street 2', 'NY', 'NY', '122', '45.234234', '33.23234', 8,'201
 
 /*PlateCategories*/
 INSERT INTO `PlateCategories`
-(`id`,`name`,`description`,`url`,`createdAt`,`updatedAt`)
-VALUES (1,'Fast Food', 'Fast Food', 'https://lorempixl.com/fast-food', '2019-12-17','2019-12-17');
+(`id`,`name`,`description`,`url`, `userId`, `createdAt`,`updatedAt`)
+VALUES (1,'Fast Food', 'Fast Food', 'https://lorempixl.com/fast-food', 1, '2019-12-17','2019-12-17');
 
 
 /*Plates*/

@@ -10,16 +10,27 @@ const userConstants = require(path.resolve('app/constants/users'));
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     name: DataTypes.STRING,
-    email: DataTypes.STRING,
+    email: {
+      type: DataTypes.STRING,
+      unique: true
+    },
     country_code: DataTypes.STRING,
-    phone_no: DataTypes.STRING,
+    phone_no: {
+      type: DataTypes.STRING,
+      unique: true
+    },
     auth_token: DataTypes.STRING,
     restaurant_name: DataTypes.STRING,
     password: DataTypes.STRING,
     location_lat: DataTypes.DECIMAL(10,8),
     location_lon: DataTypes.DECIMAL(10,8),
     user_type: DataTypes.ENUM(userConstants.USER_TYPE_USER, userConstants.USER_TYPE_CHEF, userConstants.USER_TYPE_ADMIN, userConstants.USER_TYPE_DRIVER),
-    imagePath: DataTypes.STRING,
+    imagePath: {
+      type: DataTypes.STRING,
+      get() {
+        return `${process.env.URL_SERVER}tmp/profile_photo/${this.getDataValue('imagePath')}`;
+      }
+    },
     verification_code: DataTypes.STRING,
     verification_email_token: DataTypes.STRING,
     verification_email_status: DataTypes.ENUM(userConstants.STATUS_PENDING, userConstants.STATUS_VERIFIED),

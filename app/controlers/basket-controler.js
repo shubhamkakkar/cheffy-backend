@@ -8,6 +8,7 @@ const md5 = require('md5');
 const authService = require('../services/auth');
 const asyncHandler = require('express-async-handler');
 const basketConstants = require(path.resolve('app/constants/baskets'));
+const basketInputFilters = require(path.resolve('app/inputfilters/basket'));
 const debug = require('debug')('basket');
 
 
@@ -31,15 +32,20 @@ exports.addItem = asyncHandler(async (req, res, next) => {
   //get user basket. create on if it doesn't exists yet.
   let basket = await repository.getOrCreateUserBasket(req.userId);
 
-  let basket_item_plate = await repository.getBasketItemsPlate(basket[0].id, req.body.plateId)
+  let basketItemPlate = await repository.getBasketItemsPlate(basket[0].id, req.body.plateId)
 
   let item;
   //if no plate is found in basket item, add it to basket item.
-  if (!basket_item_plate) {
-    let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId: basket[0].id }
+  if (!basketItemPlate) {
+    let body = basketInputFilters.filter(req.body);
+    //let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId:  note: req.body.note };
+    body.basketId = basket[0].id;
     item = await repository.createBasketItem(body);
   } else {
-    item = await basket_item_plate.increment('quantity', {by: req.body.quantity});
+    item = await basketItemPlate.increment('quantity', {by: req.body.quantity});
+    if(req.body.note) {
+      await basketItemPlate.update({note: req.body.note})
+    }
   }
   //after finished updating or adding plate to basket item, get the basket list
   //calculate price and send as response
@@ -196,6 +202,7 @@ function prepareCartResponse({basketItems, basket}){
     result.push({
       basketItemId: value.id,
       quantity: value.quantity,
+      note: value.note,
       basket_type: value.basket_type,
       total_value: parseFloat(value.total),
       [value.basket_type]: value['dataValues'][value.basket_type]
@@ -215,7 +222,7 @@ function prepareCartResponse({basketItems, basket}){
     delivery_fee: basket_delivery_fee,
     total: basket_total,
     items: result
-  }
+  };
 
   return basket_return;
 }

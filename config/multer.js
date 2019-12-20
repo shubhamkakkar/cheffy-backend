@@ -28,6 +28,9 @@ module.exports = (fieldsObj) => {
           case 'front_side':
             cb(null, path.resolve(__dirname, '..', 'tmp', 'front_side'));
             break;
+          case 'category_image':
+            cb(null, path.resolve(__dirname, '..', 'tmp', 'category_image'));
+            break;
           case 'plate_image':
             cb(null, path.resolve(__dirname, '..', 'tmp', 'plate_image'));
             break;
@@ -50,7 +53,7 @@ module.exports = (fieldsObj) => {
             break;
         }
       },
-      filename: (req, file, cb) => {        
+      filename: (req, file, cb) => {
         crypto.randomBytes(4, (err, hash) => {
           if (err) cb(err);
           file.key = `${Date.now()}-${hash.toString('hex')}-${file.originalname}`;

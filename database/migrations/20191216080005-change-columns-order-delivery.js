@@ -13,9 +13,9 @@ module.exports = {
     */
     await queryInterface.removeColumn('OrderDeliveries', 'state_type');
     await queryInterface.removeColumn('OrderDeliveries', 'orderId');
-    await queryInterface.removeColumn('OrderDeliveries', 'orderItemID');
-    await queryInterface.removeColumn('OrderDeliveries', 'order_delivery_type');
-    await queryInterface.removeColumn('OrderDeliveries', 'userId');
+    //await queryInterface.removeColumn('OrderDeliveries', 'orderItemID');
+    //await queryInterface.removeColumn('OrderDeliveries', 'order_delivery_type');
+    //await queryInterface.removeColumn('OrderDeliveries', 'userId');
 
     return Promise.all([
 

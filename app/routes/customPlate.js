@@ -40,8 +40,12 @@ router.post('/bid', authService.authorize, userController.getAuthUserMiddleware,
 router.post('/accept/bid/:auctionBidId', authService.authorize, userController.getAuthUserMiddleware, controller.acceptCustomPlateBid);
 
 
-/*router.get('/list/all', authService.authorize, controller.listAllCustomPlates);
-router.get('/list/:userId', authService.authorize, controller.listUserCustomPlates);*/
+/*router.get('/list/all', authService.authorize, controller.listAllCustomPlates);*/
+
+router.get('/user/:userId', controller.listUserCustomPlates);
+router.get('/user/my/list', authService.authorize, controller.listMyCustomPlates);
+
+router.param('userId', userController.getUserByUserIdParamMiddleware);
 
 router.get('/order/list/:userId', authService.authorize, controller.listUserCustomOrders);
 

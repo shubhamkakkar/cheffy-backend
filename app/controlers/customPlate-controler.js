@@ -438,9 +438,17 @@ exports.pay = asyncHandler(async (req, res, next) => {
 
   let existUser = req.user;
 
-  //user shipping address. if req.body.shipping_id is sent, it is that shipping address,
+  //user shipping address. if req.body.shipping_id || req.query.shipping_id is sent, it is that shipping address,
   //otherwise it is set to default user shipping address
   const user_address = req.userShippingAddress;
+  const deliveryTypes = [orderItemConstants.DELIVERY_TYPE_USER, 'self', 'driver'];
+
+  const promoCode = req.body.promoCode;
+  const deliveryType = req.body.deliveryType;
+
+  if(deliveryTypes.indexOf(deliveryType) === -1) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: `Delivery Type should be one of: ${deliveryTypes.join(',')}`, error: true });
+  }
 
   //get user basket items
   let user_basket = await basketRepository.getOneUserBasket(req.userId);
@@ -596,8 +604,10 @@ exports.pay = asyncHandler(async (req, res, next) => {
         name: basketItem[basketType].name,
         description: basketItem[basketType].description,
         amount: basketItem[basketType].price,
-        quantity: basketItem.quantity
+        quantity: basketItem.quantity,
+        note: basketItem.note
       };
+
       let loc = {};
 
       if(basketType === basketConstants.BASKET_TYPE_PLATE) {
@@ -622,7 +632,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 
     //remove basket items of a user
     //TODO uncomment
-    //await basketRepository.removeBasketItems(user_basket.id);
+    await basketRepository.removeBasketItems(user_basket.id);
 
     //create delivery for items which offers delivery
     const oderDeliveryPayload = basketItems.filter((basketItem) => {
@@ -699,7 +709,21 @@ exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
   const query = { where: { userId }, ...paginator.paginateQuery(req)};
   const customPlates = await CustomPlate.findAll(query);
   res.status(HttpStatus.ACCEPTED).send({
-    message: "Custom Plates",
+    message: `Custom Plates of: ${req.paramUser.name}`,
+    ...paginator.paginateInfo(query),
+    data: customPlates
+  });
+});
+/**
+* Method: GET
+* Get custom plates of auth user.
+*/
+exports.listMyCustomPlates = asyncHandler(async (req, res, next) => {
+  const userId = req.userId;
+  const query = { where: { userId }, ...paginator.paginateQuery(req)};
+  const customPlates = await CustomPlate.findAll(query);
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "Your Custom Plates",
     ...paginator.paginateInfo(query),
     data: customPlates
   });

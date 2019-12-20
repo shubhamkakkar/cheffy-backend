@@ -8,6 +8,11 @@ const orderItemConstants = require(path.resolve('app/constants/order-item'));
 */
 module.exports = (sequelize, DataTypes) => {
   const OrderItem = sequelize.define('OrderItem', {
+    //order item note like extra napkins
+    note: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     orderId: {
       type: DataTypes.INTEGER,
       references: {
@@ -43,6 +48,14 @@ module.exports = (sequelize, DataTypes) => {
         basketConstants.BASKET_TYPE_PLATE,
         basketConstants.BASKET_TYPE_CUSTOM_PLATE
       ),
+    },
+    deliveryType: {
+      type: DataTypes.ENUM(
+        orderItemConstants.DELIVERY_TYPE_CHEF,
+        orderItemConstants.DELIVERY_TYPE_DRIVER,
+        orderItemConstants.DELIVERY_TYPE_USER
+      ),
+      defaultValue: orderItemConstants.DELIVERY_TYPE_USER
     },
     state_type: {
       type: DataTypes.ENUM(

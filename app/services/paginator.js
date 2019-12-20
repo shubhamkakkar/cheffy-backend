@@ -12,7 +12,7 @@ const paginator = (req) => {
   return {
     offset,
     limit,
-    __FROM__: offset,
+    __FROM__: offset === 0 ? 1 : offset,
     __TO__: offset+limit
   };
 };

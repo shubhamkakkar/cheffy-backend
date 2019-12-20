@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('free', 'paid'),
       defaultValue: 'paid',
     },
+    //this field shows whether the plate is currently prepated by the chef or not
+    available: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
     chefDeliveryAvailable: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
