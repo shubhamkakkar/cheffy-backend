@@ -441,7 +441,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
   //user shipping address. if req.body.shipping_id || req.query.shipping_id is sent, it is that shipping address,
   //otherwise it is set to default user shipping address
   const user_address = req.userShippingAddress;
-  const deliveryTypes = [orderItemConstants.DELIVERY_TYPE_USER, 'self', 'driver'];
+  const deliveryTypes = [orderItemConstants.DELIVERY_TYPE_USER, orderItemConstants.DELIVERY_TYPE_CHEF, orderItemConstants.DELIVERY_TYPE_DRIVER];
 
   const promoCode = req.body.promoCode;
   const deliveryType = req.body.deliveryType;
@@ -481,6 +481,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
     basketId: user_basket.id,
     userId: req.userId,
     total_items: basketItems.length,
+    promoCode: promoCode,
     //convert back to dollar from cents for storing in order table
     order_total: centsToDollar(total_cart),
   };
@@ -600,6 +601,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
         orderId: create_order.id,
         item_type: basketItem.basket_type,
         user_id: req.userId,
+        deliveryType: req.body.deliveryType,
         //chef_location: DataTypes.STRING,
         name: basketItem[basketType].name,
         description: basketItem[basketType].description,
@@ -631,41 +633,45 @@ exports.pay = asyncHandler(async (req, res, next) => {
     const createdOrderItems = await repositoryOrder.createOrderItems(await Promise.all(oderItemsPayload));
 
     //remove basket items of a user
-    //TODO uncomment
+
     await basketRepository.removeBasketItems(user_basket.id);
 
-    //create delivery for items which offers delivery
-    const oderDeliveryPayload = basketItems.filter((basketItem) => {
-      const basketType = basketItem.basket_type;
-      if(basketItem[basketType].chefDeliveryAvailable) return true;
-      return false;
-    }).map( (basketItem, index) => {
-      const basketType = basketItem.basket_type;
-      const orderDelivery = {
-        orderItemId: createdOrderItems[index].id,
-        order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM,
-        userId: req.userId,
-        state_type: orderDeliveryConstants.STATE_TYPE_PENDING
-      };
+    //if not pickup by user create order deliveries
+    if(deliveryType !== orderItemConstants.DELIVERY_TYPE_USER) {
+      //create delivery for items which offers delivery
+      const oderDeliveryPayload = basketItems.filter((basketItem) => {
+        const basketType = basketItem.basket_type;
+        if(basketItem[basketType].chefDeliveryAvailable) return true;
+        return false;
+      }).map( (basketItem, index) => {
+        const basketType = basketItem.basket_type;
+        const orderDelivery = {
+          orderItemId: createdOrderItems[index].id,
+          order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM,
+          userId: req.userId,
+          state_type: orderDeliveryConstants.STATE_TYPE_PENDING
+        };
 
-      //set driverId from chef field of plate or custom_plate_order
-      if(basketType === basketConstants.BASKET_TYPE_PLATE) {
-        orderDelivery.driverId = basketItem.plate.userId;
-      }
+        //set driverId from chef field of plate or custom_plate_order
+        if(basketType === basketConstants.BASKET_TYPE_PLATE) {
+          orderDelivery.driverId = basketItem.plate.userId;
+        }
 
-      if(basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
-        orderDelivery.driverId = basketItem.custom_plate.chefID;
-      }
-      return orderDelivery;
+        if(basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
+          orderDelivery.driverId = basketItem.custom_plate.chefID;
+        }
+        return orderDelivery;
 
-    });
+      });
 
-    const orderDeliveries = await repositoryOrderDelivery.createOrderDeliveries(oderDeliveryPayload);
+      const orderDeliveries = await repositoryOrderDelivery.createOrderDeliveries(oderDeliveryPayload);
+    }
+
 
     return res.status(HttpStatus.ACCEPTED).send({
       message: 'Your order was successfully paid!',
       payment_return: create_orderPayment,
-      orderDeliveries: orderDeliveries
+      //orderDeliveries: orderDeliveries
     });
   }
 

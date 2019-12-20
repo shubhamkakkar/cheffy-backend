@@ -39,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
       ),
       defaultValue: orderConstants.STATE_TYPE_PENDING
     },
+    promoCode: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     total_items: DataTypes.INTEGER,
     shipping_fee: DataTypes.DOUBLE,
     order_total: DataTypes.DOUBLE
