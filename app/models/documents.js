@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
     social_security_number: {
       type: DataTypes.STRING,
       allowNull: true,
-      unique: true
+      //unique: true,
       /*validate: {
         notNull: {
           msg: 'Social security number is empty!'

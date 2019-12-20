@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: async (queryInterface, Sequelize) => {
     /*
       Add altering commands here.
       Return a promise to correctly handle asynchronicity.
@@ -9,14 +9,19 @@ module.exports = {
       Example:
       return queryInterface.createTable('users', { id: Sequelize.INTEGER });
     */
-    return queryInterface.changeColumn(
+
+    await queryInterface.removeColumn(
+      'Documents',
+      'social_security_number');
+
+    return queryInterface.addColumn(
       'Documents',
       'social_security_number',
       {
         type: Sequelize.STRING,
         allowNull: true,
         unique: true
-      })
+      });
   },
 
   down: (queryInterface, Sequelize) => {
@@ -33,6 +38,6 @@ module.exports = {
           {
             type: Sequelize.STRING,
             allowNull: true
-          })
+          });
   }
 };
