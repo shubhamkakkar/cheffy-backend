@@ -755,10 +755,30 @@ exports.socialauthRegister = async (req, res, next) => {
     let full_data = user;
     const createdUser = await User.create({ ...full_data });
 
-    res.status(HttpStatus.CREATED).send({
-      message: `Congratulations, successfully created ${req.body.user_type} type user!`,
-      status: HttpStatus.CREATED,
-      result: createdUser
+    const token = await authService.generateToken({
+      id: createdUser.id,
+      email: createdUser.email,
+      name: createdUser.name
+    });
+
+    createdUser.auth_token = token;
+
+    await createdUser.save();
+
+    const existUserNew = await User.findOne({
+     where: { email: req.body.email },
+
+     include: [{
+        model: ShippingAddress,
+        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
+        as:'address'
+      }]
+
+   });
+
+    res.status(200).send({
+      token: token,
+      data: existUserNew 
     });
 
 
