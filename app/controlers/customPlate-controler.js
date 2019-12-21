@@ -312,12 +312,20 @@ exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
     });
   }
 
+  if (req.body.chefDeliveryAvailable && !req.body.delivery_time) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to state whether delivery time in minutes!",
+      status: HttpStatus.CONFLICT
+    });
+  }
+
   let context = {
     CustomPlateAuctionID: req.body.auction,
     chefID: authUser.id,
     price: req.body.price,
     preparation_time: req.body.preparation_time,
-    chefDeliveryAvailable: req.body.chefDeliveryAvailable
+    chefDeliveryAvailable: req.body.chefDeliveryAvailable,
+    delivery_time: req.body.delivery_time
   };
 
   //check if auction is closed;
@@ -726,12 +734,14 @@ exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
 */
 exports.listMyCustomPlates = asyncHandler(async (req, res, next) => {
   const userId = req.userId;
-  const query = { where: { userId }, ...paginator.paginateQuery(req)};
-  const customPlates = await CustomPlate.findAll(query);
+  const query = { userId, pagination: paginator.paginateQuery(req)};
+
+  //const customPlates = await CustomPlate.findAll(query);
+  const myCustomPlates = await repository.myCustomPlates(query)
   res.status(HttpStatus.ACCEPTED).send({
     message: "Your Custom Plates",
     ...paginator.paginateInfo(query),
-    data: customPlates
+    data: myCustomPlates
   });
 });
 
