@@ -24,6 +24,8 @@ router.post('/', controller.create);
 router.post('/login', controller.authenticate);
 router.post('/logout', authService.authorize, controller.logout);
 
+router.put('/location', authService.authorize, controller.getAuthUserMiddleware, controller.updateLocation);
+
 router.post('/socialauth', controller.socialauth);
 router.post('/socialauth/register', controller.socialauthRegister);
 

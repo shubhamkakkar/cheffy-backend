@@ -885,11 +885,10 @@ exports.put = asyncHandler(async (req, res, next) => {
     const prevPhone = existUser.phone_no;
     const prevEmail = existUser.email;
 
-    const updates = userInputFilter.filter(req.body, 'form-data');
+    const updates = userInputFilter.updateFields.filter(req.body, 'form-data');
 
     if(req.files && req.files['profile_photo']) {
       updates.imagePath = req.files['profile_photo'][0].key;
-      console.log('image update', updates);
     }
 
     //need to send verification email when email change
@@ -919,7 +918,7 @@ exports.put = asyncHandler(async (req, res, next) => {
 
     await existUser.update(updates);
 
-    res.status(200).send({
+    res.status(HttpStatus.OK).send({
       message: 'Profile successfully updated!',
       data: existUser
     });
@@ -934,6 +933,32 @@ exports.put = asyncHandler(async (req, res, next) => {
       let phone = existUser.country_code + existUser.phone_no;
       await phoneService.sendMessage(phone, existUser.verification_phone_token);
     }
+
+});
+
+
+/**
+* Update user location_lat and location_lon fields
+*/
+exports.updateLocation = asyncHandler(async(req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.location_lat, 'Field location_lat is required');
+  contract.isRequired(req.body.location_lon, 'Field location_lon is required');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+  }
+
+  const user = req.user;
+
+  const updates = userInputFilter.locationFields.filter(req.body);
+
+  await user.update(updates);
+
+  res.status(HttpStatus.OK).send({
+    message: 'Location successfully updated!',
+    data: user
+  });
 
 });
 
