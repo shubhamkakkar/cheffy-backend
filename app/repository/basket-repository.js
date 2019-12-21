@@ -201,7 +201,8 @@ exports.getBasketItemsDetail = async (basketId) => {
             attributes: userConstants.userSelectFields,
             include: [
               {
-                model: ShippingAddress
+                model: ShippingAddress,
+                as: 'address'
               }
             ]
           }
