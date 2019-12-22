@@ -22,7 +22,9 @@ const bcrypt = require('bcrypt');
 const debug = require('debug')('user');
 const asyncHandler = require('express-async-handler');
 const userConstants = require(path.resolve('app/constants/users'));
+const appConstants = require(path.resolve('app/constants/app'));
 const userInputFilter = require(path.resolve('app/inputfilters/user'));
+const events = require(path.resolve('app/services/events'));
 const _ = require('lodash');
 
 const { generateHash } = require('../../helpers/password');
@@ -251,6 +253,17 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
+
+  //publish create action
+  events.publish({
+      action: 'create',
+      user: newuser.get({}),
+      query: req.query,
+      //registration can be by any user so scope is all
+      scope: appConstants.SCOPE_ALL,
+      type: 'user'
+  }, req);
+
 });
 
 exports.getUserBalance = async (req, res, next) => {
@@ -697,7 +710,7 @@ exports.socialauth = async (req, res, next) => {
 
     res.status(200).send({
       token: token,
-      data: existUser 
+      data: existUser
     });
 
   } catch (e) {
@@ -778,11 +791,11 @@ exports.socialauthRegister = async (req, res, next) => {
 
     res.status(200).send({
       token: token,
-      data: existUserNew 
+      data: existUserNew
     });
 
 
-    
+
 
   } catch (e) {
     res.status(500).send({
@@ -844,6 +857,17 @@ exports.authenticate = async (req, res, next) => {
       token: token,
       data: { ...customer.dataValues, user_doc: !!(doc) }
     });
+
+    //publish create action
+    events.publish({
+        action: 'login',
+        user: customer.get({}),
+        query: req.query,
+        //login can be by any user so scope is all
+        scope: appConstants.SCOPE_ALL,
+        type: 'user'
+    }, req);
+
   } catch (e) {
     console.log(e)
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({

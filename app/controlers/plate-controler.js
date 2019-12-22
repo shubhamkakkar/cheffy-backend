@@ -15,6 +15,8 @@ const Op = Sequelize.Op;
 const documentConstants = require(path.resolve('app/constants/documents'));
 const asyncHandler = require('express-async-handler');
 const plateInputFilter = require(path.resolve('app/inputfilters/plate'));
+const events = require(path.resolve('app/services/events'));
+const appConstants = require(path.resolve('app/constants/app'));
 const _ = require('lodash');
 
 
@@ -205,7 +207,7 @@ exports.getPlate = async (req, res, next) => {
   }
 };
 
-exports.searchPlates = async (req, res, next) => {
+exports.searchPlates = asyncHandler(async (req, res, next) => {
   const list_plates = await Plates.findAll({
     where: {
       name: {
@@ -228,8 +230,20 @@ exports.searchPlates = async (req, res, next) => {
       },
     ],
   });
+
   res.status(200).send({ message: "Plates found!", param: req.params.text, data: list_plates });
-};
+
+  //publish search action
+  events.publish({
+      action: 'searched',
+      user: req.user,
+      query: req.query,
+      params: req.params,
+      //registration can be by any user so scope is all
+      scope: appConstants.SCOPE_ALL,
+      type: 'plate'
+  }, req);
+});
 
 
 exports.searchPlatesByChefId = async (req, res, next) => {

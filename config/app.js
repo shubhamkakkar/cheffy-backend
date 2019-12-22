@@ -12,9 +12,16 @@ module.exports = {
   },
   phone: {
     twilio: {
-      accountSid: proces.env.TWILIO_ACCOUNT_SID,
-      authToken: proces.env.TWILIO_AUTH_TOKEN,
-      baseNumber: proces.env.TWILIO_BASE_NUMBER
+      accountSid: process.env.TWILIO_ACCOUNT_SID,
+      authToken: process.env.TWILIO_AUTH_TOKEN,
+      baseNumber: process.env.TWILIO_BASE_NUMBER
     }
+  },
+  slack: {
+    userActivityWebhookURI: process.env.SLACK_USER_ACTIVITY_WEBHOOK_URI,
+    bugWebhookURI: process.env.SLACK_BUG_WEBHOOK_URI,
+    bugChannel:  process.env.SLACK_CHANNEL_BUG,
+    userLogsChannel:  process.env.SLACK_CHANNEL_USER_ACTIVITY,
+    username:  process.env.SLACK_USERNAME,
   }
 };

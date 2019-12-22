@@ -4,11 +4,7 @@ const path = require('path');
 const HttpStatus = require("http-status-codes");
 const debug = require('debug')('errors');
 const logger = require(path.resolve('./server/logger'));
-/*const Slack = require('slack-node');
-
-const bugWebhookURI = config.slack.bugWebhookURI;
-const bugSlack = new Slack();
-bugSlack.setWebhook(bugWebhookURI);*/
+const slackLogger = require(path.resolve('app/services/slack'));
 /**
  *
  * @param error
@@ -105,8 +101,7 @@ exports.logError = function(error, req) {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    //TODO
-    //log error in bug tracking service or slack
+    slackLogger.logError(error, req, 'API Error');
     return logger.error(error);
   }
 
@@ -127,6 +122,8 @@ exports.logBrowserError = function(req, body = {}) {
     if(fileLogContents.screenshot) {
       delete fileLogContents.screenshot;
     }
+    slackLogger.logError(error, req, 'Browser/Client Error');
+
     return logger.warn(fileLogContents, 'browser-error');
   }
   //delete screenshot dataURL for not polluting the console
