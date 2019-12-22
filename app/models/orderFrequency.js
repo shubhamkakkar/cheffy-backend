@@ -6,14 +6,14 @@
 */
 
 module.exports = (sequelize, DataTypes) => {
-  const orderFrequency = sequelize.define('orderFrequency', {
+  const OrderFrequency = sequelize.define('OrderFrequency', {
     plate1: {
       type: DataTypes.INTEGER,
       references: {
         model: 'Plates',
         key: 'id'
       },
-      primaryKey: true
+      primaryKey: true 
     }, 
     plate2: {
       type: DataTypes.INTEGER,
@@ -29,14 +29,14 @@ module.exports = (sequelize, DataTypes) => {
     },
 
 }, {});
-  orderFrequency.associate = function(models) {
+  OrderFrequency.associate = function(models) {
 
-    orderFrequency.belongsTo(models.Plates, {foreignKey: 'plate1', as: 'plate_1', onDelete: 'cascade'});
-    orderFrequency.belongsTo(models.Plates, {foreignKey: 'plate2', as: 'plate_2', onDelete: 'cascade'});
+    OrderFrequency.belongsTo(models.Plates, {foreignKey: 'plate1', as: 'plate_1', onDelete: 'cascade'});
+    OrderFrequency.belongsTo(models.Plates, {foreignKey: 'plate2', as: 'plate_2', onDelete: 'cascade'});
     
   };
 
-  orderFrequency.removeAttribute('id');
+  OrderFrequency.removeAttribute('id');
 
-  return orderFrequency;
+  return OrderFrequency;
 };

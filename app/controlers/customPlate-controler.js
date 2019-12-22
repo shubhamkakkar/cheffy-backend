@@ -12,7 +12,7 @@ const repositoryOrderDelivery = require("../repository/orderDelivery-repository"
 const authService = require('../services/auth');
 const paymentService = require("../services/payment");
 const helpers = require('./controler-helper');
-const { User, CustomPlate, CustomPlateOrder } = require('../models/index');
+const { User, CustomPlate, CustomPlateOrder, OrderFrequency } = require('../models/index');
 const TransactionsService = require("../services/transactions");
 const asyncHandler = require('express-async-handler');
 const customPlateInputFilter = require(path.resolve('app/inputfilters/custom-plate'));
@@ -26,6 +26,10 @@ const orderPaymentConstants = require(path.resolve('app/constants/order-payment'
 const orderConstants = require(path.resolve('app/constants/order'));
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const orderItemConstants = require(path.resolve('app/constants/order-item'));
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
+
+
 
 /**
 * Helper method
@@ -635,10 +639,12 @@ exports.pay = asyncHandler(async (req, res, next) => {
       orderItem.chef_location = `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`;
       return orderItem;
 
-    });
+    })
 
     //create order items
-    const createdOrderItems = await repositoryOrder.createOrderItems(await Promise.all(oderItemsPayload));
+    let myOrderList = await Promise.all(oderItemsPayload);
+
+    const createdOrderItems = await repositoryOrder.createOrderItems(myOrderList);
 
     //remove basket items of a user
 
@@ -674,6 +680,56 @@ exports.pay = asyncHandler(async (req, res, next) => {
 
       const orderDeliveries = await repositoryOrderDelivery.createOrderDeliveries(oderDeliveryPayload);
     }
+
+    //orderFrquency count
+
+    myOrderList = myOrderList.filter(elem => elem.item_type == "plate");
+
+
+    let frequencyList = [];
+
+    if(myOrderList.length > 1){
+
+      for(let i=0;i<myOrderList.length;i++){
+        
+        for(let j=i+1;j<myOrderList.length;j++){
+          let freq = {};
+          
+          freq.plate1 = myOrderList[i].plate_id;
+          freq.plate2 = myOrderList[j].plate_id;
+          freq.frequency = 1;
+
+          frequencyList.push(freq);
+
+
+        }
+        
+
+      }
+
+    }
+
+    frequencyList.map(async (obj) => {
+      let existRecord = await OrderFrequency.findOne({
+
+        where:{
+        [Op.or]: [{plate1: obj.plate1, plate2: obj.plate2}, {plate1: obj.plate2, plate2: obj.plate1}]
+        }
+      })
+
+      if(!existRecord){
+        await OrderFrequency.create(obj);
+      }
+      else{
+      existRecord.frequency = existRecord.frequency+1;
+      existRecord.save();
+    }
+
+    })
+
+
+
+    
 
 
     return res.status(HttpStatus.ACCEPTED).send({

@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/user-controler');
 const messageController = require('../controlers/message-controller');
+const basketController = require('../controlers/basket-controler');
 const authService = require("../services/auth");
 const facebookRouter = require("../routes/facebook");
 const creditCardRouter = require("../routes/card");
@@ -63,5 +64,8 @@ router.get('/search/:text',  controller.search);
 
 
 router.get('/searchPredictions', controller.searchPredictions);
+
+router.get('/peopleAlsoAdded/:id', basketController.peopleAlsoAddedList);
+
 
 module.exports = router;

@@ -1,7 +1,9 @@
 'use strict';
 const path = require('path');
-const { Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder, User, ShippingAddress } = require('../models/index');
+const {OrderFrequency, Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder, User, ShippingAddress } = require('../models/index');
 const userConstants = require(path.resolve('app/constants/users'));
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
 exports.getOrCreateUserBasket = async (userId) => {
   const basket = await Basket.findOrCreate({
@@ -212,4 +214,34 @@ exports.getBasketItemsDetail = async (basketId) => {
   });
 
   return existBasket;
+}
+
+
+exports.peopleAlsoAddedList = async(plateId) => {
+  let list = OrderFrequency.findAll({
+    where:{
+      [Op.or]: [{plate1: plateId}, {plate2: plateId}]
+    },
+    attributes:[],
+    include: [
+      {
+        model: Plates,
+        as: 'plate_1',
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId']
+      },
+      {
+        model: Plates,
+        as: 'plate_2',
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId']
+      }],
+
+    limit: 3 ,
+    order: [
+    ['frequency', 'DESC']
+    ]
+
+  })
+
+  return list;
+
 }

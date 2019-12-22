@@ -1,7 +1,7 @@
 'use strict';
 const path = require('path');
 const HttpStatus = require('http-status-codes');
-const { User } = require('../models/index');
+const { User, OrderFrequency } = require('../models/index');
 const ValidationContract = require('../services/validator');
 const repository = require('../repository/basket-repository');
 const md5 = require('md5');
@@ -277,3 +277,20 @@ exports.delItem = async ( req, res, next) => {
 
   res.status(HttpStatus.ACCEPTED).send(basket_list);
 }
+
+exports.peopleAlsoAddedList = async ( req, res, next) => {
+
+  let list = await repository.peopleAlsoAddedList(req.params.id)
+
+  let filteredList = [];
+  list.map((elem) =>{
+    if(elem.plate_1.id == req.params.id){
+      filteredList.push(elem.plate_2)
+    }
+
+    else filteredList.push(elem.plate_1)
+  })
+
+  res.status(HttpStatus.ACCEPTED).send(filteredList);
+}
+
