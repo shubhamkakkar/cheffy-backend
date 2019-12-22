@@ -1,7 +1,9 @@
 'use strict';
+const path = require('path');
 const { CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User } = require("../models/index");
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+const userConstants = require(path.resolve('app/constants/users'));
 
 exports.create = async (data) => {
   let plate = await CustomPlate.create({ ...data });
@@ -65,6 +67,43 @@ exports.chefGetPlates = async () => {
   return plate;
 }
 
+/**
+* My Custom Plates
+* With auction information, bid count
+*/
+exports.myCustomPlates = async ({userId, pagination}) => {
+
+  const customPlates = await CustomPlate.findAll({
+     where: {
+       close_date: {
+         [Op.gte]: new Date()
+       }
+     },
+     include : [
+       {
+         model: CustomPlateAuction,
+         attributes: [
+           'id', 'state_type', 'winner', 'createdAt',
+         [Sequelize.literal('(SELECT COUNT(*) FROM CustomPlateAuctionBids WHERE CustomPlateAuctionBids.CustomPlateAuctionID = CustomPlateAuction.id)'), 'bidCount'] ],
+         where: {
+           state_type: 'open'
+         },
+       },
+       {
+         model: CustomPlateImage,
+         attributes: [ 'id', 'name', 'url', 'createdAt' ]
+       }
+     ]
+  });
+
+  return customPlates;
+}
+
+/**
+* Get custom plate by id
+* Get Auction information
+* Get bid list with detail information of chef
+*/
 exports.getPlate = async (data) => {
   const plate = await CustomPlate.findByPk(data ,{
      include : [
@@ -74,7 +113,14 @@ exports.getPlate = async (data) => {
          include: [
            {
              model: CustomPlateAuctionBid,
-             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'createdAt' ]
+             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'createdAt', 'chefDeliveryAvailable', 'delivery_time', 'winner' ],
+             include: [
+               {
+                 model: User,
+                 as: 'Chef',
+                 attributes: userConstants.userSelectFields
+               }
+             ]
            }
          ],
        },

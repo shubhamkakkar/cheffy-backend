@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DOUBLE,
     },
+    delivery_time: {
+      allowNull: true,
+      type: DataTypes.DOUBLE,
+    },
     chefDeliveryAvailable: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -35,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
   CustomPlateAuctionBid.associate = function(models) {
     CustomPlateAuctionBid.belongsTo(models.CustomPlateAuction, {foreignKey: 'CustomPlateAuctionID', as: 'custom_plates_id'})
-    CustomPlateAuctionBid.belongsTo(models.User, {foreignKey: 'chefID', as: 'chef_id'})
+    CustomPlateAuctionBid.belongsTo(models.User, {foreignKey: 'chefID', as: 'Chef'})
   };
   return CustomPlateAuctionBid;
 };

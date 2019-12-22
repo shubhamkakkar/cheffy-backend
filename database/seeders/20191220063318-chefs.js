@@ -15,6 +15,7 @@ module.exports = {
         email: name + '@gmail.com',
         phone_no: faker.phone.phoneNumber(),
         country_code: faker.address.countryCode(),
+        restaurant_name: faker.company.companyName(),
         user_type: 'chef',
         verification_email_status: 'verified',
         verification_email_token: null,

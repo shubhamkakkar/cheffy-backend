@@ -98,7 +98,7 @@ exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send({
     message: 'Here are your orders!',
     data: user_orders,
-    ...pagination.paginateInfo(query)
+    ...paginator.paginateInfo(query)
   });
 
 });

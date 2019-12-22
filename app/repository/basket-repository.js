@@ -1,5 +1,7 @@
 'use strict';
-const { Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder } = require('../models/index');
+const path = require('path');
+const { Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder, User, ShippingAddress } = require('../models/index');
+const userConstants = require(path.resolve('app/constants/users'));
 
 exports.getOrCreateUserBasket = async (userId) => {
   const basket = await Basket.findOrCreate({
@@ -191,7 +193,20 @@ exports.getBasketItemsDetail = async (basketId) => {
       {
         model: CustomPlateOrder,
         as: 'custom_plate',
-        attributes: [ 'id', 'name', 'description', 'price', 'userId', 'chefID', 'chefDeliveryAvailable']
+        attributes: [ 'id', 'name', 'description', 'price', 'userId', 'chefID', 'chefDeliveryAvailable'],
+        include: [
+          {
+            model: User,
+            as: 'chef',
+            attributes: userConstants.userSelectFields,
+            include: [
+              {
+                model: ShippingAddress,
+                as: 'address'
+              }
+            ]
+          }
+        ]
       }
     ]
   });

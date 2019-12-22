@@ -153,7 +153,6 @@ exports.getPendingDeliveriesByUser = async (data) => {
         model: OrderPayment,
         attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
-
       {
         model: OrderItem,
         attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
@@ -164,7 +163,6 @@ exports.getPendingDeliveriesByUser = async (data) => {
             model: User,
             as:'chef',
             include:[{model:ShippingAddress, as: 'address'}]
-
           },
 
           {
@@ -176,7 +174,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"],
-    where: {state_type: orderDeliveryConstants.STATE_TYPE.STATE_TYPE_PENDING}
+    where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
    }]
   });
   return order;
