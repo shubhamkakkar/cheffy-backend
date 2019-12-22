@@ -9,6 +9,9 @@ const authService = require('../services/auth');
 const asyncHandler = require('express-async-handler');
 const basketConstants = require(path.resolve('app/constants/baskets'));
 const basketInputFilters = require(path.resolve('app/inputfilters/basket'));
+const events = require(path.resolve('app/services/events'));
+const appConstants = require(path.resolve('app/constants/app'));
+
 const debug = require('debug')('basket');
 
 
@@ -54,6 +57,17 @@ exports.addItem = asyncHandler(async (req, res, next) => {
   const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
 
   res.status(HttpStatus.ACCEPTED).send(result);
+
+  //publish create action
+  events.publish({
+      action: 'create',
+      user: req.user,
+      query: req.query,
+      params: req.params,
+      payload: req.body,
+      scope: appConstants.SCOPE_USER,
+      type: 'basket'
+  }, req);
 });
 
 
@@ -71,6 +85,17 @@ exports.list = asyncHandler(async (req, res, next) => {
   const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket[0]});
 
   res.status(HttpStatus.ACCEPTED).send(result);
+
+  //publish create action
+  events.publish({
+      action: 'listed',
+      user: req.user,
+      query: req.query,
+      params: req.params,
+      scope: appConstants.SCOPE_USER,
+      type: 'basket'
+  }, req);
+
 });
 
 

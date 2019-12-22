@@ -127,7 +127,7 @@ exports.listBasket = async (data) => {
     include: [
       {
         model: BasketItem,
-        attributes: [ 'id', 'quantity', 'plateId', 'customPlateId', 'basket_type' ],
+        attributes: [ 'id', 'quantity', 'plateId', 'customPlateId', 'basket_type', 'note' ],
         include: [
           {
             model: Plates,
@@ -181,12 +181,12 @@ exports.getBasketItemsDetail = async (basketId) => {
 
   let existBasket = await BasketItem.findAll({
     where: { basketId: basketId },
-    attributes: [ 'id', 'quantity', 'plateId', 'customPlateId', 'basket_type' ],
+    attributes: [ 'id', 'quantity', 'plateId', 'customPlateId', 'basket_type', 'note' ],
     include: [
       {
         model: Plates,
         as: 'plate',
-        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId' ]
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId']
       },
       //added custom plate in listBasket as well
       //TODO may be we should name as custom_plate_order. it would be confused with the actual custom_plate table
