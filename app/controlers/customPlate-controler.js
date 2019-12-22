@@ -25,6 +25,7 @@ const debug = require('debug')('custom-plate');
 const orderPaymentConstants = require(path.resolve('app/constants/order-payment'));
 const orderConstants = require(path.resolve('app/constants/order'));
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+const orderItemConstants = require(path.resolve('app/constants/order-item'));
 
 /**
 * Helper method
@@ -93,7 +94,6 @@ exports.customPlateImageByIdMiddleware = asyncHandler(async(req, res, next, cust
 exports.addCustomPlate = asyncHandler(async (req, res, next) => {
   debug('req.body', req.body);
   let contract = new ValidationContract();
-  console.log(req.body);
   contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
   contract.isRequired(req.body.description, 'Plate description is required!');
   contract.isRequired(req.body.price_min, 'Minimum price is required!');
