@@ -41,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
     stripe_id: DataTypes.STRING,
     provider: DataTypes.STRING,
     provider_user_id: DataTypes.STRING,
+    promotionalContent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    }
 
   });
 

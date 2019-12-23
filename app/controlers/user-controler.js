@@ -470,6 +470,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
   existUser.name = req.body.name;
   existUser.user_type = req.body.user_type;
   existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
+  existUser.promotionalContent = req.body.promotionalContent;
 
   if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
     await driverAPI.createDriver({
