@@ -25,8 +25,7 @@ const debug = require('debug')('basket');
 exports.addItem = asyncHandler(async (req, res, next) => {
 
   let contract = new ValidationContract();
-  contract.isRequired(req.body.plateId, 'The plate identifier code is required!');
-  contract.isRequired(req.body.quantity, 'Quantity field is required!');
+  contract.isRequired(req.body.plates, 'The plates identifier code is required!');
 
   if (!contract.isValid()) {
     return res.status(HttpStatus.CONFLICT).send(contract.errors());
@@ -35,40 +34,54 @@ exports.addItem = asyncHandler(async (req, res, next) => {
   //get user basket. create on if it doesn't exists yet.
   let basket = await repository.getOrCreateUserBasket(req.userId);
 
-  let basketItemPlate = await repository.getBasketItemsPlate(basket[0].id, req.body.plateId)
+  let item_list = req.body.plates;
 
-  let item;
-  //if no plate is found in basket item, add it to basket item.
-  if (!basketItemPlate) {
-    let body = basketInputFilters.filter(req.body);
-    //let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId:  note: req.body.note };
-    body.basketId = basket[0].id;
-    item = await repository.createBasketItem(body);
-  } else {
-    item = await basketItemPlate.increment('quantity', {by: req.body.quantity});
-    if(req.body.note) {
-      await basketItemPlate.update({note: req.body.note})
-    }
-  }
-  //after finished updating or adding plate to basket item, get the basket list
-  //calculate price and send as response
-  let basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id);
+  let basketItemsListDetail = null;
 
-  const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
+  Promise.all(item_list.map(async (Item) =>{
 
-  res.status(HttpStatus.ACCEPTED).send(result);
+    let basketItemPlate = await repository.getBasketItemsPlate(basket[0].id, Item.plateId)
 
-  //publish create action
-  events.publish({
-      action: 'create',
-      user: req.user,
-      query: req.query,
-      params: req.params,
-      payload: req.body,
-      scope: appConstants.SCOPE_USER,
-      type: 'basket'
-  }, req);
-});
+    let item;
+      //if no plate is found in basket item, add it to basket item.
+      if (!basketItemPlate) {
+        let body = basketInputFilters.filter(Item);
+        //let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId:  note: req.body.note };
+        body.basketId = basket[0].id;
+        item = await repository.createBasketItem(body);
+      } else {
+        item = await basketItemPlate.increment('quantity', {by: Item.quantity});
+        if(Item.note) {
+          await basketItemPlate.update({note: Item.note})
+        }
+      }
+
+
+    })).then(async function(){
+
+    basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id) 
+    const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
+    res.status(HttpStatus.ACCEPTED).send(result);
+
+      //publish create action
+      events.publish({
+        action: 'create',
+        user: req.user,
+        query: req.query,
+        params: req.params,
+        payload: req.body,
+        scope: appConstants.SCOPE_USER,
+        type: 'basket'
+      }, req);
+    });
+
+  })
+      //after finished updating or adding plate to basket item, get the basket list
+      //calculate price and send as response
+
+     
+
+      
 
 
 /**
