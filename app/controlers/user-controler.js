@@ -706,6 +706,7 @@ exports.socialauth = async (req, res, next) => {
     });
 
     existUser.auth_token = token;
+    existUser.verification_email_status = 'verified';
 
     await existUser.save();
 
