@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    //to know if it is user's default shipping address
+    isDefaultAddress: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
   }, {});
   ShippingAddress.associate = function(models) {
     ShippingAddress.belongsTo(models.User, {

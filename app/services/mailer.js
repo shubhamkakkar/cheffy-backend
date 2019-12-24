@@ -2,13 +2,16 @@
 const path = require("path");
 const nodemailer = require("nodemailer");
 var hbs = require('nodemailer-express-handlebars');
+const appConfig = require(path.resolve('config/app'));
+
+const sendGridConfig = appConfig.mail.sendgrid
 
 let transportConfig = {
-    host: "smtp.sendgrid.net",
-    port: 25,
+    host: sendGridConfig.host,
+    port: sendGridConfig.port,
     auth: {
-        user: "apikey",
-        pass: "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"
+        user: sendGridConfig.user,
+        pass: sendGridConfig.pass
     }
 };
 

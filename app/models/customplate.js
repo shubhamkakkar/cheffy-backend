@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
     CustomPlate.hasOne(models.CustomPlateAuction);
     //CustomPlate.hasOne(models.CustomPlateOrder);
     CustomPlate.hasMany(models.CustomPlateImage);
-    CustomPlate.belongsTo(models.User, {foreignKey: 'userId', onDelete: 'cascade'});
+    CustomPlate.belongsTo(models.User, {foreignKey: 'userId', as: 'user', onDelete: 'cascade'});
   };
 
   return CustomPlate;

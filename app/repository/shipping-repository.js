@@ -23,52 +23,39 @@ exports.checkExistAddress = async (data) => {
   }
 };
 
-exports.getUserAddress = async (data, query = {}) => {
-    const existAddress = await ShippingAddress.findOne({ where: { userId: data }, ...query });
+exports.getUserAddress = async (data, options = {}) => {
+    const existAddress = await ShippingAddress.findOne({ where: { userId: data }, ...options });
     return existAddress;
 };
+
+/**
+* Get user default shippingAddress
+*/
+exports.getUserDefaultAddress = async(userId, options = {}) => {
+  const existAddress = await ShippingAddress.findOne({ where: { userId: userId, isDefaultAddress: true }, ...options});
+  return existAddress;
+}
 
 exports.getUserAddressByShippingId = async ({userId, shippingId}) => {
     const address = await ShippingAddress.findByPk(shippingId, { where: { userId: userId }});
     return address;
 };
 
+exports.userShippingAddressCount = async(userId) => {
+  return await ShippingAddress.count({where: {userId}});
+}
+
 exports.getExistAddress = async (shippingId) => {
-  try {
     const existAddress = await ShippingAddress.findByPk(shippingId);
     return existAddress;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to get the shipping address", error: e };
-  }
 };
 
-exports.listAddress = async (data) => {
-  if (data.page == 1) {
-    try {
-      const existAddress = await ShippingAddress.findAll({
-        where: { userId: data.userId },
-        order: [["id", "DESC"]],
-        limit: parseInt(data.pageSize)
-      });
-      return existAddress;
-    } catch (e) {
-      console.log("Error: ", e);
-      return { message: "Fail to get Address!", error: e };
-    }
-  }
 
-  try {
-    let skiper = data.pageSize * (data.page - 1);
-    const existAddress = await ShippingAddress.findAll({
-      where: { userId: data.userId },
-      order: [["id", "DESC"]],
-      offset: parseInt(skiper),
-      limit: parseInt(data.pageSize)
-    });
-    return existAddress;
-  } catch (e) {
-    console.log("Error: ", e);
-    return { message: "Fail to get Address!", error: e };
-  }
+exports.listAddress = async ({userId, pagination}) => {
+  const existAddress = await ShippingAddress.findAll({
+    where: { userId: userId },
+    order: [["id", "DESC"]],
+    ...pagination
+  });
+  return existAddress;
 };

@@ -19,8 +19,8 @@ const paginator = (req) => {
 
 exports.paginateQuery = paginator;
 
-exports.paginateInfo = (query) => {
+exports.paginateInfo = (paginationQuery) => {
   return {
-    page: {from: query.__FROM__, to: query.__TO__}
+    page: {from: paginationQuery.__FROM__, to: paginationQuery.__TO__}
   };
 }

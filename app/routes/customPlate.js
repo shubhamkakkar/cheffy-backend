@@ -21,8 +21,9 @@ const fieldsFile = addFields.map((field) => {
 router.post('/', authService.authorize, userController.getAuthUserMiddleware, multerStart(fieldsFile), controller.addCustomPlate);
 router.put('/:customPlateId', authService.authorize, userController.getAuthUserMiddleware, customPlatePolicies.isOwnerMiddleware(), multerStart(fieldsFile), controller.editCustomPlate);
 
-/*get user custom plate with bids from chef*/
-router.get('/', controller.customPlates);
+/*get users custom plates with bids from chef*/
+router.get('/', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.chefSearchCustomPlates);
+
 router.get('/:customPlateId', controller.customPlate);
 
 
@@ -39,11 +40,8 @@ router.post('/bid', authService.authorize, userController.getAuthUserMiddleware,
 //i think we need to add post since documents are created for this route, although no req.body is sent
 router.post('/accept/bid/:auctionBidId', authService.authorize, userController.getAuthUserMiddleware, controller.acceptCustomPlateBid);
 
-
-/*router.get('/list/all', authService.authorize, controller.listAllCustomPlates);*/
-
 router.get('/user/:userId', controller.listUserCustomPlates);
-router.get('/user/my/list', authService.authorize, controller.listMyCustomPlates);
+router.get('/user/my/list', authService.authorize, userController.getAuthUserMiddleware, controller.listMyCustomPlates);
 
 router.param('userId', userController.getUserByUserIdParamMiddleware);
 

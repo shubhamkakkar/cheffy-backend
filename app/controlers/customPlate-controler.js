@@ -22,6 +22,9 @@ const basketConstants = require(path.resolve('app/constants/baskets'));
 const customPlateConstants = require(path.resolve('app/constants/custom-plates'));
 const debug = require('debug')('custom-plate');
 
+const events = require(path.resolve('app/services/events'));
+const appConstants = require(path.resolve('app/constants/app'));
+
 const orderPaymentConstants = require(path.resolve('app/constants/order-payment'));
 const orderConstants = require(path.resolve('app/constants/order'));
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
@@ -161,6 +164,16 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
     data: payload
   });
 
+  //publish create action
+  events.publish({
+      action: appConstants.ACTION_TYPE_CREATED,
+      user: req.user,
+      cutomPlate: customPlate,
+      payload: payload,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
+
 });
 
 /**
@@ -239,6 +252,16 @@ exports.editCustomPlate = [
       data: payload
     });
 
+    //publish edit action
+    events.publish({
+        action: appConstants.ACTION_TYPE_UPDATED,
+        user: req.user,
+        cutomPlate: customPlate,
+        payload: payload,
+        scope: appConstants.SCOPE_USER,
+        type: 'customPlate'
+    }, req);
+
 })];
 
 
@@ -261,7 +284,17 @@ exports.addImages = asyncHandler(async(req, res, next) => {
 
   const createdImages = await repository.createPlateImage(images_data)
 
-  return res.status(HttpStatus.OK).send({message: 'Custom Plate images uploaded successfully.', images: createdImages});
+  res.status(HttpStatus.OK).send({message: 'Custom Plate images uploaded successfully.', images: createdImages});
+
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_IMAGE_ADDED,
+      user: req.user,
+      cutomPlate: customPlate,
+      payload: images_data,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
 
 });
 
@@ -271,7 +304,17 @@ exports.deleteImage = asyncHandler(async(req, res, next) => {
 
   await customPlateImage.destroy();
 
-  return res.status(HttpStatus.OK).send({message: `Custom Plate Image by Id : ${customPlateImage.id} removed`})
+  res.status(HttpStatus.OK).send({message: `Custom Plate Image by Id : ${customPlateImage.id} removed`})
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_IMAGE_DELETED,
+      user: req.user,
+      cutomPlate: req.customPlate,
+      payload: customPlateImage,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
+
 });
 
 /**
@@ -357,6 +400,16 @@ exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
     data: data
   });
 
+  events.publish({
+      action: appConstants.ACTION_TYPE_CREATED,
+      user: req.user,
+      customPlate: customPlate,
+      customPlateAuctionBid: data,
+      payload: data,
+      scope: appConstants.SCOPE_CHEF,
+      type: 'customPlateAuctionBid'
+  }, req);
+
 });
 
 /**
@@ -421,10 +474,21 @@ exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
   //close the auction and set winner
   await customPlateAuction.update({state_type: customPlateConstants.STATE_TYPE_CLOSED, winner: customPlateAuctionBid.userId});
 
+  await repository.updateCustomPlateBidById({id: customPlateAuctionBid.id, data:{winner: true}});
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_ACCEPTED,
+      user: req.user,
+      payload: {
+        customPlate: customPlateAuctionBid.custom_plate,
+        customOrder: custom_order,
+      },
+      customPlateAuctionBid: customPlateAuctionBid,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlateAuctionBid'
+  }, req);
 
 });
-
-
 
 /**
 * Method: POST
@@ -498,19 +562,18 @@ exports.pay = asyncHandler(async (req, res, next) => {
     order_total: centsToDollar(total_cart),
   };
 
-  let create_order, card_return, stripeCustomerResponse, confirm
-  try {
-    //create order
-    create_order = await repositoryOrder.create(payload);
+  events.publish({
+      action: appConstants.ACTION_TYPE_PRE_CHECKOUT,
+      user: req.user,
+      payload: {cart_items, payload},
+      body: req.body,
+      scope: appConstants.SCOPE_USER,
+      type: 'checkout'
+  }, req);
 
-  } catch (e) {
-    console.log("create: ", e)
-    return res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to create your order!',
-      data: e,
-      error: true
-    });
-  }
+  let card_return, stripeCustomerResponse, confirm;
+    //create order
+  let create_order = await repositoryOrder.create(payload);
 
   try {
     if (existUser.stripe_id) {
@@ -525,7 +588,6 @@ exports.pay = asyncHandler(async (req, res, next) => {
     const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
     await repositoryOrderPayment.create(orderPaymentFail);
     await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED);
-
     return res.status(HttpStatus.CONFLICT).send({
       message: 'There was a problem to create your payment data!',
       data: e,
@@ -540,7 +602,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
       const cardList = await paymentService.getUserCardsList(existUser.stripe_id, {limit: 1});
       card_return = cardList.data[0];
       if(!card_return) {
-        return res.status(HttpStatus.NOT_FOUND).send({message: 'User default card not found'});
+        res.status(HttpStatus.NOT_FOUND).send({message: 'User have no default card saved. Please send card information'});
       } else {
         cardAlreadyAttached = true;
       }
@@ -583,15 +645,36 @@ exports.pay = asyncHandler(async (req, res, next) => {
     await repositoryWallet.getWallet(existUser.id);
   } catch (e) {
     return res.status(HttpStatus.CONFLICT).send({
-      message: 'There was a problem to save your data!',
+      message: 'There was a problem to get your Wallet!',
       data: e,
       error: true
     });
   }
+
   const create_orderPayment = await repositoryOrderPayment.create(data_full);
 
   if (create_orderPayment.status === orderPaymentConstants.STATUS_SUCCEEDED && create_orderPayment.type === 'authorized') {
     await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_APPROVED)
+
+    events.publish({
+        action: appConstants.ACTION_TYPE_PAYMENT_SUCCESS,
+        user: req.user,
+        payload: confirm,
+        body: req.body,
+        scope: appConstants.SCOPE_USER,
+        type: 'checkout'
+    }, req);
+
+    events.publish({
+        action: appConstants.ACTION_TYPE_ORDER_APPROVED,
+        user: req.user,
+        order: create_order,
+        body: req.body,
+        payload: create_orderPayment,
+        scope: appConstants.SCOPE_USER,
+        type: 'order'
+    }, req);
+
 
     let bulkTransactions = cart_items.map(elem => (
       {
@@ -750,6 +833,19 @@ exports.pay = asyncHandler(async (req, res, next) => {
     create_order: create_order
   });
 
+  events.publish({
+      action: appConstants.ACTION_TYPE_CHECKOUT_FAILED,
+      user: req.user,
+      body: req.body,
+      payload: {
+        order: create_order,
+        cart_items,
+        total_cart
+      },
+      scope: appConstants.SCOPE_USER,
+      type: 'checkout'
+  }, req);
+
 });
 
 /**
@@ -759,12 +855,21 @@ exports.pay = asyncHandler(async (req, res, next) => {
 exports.listUserCustomOrders = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
   const query = { where: { userId }, ...paginator.paginateQuery(req)};
-  const customPlates = await CustomPlateOrder.findAll(query);
+  const customPlateOrders = await CustomPlateOrder.findAll(query);
   res.status(HttpStatus.ACCEPTED).send({
     message: "Your custom order's",
     ...paginator.paginateInfo(query),
-    data: customPlates
+    data: customPlateOrders
   });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      payload: customPlateOrders,
+      scope: appConstants.SCOPE_ALL,
+      type: 'customPlateOrder'
+  }, req);
+
 });
 
 
@@ -783,6 +888,16 @@ exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
     ...paginator.paginateInfo(query),
     data: customPlates
   });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      params: req.params,
+      payload: customPlates,
+      scope: appConstants.SCOPE_ALL,
+      type: 'customPlate'
+  }, req);
+
 });
 /**
 * Method: GET
@@ -799,6 +914,14 @@ exports.listMyCustomPlates = asyncHandler(async (req, res, next) => {
     ...paginator.paginateInfo(query),
     data: myCustomPlates
   });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      payload: myCustomPlates,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
 });
 
 /**
@@ -815,14 +938,39 @@ exports.listAllCustomPlates = asyncHandler(async (req, res, next) => {
     data: customPlates
   });
 
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      payload: customPlates,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
+
 });
 
 /**
-* Get all custom plates with all infos like auctions
+* Custom Plates search/filter for Chef
+* Get custom plates with all infos like auctions
+* Filter by params
 */
-exports.customPlates = asyncHandler(async (req, res, next) => {
-  const result = await repository.chefGetPlates()
-  res.status(HttpStatus.ACCEPTED).send(result);
+exports.chefSearchCustomPlates = asyncHandler(async (req, res, next) => {
+  const options = { req, query: req.query, pagination: paginator.paginateQuery(req)};
+
+  const result = await repository.chefGetPlates(options);
+
+  res.status(HttpStatus.ACCEPTED).send({
+    data: result,
+    ...paginator.paginateInfo(options.pagination)
+  });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      query: req.query,
+      payload: result,
+      scope: appConstants.SCOPE_CHEF,
+      type: 'customPlate'
+  }, req);
 });
 
 
@@ -836,4 +984,12 @@ exports.customPlate = asyncHandler(async (req, res, next) => {
   }
 
   res.status(HttpStatus.ACCEPTED).send(result);
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_VIEWED,
+      user: req.user,
+      customPlate: result,
+      scope: appConstants.SCOPE_ALL,
+      type: 'customPlate'
+  }, req);
 });

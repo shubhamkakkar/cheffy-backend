@@ -14,7 +14,7 @@ exports.REAL_IP_HEADER = REAL_IP_HEADER;
 exports.getAgentInfo = (req) => {
   const agent = req.headers && useragent.parse(req.headers['user-agent']);
   if(!agent) return {};
-  
+
   const agentInfo = {
     browser: agent.family,
     browserVersion:agent.toVersion(),
@@ -68,6 +68,10 @@ exports.publish = (config, req) => {
 
     if(req.query.crawler) {
       slackPayload.crawler = req.query.crawler;
+    }
+
+    if(config.body) {
+      slackPayload.body = config.body;
     }
 
     if(config.query) {

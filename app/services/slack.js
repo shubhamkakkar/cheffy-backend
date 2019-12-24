@@ -20,7 +20,6 @@ userActivitySlack.setWebhook(userActivityWebhookURI);
  */
 exports.logError = (error, req, name) => {
 
-console.log('slack error log', error.stack);
   if(!error.stack) return;
 
   bugSlack.webhook({

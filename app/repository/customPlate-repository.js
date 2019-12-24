@@ -1,9 +1,22 @@
 'use strict';
 const path = require('path');
-const { CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User } = require("../models/index");
+const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User } = require("../models/index");
 const Sequelize = require("sequelize");
+const debug = require('debug')('customPlate-repository');
 const Op = Sequelize.Op;
 const userConstants = require(path.resolve('app/constants/users'));
+const customPlateConstants = require(path.resolve('app/constants/custom-plates'));
+const regexpService = require(path.resolve('app/services/regexp'));
+
+exports.DEFAULT_RADIUS = 10;
+exports.HAVERSINE_MILES_MULTIPLIER = 3959;
+exports.HAVERSINE_KM_MULTIPLIER = 6371;
+
+exports.radiusDistanceUnitHaversineMap = {
+  miles: exports.HAVERSINE_MILES_MULTIPLIER,
+  km: exports.HAVERSINE_KM_MULTIPLIER
+}
+
 
 exports.create = async (data) => {
   let plate = await CustomPlate.create({ ...data });
@@ -37,24 +50,94 @@ exports.getCustomPlateAuctionByCustomPlate = async(customPlateId) => {
 }
 
 
-exports.chefGetPlates = async () => {
-  const plate = await CustomPlate.findAll({
-     where: {
-       close_date: {
-         [Op.gte]: new Date()
-       }
-     },
+/**
+* Searches for user custom plates by chef with various filters
+*/
+exports.chefGetPlates = async ({req, query, pagination}) => {
+  const whereQuery = {};
+
+  const auctionWhereQuery = {};
+
+  let customPlateHavingQuery = {};
+
+  let customPlateOrderByQuery = [['id', 'ASC']];
+
+  if(query.active) {
+    whereQuery.close_date = {
+      [Op.gte]: new Date()
+    };
+  }
+
+  if(query.keyword) {
+    const keyword = regexpService.escape(query.keyword);
+    whereQuery.name = {[Op.like]:`%${keyword}%`}
+  }
+
+  let customPlateSelectAttributes = customPlateConstants.selectFields;
+  let userNearQuery = null;
+  if((query.near && req.user) || (req.query.lat && req.query.lon)) {
+    const currentUserLocationLat = req.query.lat || req.user.location_lat;
+    const currentUserLocationLon = req.query.lon || req.user.location_lon;
+
+    //calculation formula here https://martech.zone/calculate-distance/#ixzz2HZ6jkOVe
+    //https://en.wikipedia.org/wiki/Great-circle_distance
+    //default radius in miles
+    const radiusDistance = req.query.radius || exports.DEFAULT_RADIUS;
+    const radiusDistanceUnit = req.query.radiusUnit || 'miles';
+    const multiplier = exports.radiusDistanceUnitHaversineMap[radiusDistanceUnit];
+    debug('lat, lon, radius',currentUserLocationLat, currentUserLocationLon, radiusDistance);
+
+    userNearQuery = [sequelize.literal(`
+      (SELECT (${multiplier}*acos( cos( radians(${currentUserLocationLat}) ) * cos( radians( location_lat ) )
+      * cos( radians( location_lon ) - radians(${currentUserLocationLon}) ) + sin( radians(${currentUserLocationLat}) ) * sin(radians(location_lat)) ) )
+      FROM Users where Users.id = CustomPlate.userId)`), 'distance'];
+
+    customPlateHavingQuery = {distance: {[Sequelize.Op.lte]: radiusDistance}};
+
+    customPlateOrderByQuery = [[sequelize.col('distance'), 'ASC']];
+  }
+
+  if(query.state_type) {
+    auctionWhereQuery.state_type = query.state_type;
+  }
+
+  if(query.userId) {
+    whereQuery.userId = query.userId;
+  }
+
+  if(query.price_min) {
+    whereQuery.price_min = query.price_min;
+  }
+
+  if(query.quantity) {
+    whereQuery.quantity = query.quantity;
+  }
+
+  if(query.price_max) {
+    whereQuery.price_max = query.price_max;
+  }
+
+  const queryOptions = {
+     where: whereQuery,
+     attributes: [
+       ...customPlateConstants.selectFields,
+     ],
+     having: customPlateHavingQuery,
+     order: customPlateOrderByQuery,
      include : [
+       {
+         model: User,
+         as: 'user',
+         attributes: userConstants.userSelectFields
+       },
        {
          model: CustomPlateAuction,
          attributes: [ 'id', 'state_type', 'winner', 'createdAt' ],
-         where: {
-           state_type: 'open'
-         },
+         where: auctionWhereQuery,
          include: [
            {
              model: CustomPlateAuctionBid,
-             attributes: [ 'id', 'chefID', 'price', 'createdAt' ]
+             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'delivery_time', 'chefDeliveryAvailable', 'winner', 'createdAt' ]
            }
          ],
        },
@@ -62,9 +145,21 @@ exports.chefGetPlates = async () => {
          model: CustomPlateImage,
          attributes: [ 'id', 'name', 'url', 'createdAt' ]
        }
-     ]
-  });
-  return plate;
+     ],
+     ...pagination,
+     //raw: true
+  }
+
+  if(userNearQuery) {
+    queryOptions.attributes = [
+      ...customPlateConstants.selectFields,
+      userNearQuery
+    ]
+  }
+
+  const customPlates = await CustomPlate.findAll(queryOptions);
+
+  return customPlates;
 }
 
 /**
@@ -86,7 +181,7 @@ exports.myCustomPlates = async ({userId, pagination}) => {
            'id', 'state_type', 'winner', 'createdAt',
          [Sequelize.literal('(SELECT COUNT(*) FROM CustomPlateAuctionBids WHERE CustomPlateAuctionBids.CustomPlateAuctionID = CustomPlateAuction.id)'), 'bidCount'] ],
          where: {
-           state_type: 'open'
+           state_type: 'open',
          },
        },
        {
@@ -146,6 +241,10 @@ exports.createPlateImage = async (data) => {
 exports.bidCustomPlate = async (data) => {
   let plate = await CustomPlateAuctionBid.create({ ...data });
   return plate;
+}
+
+exports.updateCustomPlateBidById = async ({id, data}) => {
+  return await CustomPlateAuctionBid.update({...data}, {where: {id: id}});
 }
 
 exports.acceptCustomPlateBid = async (data) => {
@@ -218,6 +317,7 @@ exports.getCustomPlateBid = async (data) => {
   bid = bid.get({plain: true});
 
   let plate_data = {
+    id: bid.id,
     name: bid.custom_plates_id.custom_plates.name,
     description: bid.custom_plates_id.custom_plates.description,
     quantity: bid.custom_plates_id.custom_plates.quantity,

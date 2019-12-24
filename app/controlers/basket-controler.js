@@ -59,7 +59,10 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 
     })).then(async function(){
 
-    basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id) 
+    basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id)
+    //after finished updating or adding plate to basket item, get the basket list
+    //calculate price and send as response
+    
     const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket});
     res.status(HttpStatus.ACCEPTED).send(result);
 
@@ -76,12 +79,6 @@ exports.addItem = asyncHandler(async (req, res, next) => {
     });
 
   })
-      //after finished updating or adding plate to basket item, get the basket list
-      //calculate price and send as response
-
-     
-
-      
 
 
 /**
@@ -306,4 +303,3 @@ exports.peopleAlsoAddedList = async ( req, res, next) => {
 
   res.status(HttpStatus.ACCEPTED).send(filteredList);
 }
-

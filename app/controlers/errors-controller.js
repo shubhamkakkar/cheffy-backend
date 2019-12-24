@@ -5,6 +5,7 @@ const HttpStatus = require("http-status-codes");
 const debug = require('debug')('errors');
 const logger = require(path.resolve('./server/logger'));
 const slackLogger = require(path.resolve('app/services/slack'));
+const events = require(path.resolve('app/services/events'));
 /**
  *
  * @param error
@@ -101,7 +102,7 @@ exports.logError = function(error, req) {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    slackLogger.logError(error, req, 'API Error');
+    slackLogger.logError({error, body: req.body, query: req.query, params: req.params, agent: events.getAgentInfo(req), userId: req.userId}, req, 'API Error');
     return logger.error(error);
   }
 

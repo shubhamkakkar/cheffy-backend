@@ -71,6 +71,27 @@ exports.getAuthUserMiddleware = asyncHandler(async(req, res, next) => {
 
 /**
 * Middleware
+* Get currently authenticated user by userId decoded from jsonwebtoken, if token is valid and it contains the userId.
+* This should not send back NOT_FOUND response, it is used as optional middleware
+*/
+exports.getAuthUserIfPresentMiddleware = asyncHandler(async(req, res, next) => {
+  if(!req.userId) return next();
+
+  const user = await User.findByPk(req.userId , {
+    attributes: userConstants.privateSelectFields,
+  });
+
+  if(!user) {
+    return next();
+  }
+
+  req.user = user;
+  next();
+
+});
+
+/**
+* Middleware
 * Get params user by userId from route. for e.g /order/list/:userId
 * Sets paramUser in express req object
 */
@@ -853,7 +874,7 @@ exports.authenticate = async (req, res, next) => {
     });
 
     customer.auth_token = token;
-    customer.save()
+    await customer.save();
 
     res.status(200).send({
       token: token,
@@ -965,6 +986,7 @@ exports.put = asyncHandler(async (req, res, next) => {
 
 /**
 * Update user location_lat and location_lon fields
+* Sets default location/shipping_address of chef/user
 */
 exports.updateLocation = asyncHandler(async(req, res, next) => {
   let contract = new ValidationContract();
