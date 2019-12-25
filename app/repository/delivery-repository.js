@@ -115,7 +115,7 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     include: [
       {
         model: OrderPayment,
-        attributes: ["payment_id", "amount", "client_secret", "customer", "payment_method", "status"]
+        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
         model: OrderItem,
@@ -136,7 +136,7 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     model: OrderDelivery,
     required: true,
     attributes: ["id"],
-    where: {state_type: orderDeliveryConstants.STATE_TYPE.STATE_TYPE_DELIVERED}
+    where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
    }]
   });
   return order;
