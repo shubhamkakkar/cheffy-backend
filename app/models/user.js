@@ -54,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.Order);
     User.hasMany(models.ShippingAddress,{as: 'address'});
     User.hasMany(models.CustomPlateAuctionBid);
-    User.hasMany(models.PlateReview);
+    User.hasMany(models.Review);
     User.hasOne(models.Documents);
     User.hasOne(models.Basket);
     User.hasOne(models.Wallet);

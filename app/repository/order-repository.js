@@ -1,8 +1,9 @@
 'use strict';
-const {sequelize, Plates, CustomPlate, CustomPlateOrder, PlateReview,PlateImage, CustomPlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const {sequelize, Plates,AggregateReview, CustomPlate, CustomPlateOrder, Review,PlateImage, CustomPlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 const path = require('path');
 const userConstants = require(path.resolve('app/constants/users'));
 const orderItemConstants = require(path.resolve('app/constants/order-item'));
+const reviewConstants = require(path.resolve('app/constants/reviews'));
 
 
 exports.getById = async (orderId) => {
@@ -19,7 +20,13 @@ exports.getById = async (orderId) => {
 
 exports.getOrderItemById = async (orderItemId) => {
   try {
-      const order = await OrderItem.findByPk(orderItemId);
+      const order = await OrderItem.findByPk(orderItemId,{
+        attributes:{
+          exclude:['WalletId']
+        }
+
+
+      });
       return order;
     } catch (e) {
       console.log(e)
@@ -264,23 +271,48 @@ exports.createOrderReview = async (review) => {
     let plateId = orderItem.plate_id;
     review.plateId = plateId;
 
-    createdReview  = await PlateReview.create(review);
+    createdReview  = await Review.create(review);
 
-    if(createdReview){
-      let orderDelivery = OrderDelivery.findOne({where:{orderId:orderItem.orderId}});
+    /*if(createdReview){
+      let orderDelivery = OrderDelivery.findOne({where:{orderId:orderItem.orderId}});console.log(orderDelivery)
       if(orderDelivery){
         orderDelivery.rating = createdReview.rating;
         orderDelivery.has_rating = true;
         orderDelivery.save();
       }
-    }
+    }*/
 
 
-    return await sequelize.query(`SELECT (sum(rating)/ count(rating)) as average_rating FROM PlateReviews where plateId=${plateId}`).then(([results, metadata]) => {
+    let sumUser = await Review.count({
+
+      where:{plateId:plateId}
+
+    })
+
+    let sumRating = await Review.sum('rating', {
+
+      where:{plateId:plateId}
+
+    })
+
+    let aggr_item = {};
+    aggr_item.review_type = reviewConstants.REVIEW_TYPE_PLATE;
+    aggr_item.plateId = plateId;
+    aggr_item.userCount = sumUser;
+    aggr_item.rating = (sumRating/sumUser).toFixed(1);
+
+
+    const foundPlate = await AggregateReview.findOne({where:{plateId:plateId}});
+    if (!foundPlate) {
+        await AggregateReview.create(aggr_item)
+      }
+    else await AggregateReview.update(aggr_item, {where:{plateId:plateId}});
+
+    return await sequelize.query(`SELECT (sum(rating)/ count(rating)) as average_rating FROM Reviews where plateId=${plateId}`).then(([results, metadata]) => {
 
       let average_rating = createdReview.rating;
 
-      if(results.lehgth > 0){
+      if(results.length > 0){
         average_rating = results[0].average_rating;
       }
 
@@ -288,7 +320,7 @@ exports.createOrderReview = async (review) => {
       try {
 
       return Plates.update(
-        { rating: average_rating },
+        { rating: average_rating.toFixed(1) },
         { where: {id:plateId } }
       )
 

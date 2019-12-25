@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    rating: DataTypes.INTEGER
+    rating: DataTypes.DOUBLE
   });
   Plate.associate = function(models) {
     Plate.belongsTo(models.User, {foreignKey: 'userId', as: 'chef', onDelete: 'cascade'})
@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     Plate.hasMany(models.PlateImage)
     Plate.hasMany(models.KitchenImage)
     Plate.hasMany(models.ReceiptImage)
-    Plate.hasMany(models.PlateReview, {as: 'reviews'})
+    Plate.hasMany(models.Review, {as: 'reviews'})
   }
   return Plate;
 }

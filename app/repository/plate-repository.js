@@ -1,7 +1,7 @@
 
 'use strict';
 const Sequelize = require('sequelize');
-const {sequelize,OrderItem, ShippingAddress,PlateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
+const {sequelize,OrderItem, ShippingAddress,Review, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
 const Op = Sequelize.Op;
 
 exports.createIngredient = async (data) => {
@@ -203,7 +203,7 @@ exports.getPlate = async (data) => {
           attributes: [ 'name', 'url' ]
         },
         {
-          model: PlateReview,
+          model: Review,
           attributes: [ 'comment','rating' ],
           as:'reviews',
           include: [{
@@ -306,7 +306,7 @@ exports.getRelatedPlate = async (plateId) => {
             attributes: [ 'id', 'name', 'url' ]
           },
           {
-            model: PlateReview,
+            model: Review,
             attributes: [ 'comment','rating' ],
             as:'reviews',
             include: [{
@@ -376,7 +376,7 @@ exports.getPlateReviewByPlateId = async (data,limit) => {
       //       as: 'user'}],
       //     limit: parseInt(data.pageSize)
       //   });
-        let sql = `select u.name, pr.* from PlateReviews pr
+        let sql = `select u.name, pr.* from Reviews pr
         inner join Users u on pr.userId = u.id
           where pr.plateId = ${data.id} `;
 
@@ -395,14 +395,14 @@ exports.getPlateReviewByPlateId = async (data,limit) => {
 
   try {
     let skiper = data.pageSize * (data.page - 1)
-    const plateReviews = await PlateReview.findAll({
+    const Reviews = await Review.findAll({
         where: {
           palteId:plate
         },
         offset: parseInt(skiper),
         limit: parseInt(data.pageSize),
       });
-      return plateReviews;
+      return Reviews;
     } catch (e) {
       console.log("Error: ", e);
       return { message: "Fail to get Plate Reviews!", error: e };
@@ -440,7 +440,7 @@ exports.listPlates2 = async (data) => {
         attributes: [ 'id', 'name', 'url' ]
       },
       {
-        model: PlateReview,
+        model: Review,
         attributes: [ 'comment','rating' ],
         as:'reviews',
         include: [{

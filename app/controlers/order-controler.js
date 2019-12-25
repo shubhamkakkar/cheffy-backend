@@ -327,8 +327,9 @@ exports.createOrderReview = async (req, res, next) => {
     let full_data = req.body;
     full_data.userId = token_return.id;
     full_data.orderId = req.params.orderId;
+    full_data.review_type = 'plate';
 
-      const createdPlateReview = await repository.createOrderReview(full_data);
+    const createdPlateReview = await repository.createOrderReview(full_data);
     res.status(200).send({ message: 'Review created!', data: createdPlateReview });
     return;
 

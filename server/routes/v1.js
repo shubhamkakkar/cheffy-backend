@@ -14,6 +14,7 @@ const order = require(path.resolve('./app/routes/order'));
 const driver = require(path.resolve('./app/routes/driver'));
 const customPlate = require(path.resolve('./app/routes/customPlate'));
 const favourite = require(path.resolve('./app/routes/favourite'));
+const rating = require(path.resolve('./app/routes/rating'));
 
 const router = express.Router(); // eslint-disable-line new-cap
 
@@ -31,5 +32,6 @@ router.use("/order", order);
 router.use("/driver", driver);
 router.use("/custom-plate", customPlate);
 router.use("/favourite", favourite);
+router.use("/rating", rating);
 
 module.exports = router;

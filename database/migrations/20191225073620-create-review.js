@@ -1,7 +1,8 @@
 'use strict';
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('PlateReviews', {
+    return queryInterface.createTable('Reviews', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -17,8 +18,8 @@ module.exports = {
         }
       },
       plateId: {
+        allowNull: true,
         type: Sequelize.INTEGER,
-        allowNull: false,
         references: {
           model: "Plates",
           key: "id"
@@ -26,7 +27,7 @@ module.exports = {
       },
       orderId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: "Orders",
           key: "id"
@@ -34,18 +35,37 @@ module.exports = {
       },       
       orderItemId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: "OrderItems",
           key: "id"
         }
       }, 
       rating: {
-        type: Sequelize.INTEGER
+        type: Sequelize.DOUBLE
       },
       comment: {
         type: Sequelize.STRING
       },
+      review_type: {
+      type: Sequelize.ENUM('chef','plate','driver'),
+    },
+    chefID: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
+    driverID: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -57,6 +77,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('PlateReviews');
+    return queryInterface.dropTable('Reviews');
   }
 };

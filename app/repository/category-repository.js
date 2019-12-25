@@ -1,5 +1,5 @@
 'use strict';
-const { PlateCategory,PlateReview, Plates, ShippingAddress, Ingredient, PlateImage, KitchenImage, ReceiptImage, User } = require('../models/index');
+const { PlateCategory,Review, Plates, ShippingAddress, Ingredient, PlateImage, KitchenImage, ReceiptImage, User } = require('../models/index');
 
 exports.findExist = async (data) => {
   const existCategory = await PlateCategory.findOne({ where: { name: data } });
@@ -48,7 +48,7 @@ exports.categoriesListPlates = async (data) => {
         attributes: [ 'id', 'name', 'url' ]
       },
       {
-        model: PlateReview,
+        model: Review,
         attributes: [ 'comment','rating' ],
         as:'reviews',
         include: [{

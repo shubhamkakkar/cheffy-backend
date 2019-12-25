@@ -1,6 +1,6 @@
 'use strict';
 const path = require('path');
-const {sequelize, Plates, PlateReview,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const {sequelize, Plates, Review,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 
 

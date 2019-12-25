@@ -1,7 +1,7 @@
 
 'use strict';
 const Sequelize = require('sequelize');
-const {CustomPlate, CustomPlateImage,Favourites, sequelize,OrderItem, ShippingAddress,PlateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
+const {CustomPlate, CustomPlateImage,Favourites, sequelize,OrderItem, ShippingAddress,Review, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
 const Op = Sequelize.Op;
 
 
