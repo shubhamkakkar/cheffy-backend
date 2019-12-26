@@ -774,10 +774,10 @@ exports.pay = asyncHandler(async (req, res, next) => {
     if(myOrderList.length > 1){
 
       for(let i=0;i<myOrderList.length;i++){
-        
+
         for(let j=i+1;j<myOrderList.length;j++){
           let freq = {};
-          
+
           freq.plate1 = myOrderList[i].plate_id;
           freq.plate2 = myOrderList[j].plate_id;
           freq.frequency = 1;
@@ -786,7 +786,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 
 
         }
-        
+
 
       }
 
@@ -808,12 +808,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
       existRecord.save();
     }
 
-    })
-
-
-
-    
-
+  });
 
     return res.status(HttpStatus.ACCEPTED).send({
       message: 'Your order was successfully paid!',

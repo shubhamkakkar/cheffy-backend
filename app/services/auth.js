@@ -38,7 +38,6 @@ exports.checkTokenExists = asyncHandler(async(req, res, next) => {
 exports.checkTokenExistsOptional = asyncHandler(async (req, res, next) => {
 
   let token = req.query.token || req.headers['x-access-token'];
-  console.log('yp', token)
   debug('checkTokenExistsOptional: token', token);
   if (!token) {
     return next();

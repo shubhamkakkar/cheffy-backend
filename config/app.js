@@ -10,6 +10,9 @@ module.exports = {
       pass: process.env.SENDGRID_PASS,
     }
   },
+  delivery: {
+    unitPrice: process.env.DELIVERY_UNIT_PRICE
+  },
   phone: {
     twilio: {
       accountSid: process.env.TWILIO_ACCOUNT_SID,

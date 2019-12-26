@@ -95,12 +95,12 @@ exports.getAuthUserIfPresentMiddleware = asyncHandler(async(req, res, next) => {
 * Get params user by userId from route. for e.g /order/list/:userId
 * Sets paramUser in express req object
 */
-exports.getUserByUserIdParamMiddleware = asyncHandler(async(req, res, next) => {
-  if(!req.params.userId) {
+exports.getUserByUserIdParamMiddleware = asyncHandler(async(req, res, next, userId) => {
+  if(!userId) {
     return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Not userId params set in request', status: HttpStatus.BAD_REQUEST });
   }
 
-  const user = await User.findByPk(req.params.userId , {
+  const user = await User.findByPk(userId , {
     attributes: userConstants.privateSelectFields
   });
 

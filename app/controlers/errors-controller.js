@@ -16,6 +16,7 @@ const events = require(path.resolve('app/services/events'));
  */
 exports.errorHandler = function(error, req, res, next) {
   // If the error object doesn't exists
+  debug('error', error);
   if(error === undefined) {
     return;
   }

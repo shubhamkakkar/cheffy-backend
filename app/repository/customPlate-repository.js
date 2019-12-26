@@ -7,15 +7,8 @@ const Op = Sequelize.Op;
 const userConstants = require(path.resolve('app/constants/users'));
 const customPlateConstants = require(path.resolve('app/constants/custom-plates'));
 const regexpService = require(path.resolve('app/services/regexp'));
-
-exports.DEFAULT_RADIUS = 10;
-exports.HAVERSINE_MILES_MULTIPLIER = 3959;
-exports.HAVERSINE_KM_MULTIPLIER = 6371;
-
-exports.radiusDistanceUnitHaversineMap = {
-  miles: exports.HAVERSINE_MILES_MULTIPLIER,
-  km: exports.HAVERSINE_KM_MULTIPLIER
-}
+const shippingAddressConstants = require(path.resolve('app/constants/shipping-address'));
+const repositoryHelpers = require('./helpers');
 
 
 exports.create = async (data) => {
@@ -82,9 +75,9 @@ exports.chefGetPlates = async ({req, query, pagination}) => {
     //calculation formula here https://martech.zone/calculate-distance/#ixzz2HZ6jkOVe
     //https://en.wikipedia.org/wiki/Great-circle_distance
     //default radius in miles
-    const radiusDistance = req.query.radius || exports.DEFAULT_RADIUS;
-    const radiusDistanceUnit = req.query.radiusUnit || 'miles';
-    const multiplier = exports.radiusDistanceUnitHaversineMap[radiusDistanceUnit];
+    const radiusDistance = req.query.radius || shippingAddressConstants.DEFAULT_RADIUS;
+    const radiusDistanceUnit = req.query.radiusUnit || shippingAddressConstants.DISTANCE_MILES;
+    const multiplier = shippingAddressConstants.radiusDistanceUnitHaversineMap[radiusDistanceUnit];
     debug('lat, lon, radius',currentUserLocationLat, currentUserLocationLon, radiusDistance);
 
     userNearQuery = [sequelize.literal(`
@@ -159,7 +152,7 @@ exports.chefGetPlates = async ({req, query, pagination}) => {
 
   const customPlates = await CustomPlate.findAll(queryOptions);
 
-  return customPlates;
+  return repositoryHelpers.deliveryPriceHelperList(customPlates);
 }
 
 /**

@@ -8,6 +8,7 @@ const repoCustom = require('../repository/customPlate-repository');
 const repositoryDocs = require('../repository/docs-repository');
 const repositoryOrder = require(path.resolve('app/repository/order-repository'));
 const md5 = require('md5');
+const _ = require('lodash');
 const authService = require('../services/auth');
 const upload = require('../services/upload');
 const Sequelize = require("sequelize");
@@ -17,7 +18,21 @@ const asyncHandler = require('express-async-handler');
 const plateInputFilter = require(path.resolve('app/inputfilters/plate'));
 const events = require(path.resolve('app/services/events'));
 const appConstants = require(path.resolve('app/constants/app'));
-const _ = require('lodash');
+const paginator = require(path.resolve('app/services/paginator'));
+
+/**
+* Get plate by plateId
+* Middleware
+*/
+exports.getPlateByIdMiddleware = asyncHandler(async (req, res, next, plateId) => {
+    const existPlate = await repository.getPlateById(plateId);
+    if(!existPlate) {
+      return res.status(HttpStatus.NOT_FOUND).send({message: `Plate not found by id: ${plateId}`});
+    }
+
+    req.plate = existPlate;
+    next();
+});
 
 
 exports.create = asyncHandler(async (req, res, next) => {
@@ -88,51 +103,40 @@ exports.create = asyncHandler(async (req, res, next) => {
   res.status(payload.status).send(payload);
 });
 
-exports.list = asyncHandler(async (req, res, next) => {
-  let retorno
-  if (req.query.page && req.query.pageSize) {
-    //retorno = await repository.listPlates({page: req.query.page, pageSize: req.query.pageSize})
-    retorno = await repository.listPlates2(req.query)
-  } else {
-    let data = req.query;
-    data.page=1;
-    data.pageSize=10;
-    retorno = await repository.listPlates2(data)
-  }
-  res.status(HttpStatus.ACCEPTED).send(retorno);
-});
 
-exports.listNear = asyncHandler(async (req, res, next) => {
-  let retorno = await repository.listNear({ latitude: req.query.latitude, longitude: req.query.longitude, radiusMiles: req.query.radius })
-  res.status(HttpStatus.ACCEPTED).send(retorno);
-})
+exports.getPlate = asyncHandler(async (req, res, next) => {
+
+  const detailPlate = await repository.getPlate({req, plateId: req.params.id});
+
+  res.status(200).send({ message: 'Plate find!', data: detailPlate });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_VIEWED,
+      user: req.user,
+      plate: req.plate,
+      scope: appConstants.SCOPE_ALL,
+      type: 'plate'
+  }, req);
+
+});
 
 exports.edit = asyncHandler(async (req, res, next) => {
 
-  let existPlate = await repository.findPlate(req.params.id);
+  let existPlate = req.plate;
 
-  if (!existPlate) {
-    return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-  }
+  const updates = plateInputFilter.createFilters.filter(req.body);
 
-  const updates = plateInputFilter.filter(req.body);
+  existPlate = await existPlate.update(updates);
 
-  await existPlate.update(updates);
-
-  const updatedPlate = await repository.findPlate(req.params.id);
-
-  res.status(200).send({ message: 'Plate successfully updated!', data: updatedPlate });
+  res.status(200).send({ message: 'Plate successfully updated!', data: existPlate });
 
 });
 
 exports.delete = asyncHandler(async (req, res, next) => {
 
-  let existPlate = await repository.findPlate(req.params.id);
+  let existPlate = req.plate;
 
-  if (!existPlate) {
-    return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-  }
-
+  return res.status(HttpStatus.BAD_REQUEST).send({message: "Feature not implemented"});
   //TODO
 });
 
@@ -142,96 +146,22 @@ exports.getPlateReview = asyncHandler(async (req, res, next) => {
 });
 
 
-exports.getRelatedPlates = async (req, res, next) => {
-  try {
-    const relatedPlates = await repository.getRelatedPlate(req.params.id);
-    if(relatedPlates){
-      res.status(200).send(relatedPlates);
-    }else{
-      res.status(404).send({message:"Plate not found"});
-    }
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
+/**
+* New Plates search API
+* Filter based on various parameters
+* Show Near plates
+*/
+exports.list = asyncHandler(async (req, res, next) => {
 
-// exports.createPlateReview = async (req, res, next) => {
-//   try {
-//     let existPlate,token_return;
+  const query = {req, query: req.query, pagination: paginator.paginateQuery(req)};
 
-//     try {
-//       existPlate = await repository.getPlate(req.params.id);
-//     } catch (error) {
-//       res.status(409).send({ message: 'Error retrieving the plate'});
-//       return;
-//     }
+  const plates = await repository.searchPlates(query)
 
-//     if(existPlate){
-
-//       try {
-//         token_return = await authService.decodeToken(req.headers['x-access-token'])
-//       } catch (error) {
-//         res.status(409).send({ message: 'Token expired'});
-//         return;
-//       }
-
-
-//       let full_data = req.body;
-//       full_data.userId = token_return.id;
-
-//         const createdPlateReview = await repository.createPlateReview(full_data);
-//       res.status(200).send({ message: 'Review created!', data: createdPlateReview });
-//       return;
-//     }else{
-//       res.status(409).send({ message: 'Plate not find!'});
-//       return;
-//     }
-
-//   } catch (e) {
-//     res.status(500).send({
-//       message: 'Failed to process your request'
-//     });
-//   }
-// };
-
-exports.getPlate = async (req, res, next) => {
-  try {
-    const existPlate = await repository.getPlate(req.params.id);
-    res.status(200).send({ message: 'Plate find!', data: existPlate });
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-exports.searchPlates = asyncHandler(async (req, res, next) => {
-  const list_plates = await Plates.findAll({
-    where: {
-      name: {
-        [Op.like]: '%' + req.params.text + '%'
-      }
-    },
-    attributes: ["name", "description", "price", "delivery_time"],
-    include: [
-      {
-        model: PlateImage,
-        attributes: [ 'id', 'url', 'name' ],
-      },
-      {
-        model: ReceiptImage,
-        attributes: [ 'id', 'url', 'name' ],
-      },
-      {
-        model: KitchenImage,
-        attributes: [ 'id', 'url', 'name' ],
-      },
-    ],
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "Plates",
+    ...paginator.paginateInfo(query),
+    data: plates
   });
-
-  res.status(200).send({ message: "Plates found!", param: req.params.text, data: list_plates });
 
   //publish search action
   events.publish({
@@ -243,42 +173,43 @@ exports.searchPlates = asyncHandler(async (req, res, next) => {
       scope: appConstants.SCOPE_ALL,
       type: 'plate'
   }, req);
+
 });
 
 
-exports.searchPlatesByChefId = async (req, res, next) => {
-  const list_plates = await Plates.findAll({
-    where: {
-      userId: req.params.id
-    },
-    attributes:{
-      exclude:['UserId']
-    }
-  });
+exports.getChefPlates = [
+  async (req, res, next) => {
+    const { chefId } = req.params;
+    req.query.userId = chefId;
+    next();
+  },
+  exports.list
+];
 
-  const chef_details = await User.findOne({
-    where: {
-      id: req.params.id
-    }
-  })
 
-  res.status(200).send({ message: "Plates found!", chefId: req.params.id, chef: chef_details, data: list_plates });
-};
+exports.getRelatedPlates = [
+  async (req, res, next) => {
+    req.query.related = req.params.id;
+    next();
+  },
+  exports.list
+];
 
-exports.searchLatestPlates = async (req, res, next) => {
-  const retorno = await repository.searchLatestPlates({ amount: req.params.amount });
-  res.status(HttpStatus.ACCEPTED).send(retorno);
-};
+
+exports.categoryPlates = [
+  async (req, res, next) => {
+    req.query.categoryId = req.params.categoryId;
+    next();
+  },
+  exports.list
+];
+
+
+
 
 exports.imagePlateKitchen = async (req, res, next) => {
   const { id } = req.params;
   const retorno = await PlateImage.findAll({ where: { plateId: id } });
-  res.status(HttpStatus.ACCEPTED).send(retorno);
-};
-
-exports.getChefPlates = async (req, res, next) => {
-  const { id } = req.params;
-  const retorno = await repository.getChefPlates({ userId: id });
   res.status(HttpStatus.ACCEPTED).send(retorno);
 };
 
@@ -351,7 +282,7 @@ exports.uploadImages = async (req, res, next) => {
 
 exports.deleteImage = async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const { id, type_image } = req.params;
+  const { plateImageId, type_image } = req.params;
   const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (existUser.user_type !== 'chef') {
@@ -362,15 +293,15 @@ exports.deleteImage = async (req, res, next) => {
   let actualImage, message;
   switch (type_image) {
     case 'plate_image':
-      actualImage = await PlateImage.findOne({ where: { id }});
+      actualImage = await PlateImage.findOne({ where: { plateImageId }});
       message = "Plate deleted image!";
       break;
     case 'kitchen_image':
-      actualImage = await KitchenImage.findOne({ where: { id }});
+      actualImage = await KitchenImage.findOne({ where: { plateImageId }});
       message = "Kitchen deleted image!"
       break;
     case 'receipt_image':
-      actualImage = await ReceiptImage.findOne({ where: { id }});
+      actualImage = await ReceiptImage.findOne({ where: { plateImageId }});
       message = "Receipt deleted image!"
       break;
     default:
