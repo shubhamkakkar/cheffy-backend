@@ -204,18 +204,18 @@ exports.create = asyncHandler(async (req, res, next) => {
     existUser.verification_email_token = pass;
     await existUser.save();
 
-    /*let args = {
+    let args = {
       to: req.body.email,
       from: "Cheffy contact@cheffy.com",
       replyTo: "contact@cheffy.com",
       subject: `Welcome to Cheffy!`,
       template: "forget/forgot",
       context: { token: pass, user: ' One more step...' }
-    };*/
+    };
     console.log('user saved');
-    await sendMail({req, pass});
+    // await sendMail({req, pass});
 
-    //mailer.sendMail(args);
+    mailer.sendMail(args);
 
     const { id, email, verification_email_status, password } = existUser;
 
@@ -248,18 +248,18 @@ exports.create = asyncHandler(async (req, res, next) => {
   user.verification_email_token = pass;
   await user.save();
 
-  /*let args = {
+  let args = {
     to: req.body.email,
     from: "Cheffy contact@cheffy.com",
     replyTo: "contact@cheffy.com",
     subject: `Welcome to Cheffy!`,
     template: "welcome/welcome",
     context: { token: pass, user: ' One more step...' }
-  };*/
+  };
 
-  await sendMail({req, pass});
+  // await sendMail({req, pass});
 
-  //mailer.sendMail(args);
+  mailer.sendMail(args);
   const token = await authService.generateToken({
     id: user.id,
     email: user.email
