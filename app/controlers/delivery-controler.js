@@ -24,7 +24,8 @@ exports.orderDeliveryByIdMiddleware = asyncHandler(async(req, res, next, orderDe
 
 //Is this the pending deliveries of a user
 exports.list = asyncHandler(async (req, res, next) => {
-  const user = req.user;
+  const userId = req.userId;
+  const user = await User.findOne({ where: { id: userId }});
 
   if (user.user_type !== userConstants.USER_TYPE_DRIVER && user.user_type !== userConstants.USER_TYPE_CHEF) {
     return res.status(HttpStatus.CONFLICT).send({ message: "Only drivers and cheffs can have deliveries", error: true}).end();
