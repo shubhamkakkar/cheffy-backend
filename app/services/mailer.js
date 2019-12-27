@@ -4,15 +4,18 @@ const nodemailer = require("nodemailer");
 var hbs = require('nodemailer-express-handlebars');
 const appConfig = require(path.resolve('config/app'));
 
-const sendGridConfig = appConfig.mail.sendgrid
-
+const sendGridConfig = appConfig.mail.sendgrid;
+console.log(sendGridConfig);
 let transportConfig = {
+    //service: 'SendGrid',
     host: sendGridConfig.host,
     port: sendGridConfig.port,
     auth: {
         user: sendGridConfig.user,
         pass: sendGridConfig.pass
-    }
+    },
+    secure: false,
+    requireTLS: true
 };
 
 //returns jsonMessage in test mode
@@ -20,8 +23,18 @@ if(process.env.MAILER_MODE === 'test') {
   transportConfig = { jsonTransport: true }
 }
 
-const transport = nodemailer.createTransport(transportConfig);
+//development mode email
+//use maildev for receiving email
+if(process.env.NODE_ENV === 'development') {
+  transportConfig = {
+    host: 'localhost',
+    port: 1025,
+    secure: false,
+    ignoreTLS: true
+  }
+}
 
+const transport = nodemailer.createTransport(transportConfig);
 
 const options = {
      viewEngine: {
