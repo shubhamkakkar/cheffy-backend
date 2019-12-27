@@ -204,18 +204,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     existUser.verification_email_token = pass;
     await existUser.save();
 
-    let args = {
-      to: req.body.email,
-      from: "Cheffy contact@cheffy.com",
-      replyTo: "contact@cheffy.com",
-      subject: `Welcome to Cheffy!`,
-      template: "forget/forgot",
-      context: { token: pass, user: ' One more step...' }
-    };
-    console.log('user saved');
-    // await sendMail({req, pass});
-
-    mailer.sendMail(args);
+    await sendMail({req, pass});
 
     const { id, email, verification_email_status, password } = existUser;
 
@@ -225,7 +214,16 @@ exports.create = asyncHandler(async (req, res, next) => {
       result: { id, email, verification_email_status, password_generated: !!(password), user_doc: !!(doc) }
     });
 
-    return 0;
+    //publish create action
+    return events.publish({
+        action: 'token-resend',
+        user: existUser.get({}),
+        query: req.query,
+        //registration can be by any user so scope is all
+        scope: appConstants.SCOPE_ALL,
+        type: 'user'
+    }, req);
+
   }
 
   if (existUser && existUser.id) {
@@ -248,18 +246,8 @@ exports.create = asyncHandler(async (req, res, next) => {
   user.verification_email_token = pass;
   await user.save();
 
-  let args = {
-    to: req.body.email,
-    from: "Cheffy contact@cheffy.com",
-    replyTo: "contact@cheffy.com",
-    subject: `Welcome to Cheffy!`,
-    template: "welcome/welcome",
-    context: { token: pass, user: ' One more step...' }
-  };
+  await sendMail({req, pass});
 
-  // await sendMail({req, pass});
-
-  mailer.sendMail(args);
   const token = await authService.generateToken({
     id: user.id,
     email: user.email
@@ -405,23 +393,14 @@ exports.getUserBalanceHistory = async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send(JSON.parse(historyMock));
 }
 
-exports.getUser = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findByPk(token_return.id, {
-      attributes: [ 'id', 'name', 'email', 'country_code', 'phone_no', 'auth_token', 'restaurant_name', 'location_lat', 'location_lon', 'user_type', 'imagePath', 'verification_code', 'verification_email_token', 'verification_email_status', 'verification_phone_token', 'verification_phone_status', 'status', 'user_ip', 'createdAt', 'updatedAt'],
-      include: [
-        {
-            model:ShippingAddress,
-            as:'address'
-        }
-      ]
-    });
-    res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: existUser});
-  } catch (err) {
-    res.status(HttpStatus.BAD_REQUEST).send({ message: 'FAILED', data: err});
-  }
-}
+exports.getUser = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  const shippingAddresses = await user.getAddress();
+  const userResponse = user.get({plain: true});
+  userResponse.address = shippingAddresses;
+  res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
+
+});
 
 exports.verifyPhone = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();

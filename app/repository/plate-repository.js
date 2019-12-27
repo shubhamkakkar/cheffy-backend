@@ -292,6 +292,22 @@ exports.searchPlates = async({req, query, pagination}) => {
     whereQuery.price = query.price;
   }
 
+  if(query.delivery_time) {
+    whereQuery.delivery_time = query.delivery_time;
+  }
+  
+  if(query.delivery_type) {
+    whereQuery.delivery_type = query.delivery_type;
+  }
+
+  if(query.available) {
+    whereQuery.available = query.available;
+  }
+
+  if(query.chefDeliveryAvailable) {
+    whereQuery.chefDeliveryAvailable = query.chefDeliveryAvailable;
+  }
+
   if(query.categoryId) {
     whereQuery.categoryId = query.categoryId;
   }
