@@ -5,7 +5,6 @@ var hbs = require('nodemailer-express-handlebars');
 const appConfig = require(path.resolve('config/app'));
 
 const sendGridConfig = appConfig.mail.sendgrid;
-console.log(sendGridConfig);
 let transportConfig = {
     //service: 'SendGrid',
     host: sendGridConfig.host,

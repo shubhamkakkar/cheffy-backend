@@ -113,31 +113,32 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     where: {userId:data},
     order: [["id", "DESC"]],
     include: [
-      {
-        model: OrderPayment,
-        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
-      },
-      {
-        model: OrderItem,
-        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
-        include:[{
-          model: Plates,
-          as:'plate',
-          include: [{
-            model: User,
-            as:'chef'
-          },
-          {
-            model: PlateImage
-        }]
-      }]
+    {
+      model: OrderPayment,
+      attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
     },
     {
-    model: OrderDelivery,
-    required: true,
-    attributes: ["id"],
-    where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
-   }]
+      model: OrderItem,
+      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+      include:[{
+        model: Plates,
+        as:'plate',
+        include: [{
+          model: User,
+          as:'chef'
+        },
+        {
+          model: PlateImage
+        }]
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        attributes: ["id"],
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
+      }
+      ]
+    }]
   });
   return order;
 
