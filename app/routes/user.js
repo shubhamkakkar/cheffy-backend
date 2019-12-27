@@ -20,7 +20,7 @@ const fieldsFile = udpateFields.map((field) => {
 
 router.get('/dummy', controller.dummy);
 
-router.get('/', authService.authorize, controller.getUser);
+router.get('/', authService.authorize, controller.getAuthUserMiddleware, controller.getUser);
 router.post('/', controller.create);
 router.post('/login', controller.authenticate);
 router.post('/logout', authService.authorize, controller.logout);
