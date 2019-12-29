@@ -1,4 +1,5 @@
 const {sequelize, User, ShippingAddress} = require('../models/index')
+const Sequelize = require('sequelize');
 
 exports.findDriversInsideArea = async (latitude,longitude,radiusMiles) => {
     let strQuery = "SELECT id, ( 3959 * acos( cos( radians("+latitude+") ) * cos( radians( CAST(SUBSTRING_INDEX(location, ',', 1) AS DECIMAL(10,6)) ) ) "+
@@ -61,7 +62,7 @@ exports.getRestaurantSearch = async (data) => {
   try {
     const response = await User.findAll({
       where: {
-        restaurant_name:{[sequelize.Op.like]:'%'+data+'%'}
+        restaurant_name:{[Sequelize.Op.like]:'%'+data+'%'}
       },
       attributes: [
          'id','restaurant_name','location_lat','location_lon','createdAt','updatedAt'
