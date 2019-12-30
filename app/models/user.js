@@ -28,7 +28,10 @@ module.exports = (sequelize, DataTypes) => {
     imagePath: {
       type: DataTypes.STRING
     },
-    verification_code: DataTypes.STRING,
+
+    // for password reset
+    password_reset_token: DataTypes.STRING,
+
     verification_email_token: DataTypes.STRING,
     verification_email_status: DataTypes.ENUM(userConstants.STATUS_PENDING, userConstants.STATUS_VERIFIED),
     verification_phone_token: DataTypes.STRING,

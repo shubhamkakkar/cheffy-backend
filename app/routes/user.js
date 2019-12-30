@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/user-controler');
+const authController = require('../controlers/auth-controller');
 const messageController = require('../controlers/message-controller');
 const basketController = require('../controlers/basket-controler');
 const authService = require("../services/auth");
@@ -20,38 +21,45 @@ const fieldsFile = udpateFields.map((field) => {
 
 router.get('/dummy', controller.dummy);
 
-router.get('/', authService.authorize, controller.getAuthUserMiddleware, controller.getUser);
+//user signup flow
 router.post('/', controller.create);
-router.post('/login', controller.authenticate);
-router.post('/logout', authService.authorize, controller.logout);
+router.post('/complete-registration', multerStart(fieldsFile), controller.completeRegistration);
+router.put('/edit', authService.authorize, multerStart(fieldsFile), controller.put);
 
+router.get('/', authService.authorize, controller.getAuthUserMiddleware, controller.getUser);
 //router.put('/location', authService.authorize, controller.getAuthUserMiddleware, controller.updateLocation);
+//auth routes
+router.post('/login', authController.authenticate);
+router.post('/logout', authService.authorize, authController.logout);
+router.post('/socialauth', authController.socialauth);
+router.post('/socialauth/register', authController.socialauthRegister);
 
-router.post('/socialauth', controller.socialauth);
-router.post('/socialauth/register', controller.socialauthRegister);
+// phone add and verify routes
+router.post('/phone', authService.authorize, controller.getAuthUserMiddleware, controller.setUserPhone);
+router.post('/verify-phone', authService.authorize, controller.getAuthUserMiddleware, controller.verifyUserPhone);
+
+//email verification routes
+router.post('/resend-email-token', controller.resendEmailToken);
+router.post('/verify-email-token', controller.verifyEmailToken);
+
+router.post('/change-password', authService.authorize, controller.getAuthUserMiddleware, controller.changePassword);
+
+// forgot password routes
+router.post('/forgot-password', controller.forgotPassword);
+router.post('/reset-password', controller.resetPassword);
 
 router.get('/balance', authService.authorize, controller.getUserBalance);
-router.get('/balance/history?:from:to', authService.authorize, controller.getUserBalanceHistory);
-router.post('/verifyphone', authService.authorize, controller.verifyPhone);
-router.post('/confirmphone', authService.authorize, controller.checkPhone);
-router.post('/verify-email-token', controller.verifyEmailToken);
-router.post('/complete-registration', multerStart(fieldsFile), controller.completeRegistration);
-router.post('/resend-emailtoken', controller.resendEmailToken);
-
-router.post('/verifypassword', authService.authorize, controller.verifyChangePassword);
-router.post('/changepassword', controller.changePassword);
-router.post('/confirmchangepassword', authService.authorize, controller.confirmChangePassword);
-router.put('/edit', authService.authorize, multerStart(fieldsFile), controller.put);
-router.post('/forgot-password', controller.forgotPassword);
-
-router.put('/balance', authService.authorize, multerStart(fieldsFile),  controller.getUserBalance);
-//router.put('/balance/history', authService.authorize, controller.getUserBalanceHistory);
+//router.get('/balance/history', authService.authorize, controller.getUserBalanceHistory);
 
 //Facebook
 router.use('/facebook',facebookRouter);
 
 //Stripe
 router.use('/card',creditCardRouter);
+
+//balance
+router.get('/balance', authService.authorize, controller.getUserBalance);
+router.get('/balance/history?:from:to', authService.authorize, controller.getUserBalanceHistory);
 
 // Message module
 
