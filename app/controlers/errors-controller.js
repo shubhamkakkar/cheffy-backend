@@ -103,7 +103,16 @@ exports.logError = function(error, req) {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    slackLogger.logError({error, body: req.body, query: req.query, params: req.params, agent: events.getAgentInfo(req), userId: req.userId}, req, 'API Error');
+    slackLogger.logError({
+      error,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      agent: events.getAgentInfo(req),
+      userId: req.userId,
+      req,
+      name: 'API Error',
+    });
     return logger.error(error);
   }
 
