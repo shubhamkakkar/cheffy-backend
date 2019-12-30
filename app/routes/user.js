@@ -48,7 +48,6 @@ router.post('/change-password', authService.authorize, controller.getAuthUserMid
 router.post('/forgot-password', controller.forgotPassword);
 router.post('/reset-password', controller.resetPassword);
 
-router.get('/balance', authService.authorize, controller.getUserBalance);
 //router.get('/balance/history', authService.authorize, controller.getUserBalanceHistory);
 
 //Facebook
