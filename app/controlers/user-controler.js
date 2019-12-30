@@ -47,6 +47,13 @@ async function sendMail({req, pass}) {
   return await mailer.sendMail(args);
 }
 
+function userResponseHelper({user}) {
+  let userResponse = user.get({plain: true});
+  delete userResponse.password;
+  delete userResponse.auth_token;
+  return userResponse;
+}
+
 /**
 * Middleware
 * Get currently authenticated user by userId decoded from jsonwebtoken.
@@ -396,7 +403,7 @@ exports.getUserBalanceHistory = async (req, res, next) => {
 exports.getUser = asyncHandler(async (req, res, next) => {
   const user = req.user;
   const shippingAddresses = await user.getAddress();
-  const userResponse = user.get({plain: true});
+  const userResponse = userResponseHelper({user});
   userResponse.address = shippingAddresses;
   res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
 
@@ -485,10 +492,12 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 
   await existUser.save();
 
+  const userResponse = userResponseHelper({user: existUser});
+
   res.status(HttpStatus.CREATED).send({
     message: `Congratulations, successfully created ${req.body.user_type} type user!`,
     status: HttpStatus.CREATED,
-    result: existUser
+    result: userResponse
   });
 });
 
@@ -669,9 +678,7 @@ exports.checkPhone = async (req, res, next) => {
 }
 
 
-exports.socialauth = async (req, res, next) => {
-  try {
-
+exports.socialauth = asyncHandler(async (req, res, next) => {
     const contract = new ValidationContract();
 
     contract.isRequired(req.body.provider, 'provider is Required');
@@ -683,7 +690,7 @@ exports.socialauth = async (req, res, next) => {
     }
     const existUser = await User.findOne({
      where: { email: req.body.email },
-
+     attributes: userConstants.privateSelectFields,
      include: [{
         model: ShippingAddress,
         attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
@@ -710,174 +717,156 @@ exports.socialauth = async (req, res, next) => {
 
     await existUser.save();
 
-    res.status(200).send({
-      token: token,
-      data: existUser
-    });
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-
-exports.socialauthRegister = async (req, res, next) => {
-  try {
-
-    const contract = new ValidationContract();
-
-    contract.isRequired(req.body.email, 'email is Required');
-    contract.isRequired(req.body.name, 'name is Required');
-    contract.isRequired(req.body.user_type, 'user_type is Required');
-    contract.isRequired(req.body.provider, 'provider is Required');
-    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
-    contract.isRequired(req.body.imagePath, 'imagePath id is Required');
-
-    if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
-
-
-    if (!contract.isValid()) {
-        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
-    }
-    const existUser = await User.findOne({ where: { email: req.body.email } });
-    if (existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user already exists', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    let user = {};
-
-    user.name = req.body.name;
-    user.email = req.body.email;
-    user.user_type = req.body.user_type;
-    user.provider = req.body.provider;
-    user.provider_user_id = req.body.provider_user_id;
-    user.imagePath = req.body.imagePath;
-
-    if (user.user_type === userConstants.USER_TYPE_DRIVER) {
-      await driverAPI.createDriver({
-        name: user.name,
-        email: user.email
-      });
-    }
-
-    if (user.user_type === userConstants.USER_TYPE_CHEF) {
-      user.restaurant_name = req.body.restaurant_name;
-    }
-
-    let full_data = user;
-    const createdUser = await User.create({ ...full_data });
-
-    const token = await authService.generateToken({
-      id: createdUser.id,
-      email: createdUser.email,
-      name: createdUser.name
-    });
-
-    createdUser.auth_token = token;
-
-    await createdUser.save();
-
-    const existUserNew = await User.findOne({
-     where: { email: req.body.email },
-
-     include: [{
-        model: ShippingAddress,
-        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
-        as:'address'
-      }]
-
-   });
+    const userResponse = userResponseHelper({user: existUser});
 
     res.status(200).send({
       token: token,
-      data: existUserNew
+      data: userResponse
     });
 
+});
 
 
+exports.socialauthRegister = asyncHandler(async (req, res, next) => {
+  const contract = new ValidationContract();
 
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
+  contract.isRequired(req.body.email, 'email is Required');
+  contract.isRequired(req.body.name, 'name is Required');
+  contract.isRequired(req.body.user_type, 'user_type is Required');
+  contract.isRequired(req.body.provider, 'provider is Required');
+  contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+  contract.isRequired(req.body.imagePath, 'imagePath id is Required');
+
+  if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
+
+
+  if (!contract.isValid()) {
+      return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
+  }
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+  if (existUser) {
+    res.status(HttpStatus.CONFLICT).send({ message: 'user already exists', status: HttpStatus.CONFLICT});
+    return 0;
+  }
+
+  let user = {};
+
+  user.name = req.body.name;
+  user.email = req.body.email;
+  user.user_type = req.body.user_type;
+  user.provider = req.body.provider;
+  user.provider_user_id = req.body.provider_user_id;
+  user.imagePath = req.body.imagePath;
+
+  if (user.user_type === userConstants.USER_TYPE_DRIVER) {
+    await driverAPI.createDriver({
+      name: user.name,
+      email: user.email
     });
   }
-};
 
-exports.authenticate = async (req, res, next) => {
-  try {
-    const { password } = req.body;
-    debug('body', req.body);
-
-    let customer
-    var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
-    let whereClause = {};
-
-    if (reg.test(req.body.login)) {
-      whereClause = { email: req.body.login };
-    } else {
-      const num_list = req.body.login.split(" ");
-      whereClause = { country_code: num_list[0], phone_no: num_list[1] };
-    }
-
-    customer = await User.findOne({
-      where: whereClause,
-      include: [{
-        model: ShippingAddress,
-        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
-        as:'address'
-      }]
-    });
-
-    if (!customer) {
-      res.status(HttpStatus.FORBIDDEN).send({
-        message: 'User does not exist in our records',
-        data: null
-      });
-      return 0;
-    }
-    debug('customer', customer);
-    let result = await bcrypt.compare(password, customer.password);
-
-    if (!result) {
-      return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
-    }
-
-    const doc = await Documents.findOne({ where: { userId: customer.id } });
-    const token = await authService.generateToken({
-      id: customer.id,
-      email: customer.email,
-      name: customer.name
-    });
-
-    customer.auth_token = token;
-    await customer.save();
-
-    res.status(200).send({
-      token: token,
-      data: { ...customer.dataValues, user_doc: !!(doc) }
-    });
-
-    //publish create action
-    events.publish({
-        action: 'login',
-        user: customer.get({}),
-        query: req.query,
-        //login can be by any user so scope is all
-        scope: appConstants.SCOPE_ALL,
-        type: 'user'
-    }, req);
-
-  } catch (e) {
-    console.log(e)
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-      message: 'Request fail',
-      error: e
-    });
+  if (user.user_type === userConstants.USER_TYPE_CHEF) {
+    user.restaurant_name = req.body.restaurant_name;
   }
-};
+
+  let full_data = user;
+  const createdUser = await User.create({ ...full_data });
+
+  const token = await authService.generateToken({
+    id: createdUser.id,
+    email: createdUser.email,
+    name: createdUser.name
+  });
+
+  createdUser.auth_token = token;
+
+  await createdUser.save();
+
+  const existUserNew = await User.findOne({
+   where: { email: req.body.email },
+   attributes: userConstants.privateSelectFields,
+   include: [{
+      model: ShippingAddress,
+      attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
+      as:'address'
+    }]
+
+ });
+
+  res.status(200).send({
+    token: token,
+    data: existUserNew
+  });
+
+});
+
+exports.authenticate = asyncHandler(async (req, res, next) => {
+
+  const { password } = req.body;
+  debug('body', req.body);
+
+  let customer
+  var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
+  let whereClause = {};
+
+  if (reg.test(req.body.login)) {
+    whereClause = { email: req.body.login };
+  } else {
+    const num_list = req.body.login.split(" ");
+    whereClause = { country_code: num_list[0], phone_no: num_list[1] };
+  }
+
+  customer = await User.findOne({
+    where: whereClause,
+    include: [{
+      model: ShippingAddress,
+      attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
+      as:'address'
+    }]
+  });
+
+  if (!customer) {
+    res.status(HttpStatus.FORBIDDEN).send({
+      message: 'User does not exist in our records',
+      data: null
+    });
+    return 0;
+  }
+  debug('customer', customer);
+  let result = await bcrypt.compare(password, customer.password);
+
+  if (!result) {
+    return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
+  }
+
+  const doc = await Documents.findOne({ where: { userId: customer.id } });
+  const token = await authService.generateToken({
+    id: customer.id,
+    email: customer.email,
+    name: customer.name
+  });
+
+  customer.auth_token = token;
+  await customer.save();
+
+  const userResponse = userResponseHelper({user: existUser});
+
+  res.status(200).send({
+    token: token,
+    data: { userResponse, user_doc: !!(doc) }
+  });
+
+  //publish create action
+  events.publish({
+      action: 'login',
+      user: customer.get({}),
+      query: req.query,
+      //login can be by any user so scope is all
+      scope: appConstants.SCOPE_ALL,
+      type: 'user'
+  }, req);
+
+});
 
 exports.logout = asyncHandler(async(req, res, next) =>{
 
@@ -898,6 +887,9 @@ exports.logout = asyncHandler(async(req, res, next) =>{
 
 })
 
+/**
+* Edit user info
+*/
 exports.put = asyncHandler(async (req, res, next) => {
     //for accepting form-data as well
     const body = req.body || {};
@@ -914,7 +906,7 @@ exports.put = asyncHandler(async (req, res, next) => {
     const updates = userInputFilter.updateFields.filter(req.body, 'form-data');
 
     if(req.files && req.files['profile_photo']) {
-      updates.imagePath = req.files['profile_photo'][0].key;
+      updates.imagePath = req.files['profile_photo'][0].url;
     }
 
     //need to send verification email when email change
@@ -944,9 +936,12 @@ exports.put = asyncHandler(async (req, res, next) => {
 
     await existUser.update(updates);
 
+    const user = await User.findOne({ where: { id: req.userId }, attributes: userConstants.privateSelectFields });
+    const userResponse = userResponseHelper({user});
+
     res.status(HttpStatus.OK).send({
       message: 'Profile successfully updated!',
-      data: existUser
+      data: userResponse
     });
 
     //only send email/phone sms after request complete
@@ -964,6 +959,7 @@ exports.put = asyncHandler(async (req, res, next) => {
 
 
 /**
+* DEPRECATED use shipping address API
 * Update user location_lat and location_lon fields
 * Sets default location/shipping_address of chef/user
 */
@@ -984,7 +980,6 @@ exports.updateLocation = asyncHandler(async(req, res, next) => {
 
   res.status(HttpStatus.OK).send({
     message: 'Location successfully updated!',
-    data: user
   });
 
 });

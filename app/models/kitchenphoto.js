@@ -7,10 +7,7 @@ module.exports = (sequelize, DataTypes) => {
   const KitchenPhoto = sequelize.define('KitchenPhoto', {
     description: DataTypes.STRING,
     url: {
-      type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/kitchen_photo/${this.getDataValue('url')}`;
-      }
+      type: DataTypes.STRING,      
     },
     state_type: {
       type: DataTypes.ENUM('validated', 'invalid', 'pending'),

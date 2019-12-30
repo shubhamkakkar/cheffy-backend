@@ -444,11 +444,11 @@ exports.updateDriverLicense = async (documentId, data) => {
 };
 
 exports.createDriverVehicleLicense = async (documentId, data) => {
-  const { originalname, key } = data;
+  const { originalname, key, url } = data;
 
   let doc = await DriverVehicleRegistration.create({
     documentId,
-    url: key,
+    url: url,
     name: originalname
   });
 
@@ -457,7 +457,7 @@ exports.createDriverVehicleLicense = async (documentId, data) => {
 
 exports.updateDriverVehicleRegistration = async (documentId, data) => {
   try {
-    const { originalname, key, fieldname } = data;
+    const { originalname, key, url, fieldname } = data;
     const response = await DriverVehicleRegistration.findOne({ where: { documentId } });
 
     if (response)
@@ -468,7 +468,7 @@ exports.updateDriverVehicleRegistration = async (documentId, data) => {
     }
 
     response.name = originalname;
-    response.url = key;
+    response.url = url;
     //response.state_type = data.response || null
     await response.save();
     return response;
@@ -479,11 +479,11 @@ exports.updateDriverVehicleRegistration = async (documentId, data) => {
 };
 
 exports.createProfilePhoto = async (documentId, data) => {
-  const { originalname, key } = data;
+  const { originalname, key, url } = data;
 
   let doc = await ProfilePhoto.create({
     description: originalname,
-    url: key,
+    url: url,
     documentId,
   });
   return doc;
@@ -491,7 +491,7 @@ exports.createProfilePhoto = async (documentId, data) => {
 
 exports.updateProfilePhoto = async (documentId, data) => {
   try {
-    const { originalname, key, fieldname } = data;
+    const { originalname, key, url, fieldname } = data;
     const response = await ProfilePhoto.findOne({ where: { documentId } });
 
     if (response)
@@ -502,7 +502,7 @@ exports.updateProfilePhoto = async (documentId, data) => {
     }
 
     response.description = originalname;
-    response.url = key;
+    response.url = url;
     //response.state_type = data.response || null
     await response.save();
     return response;

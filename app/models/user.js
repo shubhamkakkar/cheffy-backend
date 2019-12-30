@@ -26,10 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     location_lon: DataTypes.DECIMAL(10,8),
     user_type: DataTypes.ENUM(userConstants.USER_TYPE_USER, userConstants.USER_TYPE_CHEF, userConstants.USER_TYPE_ADMIN, userConstants.USER_TYPE_DRIVER),
     imagePath: {
-      type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/profile_photo/${this.getDataValue('imagePath')}`;
-      }
+      type: DataTypes.STRING
     },
     verification_code: DataTypes.STRING,
     verification_email_token: DataTypes.STRING,

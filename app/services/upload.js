@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-exports.deleteImage = async (fieldName, name) => {
-  const dirPhoto = path.resolve(__dirname, '..', '..','tmp', fieldName, name);
-  
+exports.deleteImage = async (fieldName, url) => {
+  const photoPath = url.replace(process.env.URL_SERVER, "");
+  const dirRelativePath = path.resolve(photoPath);
+  //const dirPhoto = path.resolve(__dirname, '..', '..','tmp', fieldName, name);
+
   await fs.access(dirPhoto, (err) => {
     if (!err) {
       fs.unlink(dirPhoto, err => {

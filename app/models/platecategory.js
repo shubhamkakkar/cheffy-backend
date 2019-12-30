@@ -9,9 +9,6 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.STRING,
     url: {
       type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/category_image/${this.getDataValue('url')}`;
-      }
     },
     userId: {
       type: DataTypes.INTEGER,
