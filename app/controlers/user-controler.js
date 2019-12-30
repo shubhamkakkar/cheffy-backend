@@ -421,7 +421,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
   contract.isRequired(req.body.user_type, 'User type is required!');
 
   if (req.body.user_type === userConstants.USER_TYPE_CHEF) {
-    return contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
+    contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
   }
 
   if (!contract.isValid()) {
