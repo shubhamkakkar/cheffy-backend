@@ -46,6 +46,7 @@ router.post('/change-password', authService.authorize, controller.getAuthUserMid
 
 // forgot password routes
 router.post('/forgot-password', controller.forgotPassword);
+router.post('/verify-email-token-forgot-password', controller.veryifyTokenforgotPassword);
 router.post('/reset-password', controller.resetPassword);
 
 //router.get('/balance/history', authService.authorize, controller.getUserBalanceHistory);

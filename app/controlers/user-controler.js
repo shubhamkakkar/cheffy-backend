@@ -490,7 +490,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 * This controller should be called when email token has been sent
 * and user sends email token with email in request
 */
-exports.verifyEmailToken = async (req, res, next) => {
+exports.verifyEmailToken = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'Email is correct?')
   contract.isRequired(req.body.email_token, 'This email token is required!');
@@ -500,6 +500,10 @@ exports.verifyEmailToken = async (req, res, next) => {
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if(!existUser) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `User not found by email: ${req.body.email}`});
+  }
 
   if(existUser.verification_email_status === userConstants.STATUS_VERIFIED) {
     return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Email Already Verified!', status: HttpStatus.BAD_REQUEST});
@@ -518,12 +522,12 @@ exports.verifyEmailToken = async (req, res, next) => {
   }
 
   res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
-}
+});
 
 /**
 * Resends email token if user doesn't receives token in email
 */
-exports.resendEmailToken = async (req, res, next) => {
+exports.resendEmailToken = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
 
@@ -533,8 +537,9 @@ exports.resendEmailToken = async (req, res, next) => {
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
+
   if (!existUser) {
-    res.status(HttpStatus.OK).send({ message: 'User not found!', status: HttpStatus.OK});
+    res.status(HttpStatus.OK).send({ message: `User not found by email: ${req.body.email}`, status: HttpStatus.OK});
     return 0;
   }
 
@@ -563,7 +568,7 @@ exports.resendEmailToken = async (req, res, next) => {
     status: HttpStatus.OK
   });
   return 0;
-}
+});
 
 /**
 * Change password
@@ -928,6 +933,44 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 /**
 * Method: POST
 * No AUTH
+* Verify Email Token
+* Step 2 of forgot password
+*/
+exports.veryifyTokenforgotPassword = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+  contract.isRequired(req.body.email_token, 'This email token is required?');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if (!existUser) {
+    return res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+  }
+
+  if (existUser.password_reset_token === String(req.body.email_token)) {
+    //existUser.verification_email_status = userConstants.STATUS_VERIFIED;
+    // existUser.password_reset_token = '';
+    // existUser.password = bcrypt.hashSync(req.body.newPassword, bcrypt.genSaltSync(10));
+    // await existUser.save();
+
+    return res.status(HttpStatus.ACCEPTED).send({
+      message: "Your email token has been verified!",
+      status: HttpStatus.ACCEPTED
+    });
+
+  }
+
+  res.status(HttpStatus.CONFLICT).send({ message: "Error validating token!", status: HttpStatus.CONFLICT });
+});
+
+
+/**
+* Method: POST
+* No AUTH
 * Reset password
 * It is used after sending forgot password token to email
 * Step 2 of forgot password
@@ -941,6 +984,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   if (!contract.isValid()) {
     return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
   }
+
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
@@ -948,7 +992,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   }
 
   if (existUser.password_reset_token === String(req.body.email_token)) {
-    existUser.verification_email_status = userConstants.STATUS_VERIFIED;
+    // existUser.verification_email_status = userConstants.STATUS_VERIFIED;
     existUser.password_reset_token = '';
     existUser.password = bcrypt.hashSync(req.body.newPassword, bcrypt.genSaltSync(10));
     await existUser.save();
