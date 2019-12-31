@@ -312,13 +312,13 @@ exports.searchPlates = async({req, query, pagination}) => {
   if(query.delivery_time) {
     whereQuery.delivery_time = query.delivery_time;
   }
-  
+
   if(query.delivery_type) {
     whereQuery.delivery_type = query.delivery_type;
   }
 
-  if(query.available) {
-    whereQuery.available = query.available;
+  if(query.plateAvailable) {
+    whereQuery.available = query.plateAvailable;
   }
 
   if(query.chefDeliveryAvailable) {
@@ -342,8 +342,8 @@ exports.searchPlates = async({req, query, pagination}) => {
     3: 'deliveryTime'
   }
 
-  if(query.sort) {
-    const sortType = sortCategoryMaps[query.sort];
+  if(query.sortCategory) {
+    const sortType = sortCategoryMaps[query.sortCategory];
 
     if(sortType === 'deliveryTime') {
       plateOrderByQuery = [['deliveryTime', 'ASC']];
@@ -387,13 +387,6 @@ exports.searchPlates = async({req, query, pagination}) => {
       //plateHavingQuery = {distance: {[Sequelize.Op.lte]: radiusDistance}};
       priceTypeSubQuery = [sequelize.literal(`(SELECT avg(price) from Plates)`), 'avgPrice'];
 
-      /*plateHavingQuery.price = {
-        //5% less and 5% greater than average price
-        //[Op.between]: [sequelize.col('avgPrice')-0.15*sequelize.col('avgPrice'), sequelize.col('avgPrice')+0.15*sequelize.col('avgPrice')]
-        [Op.between]: [`${sequelize.col('avgPrice')}-1`, `${sequelize.col('avgPrice')}+1`]
-        //[Op.gte]: sequelize.col('avgPrice')
-      }*/
-
       plateHavingQuery.price = {
         [Op.between]: [sequelize.literal(`(avgPrice-0.15*avgPrice)`), sequelize.literal(`(avgPrice+0.15*avgPrice)`)]
       }
@@ -401,16 +394,25 @@ exports.searchPlates = async({req, query, pagination}) => {
       plateOrderByQuery = [['price', 'ASC']];
 
     }
-
+    console.log('price type', priceType)
     //expensive first
-    if(priceType === 'high') {
-      plateOrderByQuery = [['price', 'DSC']];
+    if(priceType === 'expensive') {
+
+      plateOrderByQuery = [['price', 'DESC']];
     }
 
   }
 
   if(req.query.sort) {
-    plateOrderByQuery = [req.query.sort, 'DSC'];
+    let sortType = req.query.sortType || 'DESC';
+    if(['ASC', 'DESC'].indexOf(sortType) === -1) {
+      throw new Error('Invalid sortType. Should be one of ASC | DESC');
+    }
+    if(userNearQuery) {
+      plateOrderByQuery.push([req.query.sort, sortType])
+    } else {
+      plateOrderByQuery = [[req.query.sort, sortType]];
+    }
   }
 
   let dietWhereQUery = {};
@@ -440,6 +442,7 @@ exports.searchPlates = async({req, query, pagination}) => {
        {
          model: DietCategory,
          where: dietWhereQUery,
+         required: false
          //through: {
          //
          //}

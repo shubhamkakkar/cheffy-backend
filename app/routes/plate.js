@@ -22,6 +22,7 @@ const router = express.Router();
 
 router.post('/', authService.authorize, shippingController.getAuthUserShippingAddress, controller.create);
 router.get('/', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.list);
+router.get('/help', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.searchHelp);
 
 router.get('/show/:id', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.getPlate);
 router.post('/edit/:id', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(),  controller.edit);

@@ -176,6 +176,78 @@ exports.list = asyncHandler(async (req, res, next) => {
 
 });
 
+/**
+* Method: GET
+* Help route for palte search/filter
+*/
+exports.searchHelp = asyncHandler( async (req, res, next) => {
+  return res.status(HttpStatus.OK).send({
+    message: 'Search Plates API help',
+    query: {
+      // field related filters
+      exactFieldRelated: [
+        { keyword: 'Search plate by name/characters', type: 'String' },
+        { related: 'Search related plates for a plate', type: 'plateId' },
+        { userId: 'Search by userId', type: 'user' },
+        { price: 'Search by exact price', type: 'Decimal' },
+        { delivery_time: 'Search by exact delivery time', type: 'Decimal' },
+        { delivery_type: 'Search by delivery_type i.e free|paid', type: 'String: free|paid' },
+        { plateAvailable: 'Search chef available plates', type: 'Boolean' },
+        { chefDeliveryAvailable: 'Search plates available for delivery', type: 'Boolean' },
+        { categoryId: 'Search plates by categoryId', type: 'categoryId' },
+      ],
+      // distance related filters
+      distanceRelated: [
+        { near: 'Search near plates', type: 'Boolean' },
+        { radius: 'Search near plates filter by radius distance', type: 'Decimal' },
+        { radiusUnit: 'Distance unit. One of miles | km', type: 'String: miles|km' } ,
+        { lat: 'search plates near latitude', type: 'Decimal' },
+        { lon: 'search plates near longitude', type: 'Decimal' },
+      ],
+      categoryRelated: [
+        {
+          sortCategory: 'Sort plates based on various category.',
+          type: 'Number: 0,1,2,3',
+          options: {
+            '0': 'default',
+            '1': 'popular',
+            '2': 'rating',
+            '3': 'deliveryTime',
+          },
+        },
+        {
+          sort: 'Sort by all available plate fields. For eg. to sort by newest',
+          type: 'String',
+          example: '?sort=createdAt',
+        },
+        {
+          sortType: 'Ascending or Descending. Default is Descending',
+          type: 'String: ASC| DESC.',
+          example: '?sortType=ASC',
+        },
+        { deliveryPrice: 'Search by average delivery Price', type: 'Decimal' },
+        {
+          priceRange: 'Search plates filter price type',
+          type: 'Number: 1,2,3',
+          options: {
+            '1': 'low',
+            '2': 'medium',
+            '3': 'expensive'
+          },
+        },
+        {
+          priceRange: 'Search plates by price range',
+          type: 'Array[Number]',
+          example: '?priceRange=1.5&priceRange=2.5'
+        },
+        { deliveryPrice: 'Distance unit. One of miles | km', type: 'String: miles|km'},
+        { dietary: 'search plates by diet category', type: 'String' },
+      ]
+    }
+
+  });
+});
+
 
 exports.getChefPlates = [
   async (req, res, next) => {
