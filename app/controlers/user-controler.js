@@ -336,7 +336,7 @@ exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
         const order_items = await OrderItem.findAll({
 
         where:{
-          [Op.and]: [{chef_id:'2002'}, {createdAt:{[Op.between]: [req.params.from, req.params.to]} }]
+          [Op.and]: [{chef_id:req.userId}, {createdAt:{[Op.between]: [req.params.from, req.params.to]} }]
           
         }
 
