@@ -16,6 +16,8 @@ router.get('/complete', authService.authorize,controller.listCompleteDeliveries)
 router.get('/pending', authService.authorize,controller.listPendingDeliveries);
 router.get('/:orderDeliveryId',authService.authorize, controller.getById);
 
+router.get('/price/calculate', controller.getDeliveryPrice);
+
 
 //router.put('/edit/:id',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOwnerMiddleware, controller.edit);
 router.put('/accept/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.accept);

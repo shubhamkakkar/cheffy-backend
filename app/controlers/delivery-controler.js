@@ -12,7 +12,9 @@ const userConstants = require(path.resolve('app/constants/users'));
 const asyncHandler = require('express-async-handler');
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const paginator = require(path.resolve('app/services/paginator'));
-
+const appConfig = require(path.resolve('config/app'));
+const shippingAddressConstants = require(path.resolve('app/constants/shipping-address'));
+const utils = require(path.resolve('app/utils'));
 
 exports.orderDeliveryByIdMiddleware = asyncHandler(async(req, res, next, orderDeliveryId) => {
   const orderDelivery = await deliveryRepository.getById(orderDeliveryId);
@@ -216,4 +218,48 @@ exports.accept = [
 exports.getById = asyncHandler(async (req, res, next) => {
   const orderDelivery = req.orderDelivery;
   res.status(HttpStatus.OK).send(orderDelivery.get({plain: true}));
+});
+
+/**
+* Method: GET
+* Default Price calculation in miles
+*/
+exports.getDeliveryPrice = asyncHandler( async(req, res, next) => {
+
+  //distance is required
+  if(!req.query.distance) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Distance is required. Required query param: distance'})
+  }
+
+  // check if distanceUnit is valid
+  if(req.query.distanceUnit) {
+    if ([
+      shippingAddressConstants.DISTANCE_KM,
+      shippingAddressConstants.DISTANCE_MILES
+    ].indexOf(req.query.distanceUnit) === -1) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        message: `Distance Unit should be one of:  ${shippingAddressConstants.DISTANCE_KM},
+        ${shippingAddressConstants.DISTANCE_MILES}`,
+      });
+    }
+  }
+
+  let distance = req.query.distance;
+  let distanceUnit = req.query.distanceUnit || shippingAddressConstants.DISTANCE_MILES;
+  // default price calculation in miles
+  let price = Number(distance) * appConfig.delivery.unitPrice;
+
+  if(distanceUnit === shippingAddressConstants.DISTANCE_KM) {
+    price = Number(distance) * shippingAddressConstants. MILES_KM_RATIO * appConfig.delivery.unitPrice;
+  }
+
+  price = utils.round2DecimalPlaces(price);
+
+  return res.status(HttpStatus.OK).send({
+    message: `Delivery Price Calculation based on ${distance} ${distanceUnit}`,
+    info: 'The delivery price is based on route distance',
+    availableDistanceUnits: `${shippingAddressConstants.DISTANCE_MILES}, ${shippingAddressConstants.DISTANCE_KM}`,
+    price: price
+  });
+
 });

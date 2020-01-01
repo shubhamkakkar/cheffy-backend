@@ -42,6 +42,7 @@ module.exports = (sequelize, DataTypes) => {
     Plate.belongsTo(models.User, {foreignKey: 'userId', as: 'chef', onDelete: 'cascade'})
     Plate.belongsTo(models.PlateCategory, {foreignKey: 'categoryId', as: 'category', onDelete: 'cascade'})
     Plate.hasMany(models.Ingredient)
+    Plate.hasOne(models.AggregateReview)
     Plate.hasMany(models.PlateImage)
     Plate.hasMany(models.KitchenImage)
     Plate.hasMany(models.ReceiptImage)

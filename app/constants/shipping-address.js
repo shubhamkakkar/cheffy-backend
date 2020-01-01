@@ -11,3 +11,4 @@ exports.radiusDistanceUnitHaversineMap = {
 
 exports.DISTANCE_MILES = 'miles';
 exports.DISTANCE_KM = 'km';
+exports.MILES_KM_RATIO = 1.609344;

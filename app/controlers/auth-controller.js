@@ -185,6 +185,11 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
     });
     return 0;
   }
+
+  if(customer.verification_email_status !== userConstants.STATUS_VERIFIED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Email Not verified. Complete registration first'});
+  }
+
   debug('customer', customer);
   let result = await bcrypt.compare(password, customer.password);
 
