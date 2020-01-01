@@ -99,11 +99,11 @@ exports.getPlate = async ({req, plateId}) => {
       },
       {
         model: Review,
-        attributes: [ 'comment','rating' ],
+        attributes: [ 'id','comment','rating', 'createdAt' ],
         as:'reviews',
         include: [{
           model: User,
-          attributes: ['id', 'name'],
+          attributes: ['id', 'name','email','imagePath'],
           as:'user'
         }]
       },
@@ -464,15 +464,15 @@ exports.searchPlates = async({req, query, pagination}) => {
          attributes: [ 'id', 'name', 'url' ]
        },
        {
-         model: Review,
-         attributes: [ 'comment','rating' ],
-         as:'reviews',
-         include: [{
-           model: User,
-           attributes: ['id', 'name'],
-           as:'user'
-         }]
-       },
+        model: Review,
+        attributes: [ 'id','comment','rating', 'createdAt' ],
+        as:'reviews',
+        include: [{
+          model: User,
+          attributes: ['id', 'name','email','imagePath'],
+          as:'user'
+        }]
+      },
        //todo include aggregate reviews for search not review list
      ],
      ...pagination,
