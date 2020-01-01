@@ -26,6 +26,8 @@ const appConstants = require(path.resolve('app/constants/app'));
 const userInputFilter = require(path.resolve('app/inputfilters/user'));
 const events = require(path.resolve('app/services/events'));
 const _ = require('lodash');
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
 const { generateHash } = require('../../helpers/password');
 
@@ -331,9 +333,12 @@ exports.getUserBalance = asyncHandler(async (req, res, next) => {
 
 exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
 
-      const order_items = await OrderItem.findAll({
+        const order_items = await OrderItem.findAll({
 
-        where:{chef_id:req.userId}
+        where:{
+          [Op.and]: [{chef_id:'2002'}, {createdAt:{[Op.between]: [req.params.from, req.params.to]} }]
+          
+        }
 
       });
 
@@ -351,7 +356,7 @@ exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
 
         order_items.map((elem) =>{
           let hist = {};
-          hist.date = elem.updatedAt.toLocaleDateString();
+          hist.date = elem.updatedAt;
           hist.balance = prev_bal + parseFloat(elem.amount * elem.quantity);
           prev_bal = hist.balance;
           balance_history.push(hist);

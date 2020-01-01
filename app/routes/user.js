@@ -49,7 +49,7 @@ router.post('/forgot-password', controller.forgotPassword);
 router.post('/verify-email-token-forgot-password', controller.veryifyTokenforgotPassword);
 router.post('/reset-password', controller.resetPassword);
 
-router.get('/balance/history', authService.authorize, controller.getAuthUserMiddleware, controller.getUserBalanceHistory);
+router.get('/balance/history/:from/:to', authService.authorize, controller.getAuthUserMiddleware, controller.getUserBalanceHistory);
 
 //Facebook
 router.use('/facebook',facebookRouter);
