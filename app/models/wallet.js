@@ -19,10 +19,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM(walletConstants.WALLET_TYPE_OPEN, walletConstants.WALLET_TYPE_LOCKED),
       defaultValue: walletConstants.WALLET_TYPE_OPEN
     },
+     balance: {
+      type: DataTypes.DOUBLE
+    }
   }, {});
   Wallet.associate = function(models) {
     Wallet.belongsTo(models.User, {foreignKey: 'userId', as: 'user'})
-    Wallet.hasMany(models.OrderItem)
   };
   return Wallet;
 };

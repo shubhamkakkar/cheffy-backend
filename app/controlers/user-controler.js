@@ -282,45 +282,98 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 });
 
-exports.getUserBalance = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findByPk(token_return.id, {
-    attributes: [ 'id', 'name', 'email', 'location', 'user_type', 'verification_email_status', 'verification_phone_status' ],
-    include: [
+exports.getUserBalance = asyncHandler(async (req, res, next) => {
+
+    let wallet = await Wallet.findOne({
+      where:{userId: req.userId},
+      include:[
+
       {
-        model: Wallet,
-        attributes: [ 'id', 'state_type' ],
-        include: [
-          {
-            model: OrderItem,
-            attributes: [ 'id', 'plate_id', 'name', 'amount', 'quantity', 'chef_payment' ],
-            where: { chef_payment: false }
-          }
-        ]
+        model:User,
+        as:'user',
+        attributes: [ 'id', 'name', 'email', 'user_type']
       }
-    ]
-  });
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Failed to access user info!', error: true });
-    return 0;
-  }
 
-  let datar = JSON.stringify(existUser);
-  datar = JSON.parse(datar);
-  let total = 0;
+      ]
+    })
 
-  if(datar.Wallet !== null || datar.Wallet.OrderItems !== null && datar.Wallet.OrderItems.lenght > 0){
 
-    total = total.reduce( function( prevVal, elem ) {
-      return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
-    }, 0 );
+    let data = {};
 
-  }
-  datar.Wallet.total = total;
-  res.status(HttpStatus.ACCEPTED).send(datar);
-}
+    if(!wallet){
+      const order_items = await OrderItem.findAll({
 
-exports.getUserBalanceHistory = async (req, res, next) => {
+        where:{chef_id:req.userId}
+      });
+
+      let total = 0;
+
+      if(order_items !== null && order_items.length > 0){
+
+        total = order_items.reduce( function( prevVal, elem ) {
+          return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+        }, 0 );
+
+      }
+
+      data.userId = req.userId;
+      data.state_type = 'open';
+      data.balance = total;
+      wallet = await Wallet.create(data);
+
+    }
+
+
+    res.status(HttpStatus.ACCEPTED).send(wallet);
+
+
+})
+
+exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
+
+      const order_items = await OrderItem.findAll({
+
+        where:{chef_id:req.userId}
+
+      });
+
+      const user = req.user;
+      const userResponse = userResponseHelper({user});
+
+
+      let total = 0;
+
+      let balance_history = [];
+
+      let prev_bal = 0;
+
+      if(order_items !== null && order_items.length > 0){
+
+        order_items.map((elem) =>{
+          let hist = {};
+          hist.date = elem.updatedAt.toLocaleDateString();
+          hist.balance = prev_bal + parseFloat(elem.amount * elem.quantity);
+          prev_bal = hist.balance;
+          balance_history.push(hist);
+
+        })
+
+
+
+        total = order_items.reduce( function( prevVal, elem ) {
+
+          return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+        }, 0 );
+
+      }
+
+
+    res.status(HttpStatus.ACCEPTED).send({user: userResponse, balance_history:balance_history, total:total});
+
+
+})
+
+/*exports.getUserBalanceHistory = async (req, res, next) => {
   // const token_return = await authService.decodeToken(req.headers['x-access-token'])
   // const existUser = await User.findByPk(token_return.id, {
   //   attributes: [ 'id', 'name', 'email', 'location', 'user_type', 'verification_email_status', 'verification_phone_status' ],
@@ -398,7 +451,7 @@ exports.getUserBalanceHistory = async (req, res, next) => {
     }
   }`;
   res.status(HttpStatus.ACCEPTED).send(JSON.parse(historyMock));
-}
+}*/
 
 exports.getUser = asyncHandler(async (req, res, next) => {
   const user = req.user;
@@ -761,63 +814,6 @@ exports.updateLocation = asyncHandler(async(req, res, next) => {
 
 });
 
-exports.getUserBalance = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  try {
-
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    try {
-      // waiting for the Wallet model to be implemented
-      let userWallet = walletRepository.getUserWallet(existUser.id);
-      let payload = {};
-      payload.status = HttpStatus.OK;
-      payload.result = userWallet;
-      res.status(payload.status).send(payload);
-    } catch (error) {
-      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
-    }
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-
-
-exports.getUserBalanceHistory = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  try {
-
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    try {
-      // waiting for the Wallet model to be implemented
-      let userWallet = walletRepository.getUserWallet(existUser.id);
-      let payload = {};
-      payload.status = HttpStatus.OK;
-      payload.result = userWallet;
-      res.status(payload.status).send(payload);
-    } catch (error) {
-      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
-    }
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
 
 exports.search = async (req, res, next) => {
   // const token_return = await authService.decodeToken(req.headers['x-access-token'])
