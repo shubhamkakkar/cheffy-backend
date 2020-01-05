@@ -67,6 +67,45 @@ exports.getPlateById = async (id) => {
   return await Plates.findByPk(id);
 };
 
+exports.findPlate = async (data) => {
+  try {
+    const existPlate = await Plates.findByPk(data, {
+      attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'sell_count' ],
+      include: [
+        {
+          model: PlateCategory,
+          as: 'category',
+          attributes: [ 'name', 'description', 'url' ]
+        },
+        {
+          model: Ingredient,
+          attributes: [ 'id', 'name', 'purchase_date' ]
+        },
+        {
+          model: PlateImage,
+          attributes: [ 'id', 'name', 'url' ]
+        },
+        {
+          model: KitchenImage,
+          attributes: [ 'id', 'name', 'url' ]
+        },
+        {
+          model: ReceiptImage,
+          attributes: [ 'id', 'name', 'url' ]
+        },
+        {
+          model: User,
+          as: 'chef'
+        }
+      ]
+    });
+    return existPlate;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail to get Plate!", error: e };
+  }
+}
+
 exports.getPlate = async ({req, plateId}) => {
   debug('getPlate');
   let plateSelectAttributes = plateConstants.selectFields;
