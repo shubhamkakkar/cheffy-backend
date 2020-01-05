@@ -163,9 +163,7 @@ exports.myCustomPlates = async ({userId, pagination}) => {
 
   const customPlates = await CustomPlate.findAll({
      where: {
-       close_date: {
-         [Op.gte]: new Date()
-       }
+       [Op.and]: [{userId:userId},{close_date: {[Op.gte]: new Date()}}]
      },
      include : [
        {
