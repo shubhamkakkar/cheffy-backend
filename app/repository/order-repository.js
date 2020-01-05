@@ -184,8 +184,13 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
         attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
+        model: ShippingAddress,
+        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode"],
+        as:'shipping'
+      },
+      {
         model: OrderItem,
-        attributes: ["plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity"],
+        attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
         include:[{
           model: Plates,
           as:'plate',
@@ -209,7 +214,7 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
     {
     model: OrderDelivery,
     required: true,
-    attributes: ["id"]
+    attributes: ["id","state_type"]
   }]
   });
   return order;

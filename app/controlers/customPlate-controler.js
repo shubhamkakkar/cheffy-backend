@@ -734,7 +734,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
     await basketRepository.removeBasketItems(user_basket.id);
 
     //if not pickup by user create order deliveries
-    if(deliveryType !== orderItemConstants.DELIVERY_TYPE_USER) {
+    if(deliveryType == orderItemConstants.DELIVERY_TYPE_CHEF) {
       //create delivery for items which offers delivery
       const oderDeliveryPayload = basketItems.filter((basketItem) => {
         const basketType = basketItem.basket_type;
@@ -746,7 +746,8 @@ exports.pay = asyncHandler(async (req, res, next) => {
           orderItemId: createdOrderItems[index].id,
           order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM,
           userId: req.userId,
-          state_type: orderDeliveryConstants.STATE_TYPE_PENDING
+          state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+          delivery_type: deliveryType,
         };
 
         //set driverId from chef field of plate or custom_plate_order
