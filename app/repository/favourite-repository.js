@@ -38,6 +38,7 @@ exports.findCustomPlateinFav = async (data) => {
 
 exports.getUserFavourites = async (data) => {
   const favourites = await Favourites.findAll({
+    where:{userId:data},
     include: [
     {
       model: Plates,
