@@ -32,6 +32,14 @@ module.exports = (sequelize, DataTypes) => {
         orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM
       )
     },
+    delivery_type: {
+      type: DataTypes.ENUM(
+        orderDeliveryConstants.DELIVERY_TYPE_USER,
+        orderDeliveryConstants.DELIVERY_TYPE_CHEF,
+        orderDeliveryConstants.DRIVER
+
+      )
+    },
     rating: DataTypes.INTEGER,
     driverId: {
       type: DataTypes.INTEGER,
