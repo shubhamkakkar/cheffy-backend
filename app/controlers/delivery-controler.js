@@ -1,7 +1,7 @@
 "use strict";
 const path = require('path');
 const HttpStatus = require("http-status-codes");
-const {sequelize, User, OrderDelivery } = require('../models/index');
+const {sequelize, User, OrderDelivery, Order } = require('../models/index');
 const ValidationContract = require("../services/validator");
 const orderRepository = require("../repository/order-repository");
 const deliveryRepository = require("../repository/delivery-repository");
@@ -133,11 +133,12 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
     }
 
     const existUser = req.user;
+    const user_order = await Order.findOne({where:{id:req.params.orderId}})
 
     const payload = {
-      orderId: req.order.id,
+      orderId: user_order.id,
       order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER,
-      userId: req.order.userId,
+      userId: user_order.userId,
       driverId: req.userId,
       state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
 

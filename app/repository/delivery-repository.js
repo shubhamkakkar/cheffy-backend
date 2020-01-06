@@ -10,11 +10,9 @@ exports.getById = async (orderDeliveryId) => {
 
 
 //TODO waiting OrderDelivey to be implemented
-exports.createOrderDelivery = async (orderId) => {
+exports.createOrderDelivery = async (data) => {
     try {
-        const order = await OrderDelivery.create({
-          orderId:orderId,
-          state_type:'pending'});
+        const order = await OrderDelivery.create(data);
         return order;
       } catch (e) {
         console.log(e)
