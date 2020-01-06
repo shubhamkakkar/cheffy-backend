@@ -182,6 +182,24 @@ exports.getPendingDeliveriesByUser = async (data) => {
 
 }
 
+exports.getPendingDeliveriesByDriver = async (data) => {
+  let order = await OrderItem.findAll({
+    where: {deliveryType: data.deliveryType},
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderDelivery,
+        required: false,
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
+      }]
+    
+  });
+  return order;
+
+}
+
+
+
 
   //TODO waiting OrderDelivey to be implemented
   exports.getByIdDetails = async (data) => {
