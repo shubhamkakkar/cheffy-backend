@@ -216,16 +216,29 @@ exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 });
 
 
-exports.listTracking = async (req, res, next) => {
-  const token_return =  await authService.decodeToken(req.headers['x-access-token'])
-  if (!token_return) {
+exports.listTrackingUser = async (req, res, next) => {
+
+  try {
+    const user_orders = await repository.listTrackingUser(req.userId)
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Here are your orders!',
+      data: user_orders
+    });
+    return 0;
+  } catch (e) {
+    console.log(e)
     res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to check your orders",
+      message: 'Fail to get your orders!',
       error: true
     });
+    return 0;
   }
+}
+
+exports.listTrackingDriver = async (req, res, next) => {
+  
   try {
-    const user_orders = await repository.getUserOrdersBeingDelivered(token_return.id)
+    const user_orders = await repository.listTrackingDriver(req.userId)
     res.status(HttpStatus.ACCEPTED).send({
       message: 'Here are your orders!',
       data: user_orders

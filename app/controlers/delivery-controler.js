@@ -141,6 +141,7 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
       userId: user_order.userId,
       driverId: req.userId,
       state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+      delieryType: orderDeliveryConstants.USER_TYPE_DRIVER
 
     };
 
