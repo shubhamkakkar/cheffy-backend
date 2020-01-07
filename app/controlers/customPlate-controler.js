@@ -734,7 +734,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
     await basketRepository.removeBasketItems(user_basket.id);
 
     //if not pickup by user create order deliveries
-    if(deliveryType == orderItemConstants.DELIVERY_TYPE_CHEF) {
+    if(deliveryType != orderItemConstants.DELIVERY_TYPE_DRIVER) {
       //create delivery for items which offers delivery
       const oderDeliveryPayload = basketItems.filter((basketItem) => {
         const basketType = basketItem.basket_type;
