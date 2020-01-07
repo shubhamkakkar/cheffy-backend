@@ -181,10 +181,24 @@ exports.getPendingDeliveriesByUser = async (data) => {
 }
 
 exports.getPendingDeliveriesByDriver = async (data) => {
+ 
   let order = await OrderItem.findAll({
     where: {deliveryType: data.deliveryType},
     order: [["id", "DESC"]],
     include: [
+      {
+        model: Plates,
+        as:'plate',
+        include: [{
+          model: User,
+          as:'chef',
+          include:[{model:ShippingAddress, as: 'address'}]
+        },
+
+        {
+          model: PlateImage
+        }]
+      },
       {
         model: OrderDelivery,
         required: false,
