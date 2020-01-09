@@ -1,5 +1,9 @@
 'use strict';
+const path = require('path');
 const { OrderDelivery, User, Wallet } = require("../models/index");
+const userConstants = require(path.resolve('app/constants/users'));
+const commission = require(path.resolve('config/driverCommision'));
+
 
 exports.getWallet = async (userId) => {
   const wallet = await Wallet.findOrCreate({
@@ -13,37 +17,45 @@ exports.getWallet = async (userId) => {
   return wallet;
 }
 
-exports.getUserWallet = async (userId) => {
-  /*let wallet = {
-    userId: userId,
-    balance: 400.0,
-    time: "2019-08-06 02:06:53"
-  }*/
 
-  //TODO to be implemented
-  return wallet;
-}
+exports.addMoneyToWallet = async (userId, order_total) => {
 
-exports.getUserWalletHistory = async (userId) => {
-  let wallet = {
-    userId: userId,
-    balance: 400.0,
-    time: "2019-08-06 02:06:53",
-    history: [
-      {
-        date: "2019-08-06 02:06:53",
-        balance:200.0
-      },
-      {
-        date: "2019-08-07 02:06:53",
-        balance:400.0
-      },
-      {
-        date: "2019-08-08 02:06:53",
-        balance:300.0
+
+    /* Considering the commission of 2% so calculating 2 percent of delivery
+    amount and updating that amount balance in driver wallet */
+
+    let commissionValue = (commission.commissionValue/100)* order_total
+    try {
+      let driverWalletBalance = await Wallet.findOne({
+        where: {
+          userId: userId
+        },
+        attribute: ['balance']
+      })
+      if(driverWalletBalance) {
+        let previousBalance = driverWalletBalance.balance
+        let newBalance = previousBalance + commissionValue
+
+
+        let balanceDetails = {
+          balance: newBalance
+        }
+        return await Wallet.update(balanceDetails, {
+          where: {
+            userId: userId    
+          }
+        })
+      }else{
+        let total = commissionValue;
+        let data = {};
+        data.userId = userId;
+        data.state_type = 'open';
+        data.balance = total;
+        await Wallet.create(data);
       }
-    ]
+    }catch (e) {
+      console.log(e)
+      return (e)
+
+    }
   }
-  //TODO to be implemented
-  return wallet;
-}

@@ -15,6 +15,7 @@ const paginator = require(path.resolve('app/services/paginator'));
 const appConfig = require(path.resolve('config/app'));
 const shippingAddressConstants = require(path.resolve('app/constants/shipping-address'));
 const utils = require(path.resolve('app/utils'));
+const walletRepository = require(path.resolve('app/repository/wallet-repository'))
 
 exports.orderDeliveryByIdMiddleware = asyncHandler(async(req, res, next, orderDeliveryId) => {
   const orderDelivery = await deliveryRepository.getById(orderDeliveryId);
@@ -195,6 +196,18 @@ exports.checkCanceled = (req, res, next) => {
 
 };
 
+exports.addMoneyToWallet = async(req, res, next) => {
+  const driverId = req.user.id;
+  const order = await Order.findOne({where:{id:req.orderDelivery.orderId}, attributes:['order_total']});
+
+  const orderAmount = order.order_total;
+
+
+  await walletRepository.addMoneyToWallet(driverId, orderAmount)
+  next();
+
+};
+
 exports.completeDelivery = [
   exports.checkCanceled,
   (req, res, next) => {
@@ -202,6 +215,7 @@ exports.completeDelivery = [
     req.body.dropoff_time = sequelize.literal('CURRENT_TIMESTAMP');
     next();
   },
+  exports.addMoneyToWallet,
   exports.editStateType('Delivery Completed!')
 ];
 
