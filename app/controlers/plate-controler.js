@@ -2,7 +2,7 @@
 const path = require('path');
 const HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { Plates, User, PlateImage, ReceiptImage, KitchenImage } = require('../models/index');
+const { Plates, User, PlateImage, ReceiptImage, KitchenImage, OrderFrequency } = require('../models/index');
 const repository = require('../repository/plate-repository');
 const repoCustom = require('../repository/customPlate-repository');
 const repositoryDocs = require('../repository/docs-repository');
@@ -409,4 +409,31 @@ exports.deleteImage = async (req, res, next) => {
   }
 
   res.status(200).send({ message: message, data: actualImage });
+};
+
+
+exports.popularPlates = async (req, res, next) => {try{
+
+  let list = await repository.popularPlates();
+
+  let popular_plates = [];
+
+  for(let i=0;i<list.length;i++){
+
+    popular_plates.push(list[i].plate_1);
+
+    popular_plates.push(list[i].plate_2);
+
+  }
+
+
+  const unique = popular_plates
+       .map(e => e['id'])
+
+    .map((e, i, final) => final.indexOf(e) === i && i)
+
+    .filter(e => popular_plates[e]).map(e => popular_plates[e]);
+
+  res.status(200).send({ message: "Popular Plates!", data: unique });
+}catch(e){console.log(e)}
 };

@@ -40,6 +40,8 @@ router.get('/:id/receipt', controller.listReceipt);
 
 router.get('/category/:categoryId', controller.categoryPlates);
 router.get('/chef/:chefId', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.getChefPlates);
+router.get('/popular', controller.popularPlates);
+
 
 router.param('categoryId', categoryController.categoryByIdMiddleware);
 router.param('chefId', userController.getUserByUserIdParamMiddleware);
