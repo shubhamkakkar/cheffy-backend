@@ -58,8 +58,9 @@ router.use('/facebook',facebookRouter);
 router.use('/card',creditCardRouter);
 
 //balance
-router.get('/balance', authService.authorize, controller.getAuthUserMiddleware, controller.getUserBalance);
+router.get('/chef/balance', authService.authorize, controller.getAuthUserMiddleware, controller.getChefBalance);
 // router.get('/balance/history/?:from:to', authService.authorize, controller.getUserBalanceHistory);
+router.get('/driver/balance', authService.authorize, controller.getAuthUserMiddleware, controller.getDriverBalance);
 
 // Message module
 

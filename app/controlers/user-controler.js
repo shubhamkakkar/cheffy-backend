@@ -284,7 +284,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 });
 
-exports.getUserBalance = asyncHandler(async (req, res, next) => {
+exports.getChefBalance = asyncHandler(async (req, res, next) => {
 
     let wallet = await Wallet.findOne({
       where:{userId: req.userId},
@@ -324,6 +324,27 @@ exports.getUserBalance = asyncHandler(async (req, res, next) => {
       wallet = await Wallet.create(data);
 
     }
+
+
+    res.status(HttpStatus.ACCEPTED).send(wallet);
+
+
+})
+
+exports.getDriverBalance = asyncHandler(async (req, res, next) => {
+
+    let wallet = await Wallet.findOne({
+      where:{userId: req.userId},
+      include:[
+
+      {
+        model:User,
+        as:'user',
+        attributes: [ 'id', 'name', 'email', 'user_type']
+      }
+
+      ]
+    })
 
 
     res.status(HttpStatus.ACCEPTED).send(wallet);
