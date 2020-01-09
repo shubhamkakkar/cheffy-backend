@@ -1,0 +1,1 @@
+exports.commissionValue = 2;
