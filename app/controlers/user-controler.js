@@ -26,6 +26,8 @@ const appConstants = require(path.resolve('app/constants/app'));
 const userInputFilter = require(path.resolve('app/inputfilters/user'));
 const events = require(path.resolve('app/services/events'));
 const _ = require('lodash');
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
 const { generateHash } = require('../../helpers/password');
 
@@ -46,6 +48,15 @@ async function sendMail({req, pass}) {
 
   return await mailer.sendMail(args);
 }
+
+function userResponseHelper({user}) {
+  let userResponse = user.get({plain: true});
+  delete userResponse.password;
+  delete userResponse.auth_token;
+  return userResponse;
+}
+
+exports.userResponseHelper = userResponseHelper;
 
 /**
 * Middleware
@@ -95,12 +106,12 @@ exports.getAuthUserIfPresentMiddleware = asyncHandler(async(req, res, next) => {
 * Get params user by userId from route. for e.g /order/list/:userId
 * Sets paramUser in express req object
 */
-exports.getUserByUserIdParamMiddleware = asyncHandler(async(req, res, next) => {
-  if(!req.params.userId) {
+exports.getUserByUserIdParamMiddleware = asyncHandler(async(req, res, next, userId) => {
+  if(!userId) {
     return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Not userId params set in request', status: HttpStatus.BAD_REQUEST });
   }
 
-  const user = await User.findByPk(req.params.userId , {
+  const user = await User.findByPk(userId , {
     attributes: userConstants.privateSelectFields
   });
 
@@ -204,28 +215,26 @@ exports.create = asyncHandler(async (req, res, next) => {
     existUser.verification_email_token = pass;
     await existUser.save();
 
-    /*let args = {
-      to: req.body.email,
-      from: "Cheffy contact@cheffy.com",
-      replyTo: "contact@cheffy.com",
-      subject: `Welcome to Cheffy!`,
-      template: "forget/forgot",
-      context: { token: pass, user: ' One more step...' }
-    };*/
-    console.log('user saved');
-    await sendMail({req, pass});
-
-    //mailer.sendMail(args);
-
     const { id, email, verification_email_status, password } = existUser;
 
     res.status(HttpStatus.OK).send({
-      message: "Resend token for you email!",
+      message: "Email Token Re-sent!",
       status: HttpStatus.OK,
       result: { id, email, verification_email_status, password_generated: !!(password), user_doc: !!(doc) }
     });
 
-    return 0;
+    await sendMail({req, pass});
+
+    //publish create action
+    return events.publish({
+        action: 'email-token-resend',
+        user: existUser.get({}),
+        query: req.query,
+        //registration can be by any user so scope is all
+        scope: appConstants.SCOPE_ALL,
+        type: 'user'
+    }, req);
+
   }
 
   if (existUser && existUser.id) {
@@ -248,32 +257,20 @@ exports.create = asyncHandler(async (req, res, next) => {
   user.verification_email_token = pass;
   await user.save();
 
-  /*let args = {
-    to: req.body.email,
-    from: "Cheffy contact@cheffy.com",
-    replyTo: "contact@cheffy.com",
-    subject: `Welcome to Cheffy!`,
-    template: "welcome/welcome",
-    context: { token: pass, user: ' One more step...' }
-  };*/
-
-  await sendMail({req, pass});
-
-  //mailer.sendMail(args);
-  const token = await authService.generateToken({
-    id: user.id,
-    email: user.email
-  });
-
   const newuser = await User.findOne({
     where: { id: user.id },
-    attributes: ['id', 'name', 'email', 'country_code', 'phone_no', 'user_type', 'verification_email_status', 'verification_phone_status', 'createdAt'],
+    attributes: userConstants.privateSelectFields
   });
-  payload.token = token;
+
+  // payload.token = token;
   payload.result = newuser;
 
   payload.status = HttpStatus.CREATED;
   res.status(payload.status).send(payload);
+
+  //send email after sending response
+
+  await sendMail({req, pass});
 
   //publish create action
   events.publish({
@@ -287,45 +284,122 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 });
 
-exports.getUserBalance = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findByPk(token_return.id, {
-    attributes: [ 'id', 'name', 'email', 'location', 'user_type', 'verification_email_status', 'verification_phone_status' ],
-    include: [
+exports.getChefBalance = asyncHandler(async (req, res, next) => {
+
+    let wallet = await Wallet.findOne({
+      where:{userId: req.userId},
+      include:[
+
       {
-        model: Wallet,
-        attributes: [ 'id', 'state_type' ],
-        include: [
-          {
-            model: OrderItem,
-            attributes: [ 'id', 'plate_id', 'name', 'amount', 'quantity', 'chef_payment' ],
-            where: { chef_payment: false }
-          }
-        ]
+        model:User,
+        as:'user',
+        attributes: [ 'id', 'name', 'email', 'user_type']
       }
-    ]
-  });
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Failed to access user info!', error: true });
-    return 0;
-  }
 
-  let datar = JSON.stringify(existUser);
-  datar = JSON.parse(datar);
-  let total = 0;
+      ]
+    })
 
-  if(datar.Wallet !== null || datar.Wallet.OrderItems !== null && datar.Wallet.OrderItems.lenght > 0){
 
-    total = total.reduce( function( prevVal, elem ) {
-      return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
-    }, 0 );
+    let data = {};
 
-  }
-  datar.Wallet.total = total;
-  res.status(HttpStatus.ACCEPTED).send(datar);
-}
+    if(!wallet){
+      const order_items = await OrderItem.findAll({
 
-exports.getUserBalanceHistory = async (req, res, next) => {
+        where:{chef_id:req.userId}
+      });
+
+      let total = 0;
+
+      if(order_items !== null && order_items.length > 0){
+
+        total = order_items.reduce( function( prevVal, elem ) {
+          return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+        }, 0 );
+
+      }
+
+      data.userId = req.userId;
+      data.state_type = 'open';
+      data.balance = total;
+      wallet = await Wallet.create(data);
+
+    }
+
+
+    res.status(HttpStatus.ACCEPTED).send(wallet);
+
+
+})
+
+exports.getDriverBalance = asyncHandler(async (req, res, next) => {
+
+    let wallet = await Wallet.findOne({
+      where:{userId: req.userId},
+      include:[
+
+      {
+        model:User,
+        as:'user',
+        attributes: [ 'id', 'name', 'email', 'user_type']
+      }
+
+      ]
+    })
+
+
+    res.status(HttpStatus.ACCEPTED).send(wallet);
+
+
+})
+
+exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
+
+        const order_items = await OrderItem.findAll({
+
+        where:{
+          [Op.and]: [{chef_id:req.userId}, {createdAt:{[Op.between]: [req.params.from, req.params.to]} }]
+          
+        }
+
+      });
+
+      const user = req.user;
+      const userResponse = userResponseHelper({user});
+
+
+      let total = 0;
+
+      let balance_history = [];
+
+      let prev_bal = 0;
+
+      if(order_items !== null && order_items.length > 0){
+
+        order_items.map((elem) =>{
+          let hist = {};
+          hist.date = elem.updatedAt;
+          hist.balance = prev_bal + parseFloat(elem.amount * elem.quantity);
+          prev_bal = hist.balance;
+          balance_history.push(hist);
+
+        })
+
+
+
+        total = order_items.reduce( function( prevVal, elem ) {
+
+          return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+        }, 0 );
+
+      }
+
+
+    res.status(HttpStatus.ACCEPTED).send({user: userResponse, balance_history:balance_history, total:total});
+
+
+})
+
+/*exports.getUserBalanceHistory = async (req, res, next) => {
   // const token_return = await authService.decodeToken(req.headers['x-access-token'])
   // const existUser = await User.findByPk(token_return.id, {
   //   attributes: [ 'id', 'name', 'email', 'location', 'user_type', 'verification_email_status', 'verification_phone_status' ],
@@ -403,27 +477,210 @@ exports.getUserBalanceHistory = async (req, res, next) => {
     }
   }`;
   res.status(HttpStatus.ACCEPTED).send(JSON.parse(historyMock));
-}
+}*/
 
-exports.getUser = async (req, res, next) => {
-  try {
-    const token_return = await authService.decodeToken(req.headers['x-access-token'])
-    const existUser = await User.findByPk(token_return.id, {
-      attributes: [ 'id', 'name', 'email', 'country_code', 'phone_no', 'auth_token', 'restaurant_name', 'location_lat', 'location_lon', 'user_type', 'imagePath', 'verification_code', 'verification_email_token', 'verification_email_status', 'verification_phone_token', 'verification_phone_status', 'status', 'user_ip', 'createdAt', 'updatedAt'],
-      include: [
-        {
-            model:ShippingAddress,
-            as:'address'
-        }
-      ]
-    });
-    res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: existUser});
-  } catch (err) {
-    res.status(HttpStatus.BAD_REQUEST).send({ message: 'FAILED', data: err});
+exports.getUser = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  const shippingAddresses = await user.getAddress();
+  const userResponse = userResponseHelper({user});
+  userResponse.address = shippingAddresses;
+  res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
+
+});
+
+
+/**
+* Complete user registration
+*/
+exports.completeRegistration = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+  contract.isRequired(req.body.name, 'User password is required!');
+  contract.isRequired(req.body.password, 'User password is required!');
+  contract.isRequired(req.body.user_type, 'User type is required!');
+
+  if (req.body.user_type === userConstants.USER_TYPE_CHEF) {
+    contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
   }
-}
 
-exports.verifyPhone = asyncHandler(async (req, res, next) => {
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+
+  if (!existUser) {
+    return res.status(HttpStatus.BAD_REQUEST).send({
+      message: `E-Mail not found, email: ${req.body.email}`,
+      status: HttpStatus.BAD_REQUEST,
+    });
+  }
+  debug('existing user', existUser.get({plain: true}));
+
+  debug('email status: ', existUser.verification_email_status);
+  if (existUser.verification_email_status !== userConstants.STATUS_VERIFIED) {
+    return res.status(HttpStatus.UNAUTHORIZED).send({
+      message: 'Token code not verified!',
+      status: HttpStatus.UNAUTHORIZED,
+    });
+  }
+
+  existUser.name = req.body.name;
+  existUser.user_type = req.body.user_type;
+  existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
+  existUser.promotionalContent = req.body.promotionalContent;
+
+  if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
+    await driverAPI.createDriver({
+      name: existUser.name,
+      email: existUser.email
+    });
+  }
+
+  if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
+    existUser.restaurant_name = req.body.restaurant_name;
+  }
+
+  // generate token
+  const token = await authService.generateToken({
+    id: existUser.id,
+    email: existUser.email
+  });
+
+  // save token in user auth_token field.
+  // for tracking logout
+  existUser.auth_token = token;
+
+  await existUser.save();
+
+  const userResponse = userResponseHelper({user: existUser});
+
+  res.status(HttpStatus.CREATED).send({
+    message: `Congratulations, successfully created ${req.body.user_type} type user!`,
+    status: HttpStatus.CREATED,
+    result: userResponse,
+    token: token
+  });
+});
+
+/**
+* Verify email Token
+* This controller should be called when email token has been sent
+* and user sends email token with email in request
+*/
+exports.verifyEmailToken = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'Email is correct?')
+  contract.isRequired(req.body.email_token, 'This email token is required!');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if(!existUser) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `User not found by email: ${req.body.email}`});
+  }
+
+  if(existUser.verification_email_status === userConstants.STATUS_VERIFIED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Email Already Verified!', status: HttpStatus.BAD_REQUEST});
+  }
+
+  if (req.body.email_token === existUser.verification_email_token) {
+    existUser.verification_email_status = userConstants.STATUS_VERIFIED;
+    existUser.verification_email_token = '';
+    await existUser.save();
+
+    return res.status(HttpStatus.OK).send({
+      message: "Congratulations, Email successfully verified!",
+      status: HttpStatus.OK
+    });
+
+  }
+
+  res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
+});
+
+/**
+* Resends email token if user doesn't receives token in email
+*/
+exports.resendEmailToken = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+
+  if (!contract.isValid()) {
+    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+    return 0;
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if (!existUser) {
+    res.status(HttpStatus.OK).send({ message: `User not found by email: ${req.body.email}`, status: HttpStatus.OK});
+    return 0;
+  }
+
+  let template = "welcome/welcome";
+
+  if (req.body.template !== undefined || req.body.template !== null || req.body.template !== '') {
+    template = "forget/forgot";
+  }
+
+  let token = (""+Math.random()).substring(2,6);
+  existUser.verification_email_token = token;
+  existUser.verification_email_status = userConstants.STATUS_PENDING;
+  await existUser.save();
+
+  let args = {
+    to: existUser.email,
+    from: "Cheffy contact@cheffy.com",
+    replyTo: "contact@cheffy.com",
+    subject: `Email Token`,
+    template,
+    context: { token, user: existUser.name }
+  };
+  mailer.sendMail(args);
+  res.status(HttpStatus.OK).send({
+    message: "Congratulations, an email with verification code has been sent!",
+    status: HttpStatus.OK
+  });
+  return 0;
+});
+
+/**
+* Change password
+* user needs to send current password as well
+*/
+exports.changePassword = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.password, 'Old password is required. field: password');
+  contract.isRequired(req.body.newPassword, 'New password is required. field: newPassword');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+  }
+
+  const existUser = req.user;
+
+  let result = await bcrypt.compare(req.body.password, existUser.password);
+
+  if (!result) {
+    return res.status(HttpStatus.FORBIDDEN).send({ message: 'Incorrect current Password', data: null });
+  }
+
+  existUser.password = bcrypt.hashSync(req.body.newPassword, bcrypt.genSaltSync(10));
+  await existUser.save();
+
+  res.status(HttpStatus.ACCEPTED).send({ message: 'Password Changed Successfully' });
+});
+
+/**
+* Sets phone_no and country_code in user.
+* Sends sms token to phone for verification process
+*/
+exports.setUserPhone = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isRequired(req.body.country_code, 'Country Code is Required!');
   contract.isRequired(req.body.phone_no, 'Phone Number is Required!');
@@ -433,14 +690,7 @@ exports.verifyPhone = asyncHandler(async (req, res, next) => {
     return 0;
   }
 
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-
-  if (!existUser) {
-    res.status(HttpStatus.OK).send({ message: "E-Mail already in use!", status: HttpStatus.OK });
-    return 0;
-  }
+  const existUser = req.user;
 
   const code = (""+Math.random()).substring(2,6);
   existUser.verification_phone_token = code;
@@ -460,224 +710,27 @@ exports.verifyPhone = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.OK).send(retorno);
 });
 
-
-
-exports.completeRegistration = asyncHandler(async (req, res, next) => {
+/**
+* Verify user phone. User sends sms_token in request
+*/
+exports.verifyUserPhone = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
-  contract.isEmail(req.body.email, 'This email is correct?');
-  contract.isRequired(req.body.name, 'User password is required!');
-  contract.isRequired(req.body.password, 'User password is required!');
-  contract.isRequired(req.body.user_type, 'User type is required!');
-
-  if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
-
-  if (!contract.isValid()) {
-    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-  }
-
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-
-
-  if (!existUser) {
-    return res.status(HttpStatus.BAD_REQUEST).send({ message: `E-Mail not found, email: ${req.body.email}`, status: HttpStatus.BAD_REQUEST });
-  }
-  debug('existing user', existUser.get({plain: true}));
-
-  debug('email status: ', existUser.verification_email_status);
-  if (existUser.verification_email_status !== userConstants.STATUS_VERIFIED) {
-    return res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
-  }
-
-  existUser.name = req.body.name;
-  existUser.user_type = req.body.user_type;
-  existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
-  existUser.promotionalContent = req.body.promotionalContent;
-
-  if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
-    await driverAPI.createDriver({
-      name: existUser.name,
-      email: existUser.email
-    });
-  }
-
-  if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
-    existUser.restaurant_name = req.body.restaurant_name;
-  }
-
-  await existUser.save();
-
-  res.status(HttpStatus.CREATED).send({
-    message: `Congratulations, successfully created ${req.body.user_type} type user!`,
-    status: HttpStatus.CREATED,
-    result: existUser
-  });
-});
-
-exports.verifyEmailToken = async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, 'Email is correct?')
-  contract.isRequired(req.body.email_token, 'This email token is required!');
+  contract.isRequired(req.body.sms_token, 'SMS code is required! field: sms_token');
 
   if (!contract.isValid()) {
     res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
 
-  const existUser = await User.findOne({ where: { email: req.body.email } });
+  const existUser = req.user;
 
-  if (req.body.email_token === existUser.verification_email_token) {
-    //existUser.verification_email_token = 'OK';
-    existUser.verification_email_status = userConstants.STATUS_VERIFIED;
-    await existUser.save();
-
-    return res.status(HttpStatus.OK).send({
-      message: "Congratulations, Email successfully verified!",
-      status: HttpStatus.OK
-    });
-
+  if(existUser.verification_phone_status === userConstants.STATUS_VERIFIED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Phone Already Verified!', status: HttpStatus.BAD_REQUEST});
   }
-
-  res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
-}
-
-exports.resendEmailToken = async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, 'This email is correct?');
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
-
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-  if (!existUser) {
-    res.status(HttpStatus.OK).send({ message: 'User not found!', status: HttpStatus.OK});
-    return 0;
-  }
-
-  let template = "welcome/welcome";
-
-  if (req.body.template !== undefined || req.body.template !== null || req.body.template !== '') {
-    template = "forget/forgot";
-  }
-
-  let token = (""+Math.random()).substring(2,6);
-  existUser.verification_email_token = token;
-  existUser.verification_email_status = 'pending';
-  await existUser.save();
-
-  let args = {
-    to: existUser.email,
-    from: "Cheffy contact@cheffy.com",
-    replyTo: "contact@cheffy.com",
-    subject: `Email Token`,
-    template,
-    context: { token, user: existUser.name }
-  };
-  mailer.sendMail(args);
-  res.status(HttpStatus.OK).send({
-    message: "Congratulations, an email with verification code has been sent!",
-    status: HttpStatus.OK
-  });
-  return 0;
-}
-
-exports.verifyChangePassword = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-
-  const existUser = await User.findOne({
-    where: { id: token_return.id, password: md5(req.body.password + global.SALT_KEY) }
-  });
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-
-  const code = (""+Math.random()).substring(2,6);
-  existUser.verification_code = code;
-  await existUser.save();
-
-  let phone = existUser.country_code + existUser.phone_no;
-
-  if (phone === null && phone === '' && phone === undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-  const retorno = await phoneService.forgetPassMessage(phone, code);
-  res.status(HttpStatus.ACCEPTED).send(retorno);
-}
-
-exports.confirmChangePassword = async (req, res, next) => {
-  if (req.body.sms_token == null || req.body.sms_token == '' || req.body.sms_token == undefined) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'SMS code not found!', status: HttpStatus.CONFLICT});
-  }
-
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
-
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-
-  if (req.body.sms_token == existUser.verification_code) {
-    existUser.verification_code = 'verified';
-    await existUser.save();
-    res.status(HttpStatus.ACCEPTED).send({
-      message: "Congratulations successfully proven authenticity!",
-      status: HttpStatus.ACCEPTED
-    });
-    return 0;
-  }
-  res.status(HttpStatus.CONFLICT).send({ message: "Error validating data!", status: HttpStatus.CONFLICT });
-}
-
-exports.changePassword = async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, 'This email is correct?');
-  contract.isRequired(req.body.email_token, 'This email token is required?');
-  contract.isRequired(req.body.password, 'This password is required');
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
-    return 0;
-  }
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-
-  if (!existUser) {
-    res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
-    return 0;
-  }
-
-  if (existUser.verification_email_token === req.body.email_token) {
-    existUser.verification_code = 'OK';
-    existUser.verification_email_status = 'verified';
-    existUser.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10));
-    await existUser.save();
-    res.status(HttpStatus.ACCEPTED).send({
-      message: "Congratulations, password successfully changed!",
-      status: HttpStatus.ACCEPTED
-    });
-    return 0;
-  }
-  res.status(HttpStatus.CONFLICT).send({ message: "Error validating data!", status: HttpStatus.CONFLICT });
-}
-
-exports.checkPhone = async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isRequired(req.body.sms_token, 'SMS code not found!');
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
-
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  const existUser = await User.findOne({ where: { id: token_return.id } });
 
   if (req.body.sms_token == existUser.verification_phone_token) {
-    existUser.verification_phone_token = 'OK';
-    existUser.verification_phone_status = 'verified';
+    existUser.verification_phone_token = '';
+    existUser.verification_phone_status = userConstants.STATUS_VERIFIED;
     await existUser.save();
     res.status(HttpStatus.OK).send({
       message: "Congratulations, phone successfully verified!",
@@ -686,239 +739,13 @@ exports.checkPhone = async (req, res, next) => {
     return 0;
   }
 
-  res.status(HttpStatus.BAD_REQUEST).send({ message: 'SMS code not found!', status: HttpStatus.BAD_REQUEST});
-}
+  res.status(HttpStatus.BAD_REQUEST).send({ message: 'Failed verifying phone. Please try re-sending sms token again', status: HttpStatus.BAD_REQUEST});
+});
 
 
-exports.socialauth = async (req, res, next) => {
-  try {
-
-    const contract = new ValidationContract();
-
-    contract.isRequired(req.body.provider, 'provider is Required');
-    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
-    contract.isRequired(req.body.email, 'email is Required');
-
-    if (!contract.isValid()) {
-        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
-    }
-    const existUser = await User.findOne({
-     where: { email: req.body.email },
-
-     include: [{
-        model: ShippingAddress,
-        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
-        as:'address'
-      }]
-
-   });
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    existUser.provider = req.body.provider;
-    existUser.provider_user_id = req.body.provider_user_id;
-
-    const token = await authService.generateToken({
-      id: existUser.id,
-      email: existUser.email,
-      name: existUser.name
-    });
-
-    existUser.auth_token = token;
-    existUser.verification_email_status = 'verified';
-
-    await existUser.save();
-
-    res.status(200).send({
-      token: token,
-      data: existUser
-    });
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-
-exports.socialauthRegister = async (req, res, next) => {
-  try {
-
-    const contract = new ValidationContract();
-
-    contract.isRequired(req.body.email, 'email is Required');
-    contract.isRequired(req.body.name, 'name is Required');
-    contract.isRequired(req.body.user_type, 'user_type is Required');
-    contract.isRequired(req.body.provider, 'provider is Required');
-    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
-    contract.isRequired(req.body.imagePath, 'imagePath id is Required');
-
-    if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
-
-
-    if (!contract.isValid()) {
-        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
-    }
-    const existUser = await User.findOne({ where: { email: req.body.email } });
-    if (existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user already exists', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    let user = {};
-
-    user.name = req.body.name;
-    user.email = req.body.email;
-    user.user_type = req.body.user_type;
-    user.provider = req.body.provider;
-    user.provider_user_id = req.body.provider_user_id;
-    user.imagePath = req.body.imagePath;
-
-    if (user.user_type === userConstants.USER_TYPE_DRIVER) {
-      await driverAPI.createDriver({
-        name: user.name,
-        email: user.email
-      });
-    }
-
-    if (user.user_type === userConstants.USER_TYPE_CHEF) {
-      user.restaurant_name = req.body.restaurant_name;
-    }
-
-    let full_data = user;
-    const createdUser = await User.create({ ...full_data });
-
-    const token = await authService.generateToken({
-      id: createdUser.id,
-      email: createdUser.email,
-      name: createdUser.name
-    });
-
-    createdUser.auth_token = token;
-
-    await createdUser.save();
-
-    const existUserNew = await User.findOne({
-     where: { email: req.body.email },
-
-     include: [{
-        model: ShippingAddress,
-        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
-        as:'address'
-      }]
-
-   });
-
-    res.status(200).send({
-      token: token,
-      data: existUserNew
-    });
-
-
-
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-exports.authenticate = async (req, res, next) => {
-  try {
-    const { password } = req.body;
-    debug('body', req.body);
-
-    let customer
-    var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
-    let whereClause = {};
-
-    if (reg.test(req.body.login)) {
-      whereClause = { email: req.body.login };
-    } else {
-      const num_list = req.body.login.split(" ");
-      whereClause = { country_code: num_list[0], phone_no: num_list[1] };
-    }
-
-    customer = await User.findOne({
-      where: whereClause,
-      include: [{
-        model: ShippingAddress,
-        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
-        as:'address'
-      }]
-    });
-
-    if (!customer) {
-      res.status(HttpStatus.FORBIDDEN).send({
-        message: 'User does not exist in our records',
-        data: null
-      });
-      return 0;
-    }
-    debug('customer', customer);
-    let result = await bcrypt.compare(password, customer.password);
-
-    if (!result) {
-      return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
-    }
-
-    const doc = await Documents.findOne({ where: { userId: customer.id } });
-    const token = await authService.generateToken({
-      id: customer.id,
-      email: customer.email,
-      name: customer.name
-    });
-
-    customer.auth_token = token;
-    await customer.save();
-
-    res.status(200).send({
-      token: token,
-      data: { ...customer.dataValues, user_doc: !!(doc) }
-    });
-
-    //publish create action
-    events.publish({
-        action: 'login',
-        user: customer.get({}),
-        query: req.query,
-        //login can be by any user so scope is all
-        scope: appConstants.SCOPE_ALL,
-        type: 'user'
-    }, req);
-
-  } catch (e) {
-    console.log(e)
-    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-      message: 'Request fail',
-      error: e
-    });
-  }
-};
-
-exports.logout = asyncHandler(async(req, res, next) =>{
-
-    const existUser = await User.findOne({ where: { id: req.userId } });
-
-    if (!existUser) {
-      return res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
-    }
-
-    existUser.auth_token = null;
-
-    existUser.save();
-
-    res.status(200).send({
-      message: 'successfully logged out!'
-    });
-
-
-})
-
+/**
+* Edit user info
+*/
 exports.put = asyncHandler(async (req, res, next) => {
     //for accepting form-data as well
     const body = req.body || {};
@@ -935,7 +762,7 @@ exports.put = asyncHandler(async (req, res, next) => {
     const updates = userInputFilter.updateFields.filter(req.body, 'form-data');
 
     if(req.files && req.files['profile_photo']) {
-      updates.imagePath = req.files['profile_photo'][0].key;
+      updates.imagePath = req.files['profile_photo'][0].url;
     }
 
     //need to send verification email when email change
@@ -965,9 +792,12 @@ exports.put = asyncHandler(async (req, res, next) => {
 
     await existUser.update(updates);
 
+    const user = await User.findOne({ where: { id: req.userId }, attributes: userConstants.privateSelectFields });
+    const userResponse = userResponseHelper({user});
+
     res.status(HttpStatus.OK).send({
       message: 'Profile successfully updated!',
-      data: existUser
+      data: userResponse
     });
 
     //only send email/phone sms after request complete
@@ -985,6 +815,7 @@ exports.put = asyncHandler(async (req, res, next) => {
 
 
 /**
+* DEPRECATED use shipping address API
 * Update user location_lat and location_lon fields
 * Sets default location/shipping_address of chef/user
 */
@@ -1005,68 +836,10 @@ exports.updateLocation = asyncHandler(async(req, res, next) => {
 
   res.status(HttpStatus.OK).send({
     message: 'Location successfully updated!',
-    data: user
   });
 
 });
 
-exports.getUserBalance = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  try {
-
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    try {
-      // waiting for the Wallet model to be implemented
-      let userWallet = walletRepository.getUserWallet(existUser.id);
-      let payload = {};
-      payload.status = HttpStatus.OK;
-      payload.result = userWallet;
-      res.status(payload.status).send(payload);
-    } catch (error) {
-      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
-    }
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
-
-
-
-exports.getUserBalanceHistory = async (req, res, next) => {
-  const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  try {
-
-    const existUser = await User.findOne({ where: { id: token_return.id } });
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
-      return 0;
-    }
-
-    try {
-      // waiting for the Wallet model to be implemented
-      let userWallet = walletRepository.getUserWallet(existUser.id);
-      let payload = {};
-      payload.status = HttpStatus.OK;
-      payload.result = userWallet;
-      res.status(payload.status).send(payload);
-    } catch (error) {
-      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
-    }
-
-  } catch (e) {
-    res.status(500).send({
-      message: 'Failed to process your request'
-    });
-  }
-};
 
 exports.search = async (req, res, next) => {
   // const token_return = await authService.decodeToken(req.headers['x-access-token'])
@@ -1135,27 +908,31 @@ exports.searchPredictions = async (req, res, next) => {
   }
 };
 
-
-exports.forgotPassword = async (req, res, next) => {
+/**
+* Method: POST
+* No AUTH
+* Forgot password
+* This is called when user forgets their password
+* It sends email_verification_token for password reset
+* Step 1 of forgot password
+*/
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
-    return 0;
+    return res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
   if (!existUser) {
-    res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND});
-    return 0;
+    return res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found!', status: HttpStatus.NOT_FOUND});
   }
 
   let template = "forget/forgot";
 
   let token = (""+Math.random()).substring(2,6);
-  existUser.verification_email_token = token;
-  existUser.verification_email_status = 'pending';
+  existUser.password_reset_token = token;
   await existUser.save();
 
   let args = {
@@ -1168,9 +945,86 @@ exports.forgotPassword = async (req, res, next) => {
   };
 
   mailer.sendMail(args);
-  res.status(HttpStatus.OK).send({
-    message: "Congratulations, an email with verification code has been sent!",
+  return res.status(HttpStatus.OK).send({
+    message: "Congratulations, an email with verification code has been sent for reseting your password!",
     status: HttpStatus.OK
   });
-  return 0;
-}
+});
+
+
+/**
+* Method: POST
+* No AUTH
+* Verify Email Token
+* Step 2 of forgot password
+*/
+exports.veryifyTokenforgotPassword = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+  contract.isRequired(req.body.email_token, 'This email token is required?');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if (!existUser) {
+    return res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+  }
+
+  if (existUser.password_reset_token === String(req.body.email_token)) {
+    //existUser.verification_email_status = userConstants.STATUS_VERIFIED;
+    // existUser.password_reset_token = '';
+    // existUser.password = bcrypt.hashSync(req.body.newPassword, bcrypt.genSaltSync(10));
+    // await existUser.save();
+
+    return res.status(HttpStatus.ACCEPTED).send({
+      message: "Your email token has been verified!",
+      status: HttpStatus.ACCEPTED
+    });
+
+  }
+
+  res.status(HttpStatus.CONFLICT).send({ message: "Error validating token!", status: HttpStatus.CONFLICT });
+});
+
+
+/**
+* Method: POST
+* No AUTH
+* Reset password
+* It is used after sending forgot password token to email
+* Step 2 of forgot password
+*/
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  let contract = new ValidationContract();
+  contract.isEmail(req.body.email, 'This email is correct?');
+  contract.isRequired(req.body.email_token, 'This email token is required?');
+  contract.isRequired(req.body.newPassword, 'This newPassword is required');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+  }
+
+  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if (!existUser) {
+    return res.status(HttpStatus.CONFLICT).send({ message: 'Error validating data', status: HttpStatus.CONFLICT});
+  }
+
+  if (existUser.password_reset_token === String(req.body.email_token)) {
+    // existUser.verification_email_status = userConstants.STATUS_VERIFIED;
+    existUser.password_reset_token = '';
+    existUser.password = bcrypt.hashSync(req.body.newPassword, bcrypt.genSaltSync(10));
+    await existUser.save();
+
+    return res.status(HttpStatus.ACCEPTED).send({
+      message: "Congratulations, password successfully reset!",
+      status: HttpStatus.ACCEPTED
+    });
+
+  }
+
+  res.status(HttpStatus.CONFLICT).send({ message: "Error validating token!", status: HttpStatus.CONFLICT });
+});

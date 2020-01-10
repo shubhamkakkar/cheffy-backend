@@ -101,7 +101,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     await repository.createNIDFrontSide(new_doc.id, req.files.front_side.shift());
   if (req.files['profile_photo']) {
     const photoResponse = await repository.createProfilePhoto(new_doc.id, req.files.profile_photo.shift());
-    await actualUser.update({'imgPath': photoResponse.url});
+    await actualUser.update({'imagePath': photoResponse.url});
   }
 
   if (actualUser.user_type === 'driver' && req.files['driver_license_front_side'])
@@ -456,7 +456,7 @@ exports.createNIDFrontInside = asyncHandler(async (req, res, next) => {
 
 exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
-  contract.isRequired(req.files['profile_photo'], "Chef's license is missing!");//
+  contract.isRequired(req.files['profile_photo'], "Profile photo missing! required field: profile_photo");//
 
   if (!contract.isValid()) {
     res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
@@ -490,8 +490,9 @@ exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
       userId: token_return.id
     });
 
+  const profilePhoto = req.files.profile_photo.shift();
   if (req.files['profile_photo'])//
-    await repository.createProfilePhoto(new_doc.id, req.files.profile_photo.shift());//
+    await repository.createProfilePhoto(new_doc.id, profilePhoto);//
 
   let saved_data = await Documents.findOne({
     where: { userId: token_return.id },
@@ -503,7 +504,9 @@ exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
     }]
   });
   saved_data.state_type = 'validated';
-  saved_data.save();
+  await saved_data.save();
+  await actualUser.update({imagePath: profilePhoto.url});
+  
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 });
 

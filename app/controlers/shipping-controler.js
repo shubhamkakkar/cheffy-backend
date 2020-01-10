@@ -196,6 +196,7 @@ exports.remove = asyncHandler(async (req, res, next) => {
 exports.edit = asyncHandler(async (req, res, next) => {
 
     let existAddress = req.shippingAddress;
+    const userId = req.userId;
 
     let contract = new ValidationContract();
     contract.isRequired(req.body.addressLine1,"It is mandatory to inform the address!");

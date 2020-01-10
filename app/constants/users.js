@@ -18,10 +18,10 @@ exports.minSelectFields = ['id', 'name'];
 //used for publicly accesible api. e.g. /api/users/:userId
 exports.publicSelectFields = [ 'id', 'name', 'imagePath'];
 
-//for self. don't expose verification tokens, password even for self.
+//for self
 //used for login session
 exports.privateSelectFields = exports.publicSelectFields.concat([
-  'email', 'country_code', 'phone_no', 'restaurant_name',
+  'email', 'country_code', 'phone_no', 'restaurant_name', 'password',
   'user_type', 'verification_email_status', 'verification_phone_status', 'status',
   'location_lat', 'location_lon',
   'stripe_id', 'createdAt', 'updatedAt'
@@ -51,4 +51,4 @@ exports.phoneSelectFields = exports.privateSelectFields.concat([
 exports.adminSelectFields = exports.privateSelectFields
   .concat(exports.emailSelectFields)
   .concat(exports.phoneSelectFields)
-  .concat(['user_ip', 'verification_code', 'verification_email_token', 'verification_phone_token']);
+  .concat(['user_ip', 'password_reset_token', 'verification_email_token', 'verification_phone_token']);

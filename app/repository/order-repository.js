@@ -174,7 +174,7 @@ exports.getUserOrders = async (data) => {
   return order;
 }
 
-exports.getUserOrdersBeingDelivered  = async (data) => {
+exports.listTrackingUser  = async (data) => {
   let order = await Order.findAll({
     where: {userId:data},
     order: [["id", "DESC"]],
@@ -184,8 +184,13 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
         attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
+        model: ShippingAddress,
+        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode"],
+        as:'shipping'
+      },
+      {
         model: OrderItem,
-        attributes: ["plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity"],
+        attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
         include:[{
           model: Plates,
           as:'plate',
@@ -209,7 +214,53 @@ exports.getUserOrdersBeingDelivered  = async (data) => {
     {
     model: OrderDelivery,
     required: true,
-    attributes: ["id"]
+    attributes: ["id","state_type"]
+  }]
+  });
+  return order;
+}
+
+exports.listTrackingDriver  = async (data) => {
+    let order = await Order.findAll({
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+      },
+      {
+        model: ShippingAddress,
+        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode"],
+        as:'shipping'
+      },
+      {
+        model: OrderItem,
+        attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
+        include:[{
+          model: Plates,
+          as:'plate',
+          include: [
+          {
+            model: PlateImage
+        }]
+        },{
+          model: CustomPlateOrder,
+          as:'custom_plate_order',
+          include: [{
+            model: CustomPlate,
+            as:'custom_plate',
+            include: [
+            {
+              model: CustomPlateImage
+            }]
+          }]
+      }]
+    },
+    {
+    model: OrderDelivery,
+    required: true,
+    attributes: ["id","state_type"],
+    where: {driverId:data},
   }]
   });
   return order;

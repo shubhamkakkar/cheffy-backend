@@ -1,12 +1,14 @@
 'use strict';
 
+const path = require('path');
 const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/basket-controler');
 const authService = require("../services/auth");
+const userController = require(path.resolve('app/controlers/user-controler'));
 
 router.post('/', authService.authorize, controller.addItem);
-router.get('/', authService.authorize, controller.list);
+router.get('/', authService.authorize, userController.getAuthUserMiddleware, controller.list);
 
 /**
 * both plate and custom plate quantity can be changed. so instead of passing plateId in params,

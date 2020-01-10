@@ -8,9 +8,6 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     url: {
       type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/plate_image/${this.getDataValue('url')}`;
-      }
     },
     plateId: {
       type: DataTypes.INTEGER,

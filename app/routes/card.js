@@ -16,7 +16,8 @@ router.put('/', authService.authorize, userController.getAuthUserMiddleware, shi
 Admin routes
 */
 router.get('/customers', authService.authorizeAdmin, userController.getAuthUserMiddleware,  controller.listCustomers);
-router.delete('/:userId', authService.authorizeAdmin, userController.getUserByUserIdParamMiddleware, controller.deleteCustomer);
+router.delete('/:userId', authService.authorizeAdmin, controller.deleteCustomer);
 
+router.param('userId', userController.getUserByUserIdParamMiddleware)
 
 module.exports = router;

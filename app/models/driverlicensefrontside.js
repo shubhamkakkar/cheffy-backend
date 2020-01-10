@@ -7,10 +7,7 @@ module.exports = (sequelize, DataTypes) => {
   const DriverLicenseFrontSide = sequelize.define('DriverLicenseFrontSide', {
     name: DataTypes.STRING,
     url: {
-      type: DataTypes.STRING,
-      get() {
-        return `${process.env.URL_SERVER}tmp/driver_license_front_side/${this.getDataValue('url')}`;
-      }
+      type: DataTypes.STRING,      
     },
     state_type: {
       type: DataTypes.ENUM('validated', 'invalid', 'pending'),

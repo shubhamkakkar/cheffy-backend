@@ -7,7 +7,6 @@ const paypal = require('paypal-rest-sdk');
 const debug = require('debug')('payment-service');
 
 stripe.setMaxNetworkRetries(3);
-
 exports.createSession = async (userID, list_items, address) => {
 
   const session = await stripe.checkout.sessions.create({
@@ -107,7 +106,8 @@ exports.deleteUser = async (user) => {
 */
 exports.getUserCardsList = async (stripeCustomerId, queryOptions = {}) => {
   debug("STRIPE Get user cards: ", stripeCustomerId)
-  const user_req = await stripe.paymentMethods.list({ customer: stripeCustomerId, type: 'card', ...queryOptions });
+  // const user_req = await stripe.paymentMethods.list({ customer: stripeCustomerId, type: 'card', ...queryOptions });
+  const user_req = await stripe.paymentMethods.list({ customer: stripeCustomerId, type: 'card' });
   return user_req;
 }
 

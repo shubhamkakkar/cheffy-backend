@@ -20,8 +20,6 @@ router.post('/', authService.authorize, userController.getAuthUserMiddleware, mu
 router.put('/edit/:categoryId', authService.authorize, userController.getAuthUserMiddleware, categoryPolicies.isOwnerMiddleware(), multerStart(fieldsFile), controller.edit);
 router.get('/', controller.list);
 router.get('/:categoryId', controller.getCategory);
-router.get('/:categoryId/plates', controller.listPlates);
-router.get('/search/:text', controller.listPlates);
 
 router.param('categoryId', controller.categoryByIdMiddleware);
 

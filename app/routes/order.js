@@ -16,7 +16,9 @@ router.get('/ready-delivery', authService.authorize, controller.ordersReadyForDe
 //list user order history
 router.get('/list', authService.authorize, controller.list);
 //this route not used fro not
-router.get('/list/tracking', authService.authorize, controller.listTracking);
+router.get('/list/userTracking', authService.authorize, userController.getAuthUserMiddleware, controller.listTrackingUser);
+
+router.get('/list/driverTracking', authService.authorize, userController.getAuthUserMiddleware, controller.listTrackingDriver);
 
 router.get('/get/:orderId', authService.authorize, controller.getOneOrder);
 //alias of above method

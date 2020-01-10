@@ -10,11 +10,9 @@ exports.getById = async (orderDeliveryId) => {
 
 
 //TODO waiting OrderDelivey to be implemented
-exports.createOrderDelivery = async (orderId) => {
+exports.createOrderDelivery = async (data) => {
     try {
-        const order = await OrderDelivery.create({
-          orderId:orderId,
-          state_type:'pending'});
+        const order = await OrderDelivery.create(data);
         return order;
       } catch (e) {
         console.log(e)
@@ -113,31 +111,32 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     where: {userId:data},
     order: [["id", "DESC"]],
     include: [
-      {
-        model: OrderPayment,
-        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
-      },
-      {
-        model: OrderItem,
-        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
-        include:[{
-          model: Plates,
-          as:'plate',
-          include: [{
-            model: User,
-            as:'chef'
-          },
-          {
-            model: PlateImage
-        }]
-      }]
+    {
+      model: OrderPayment,
+      attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
     },
     {
-    model: OrderDelivery,
-    required: true,
-    attributes: ["id"],
-    where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
-   }]
+      model: OrderItem,
+      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+      include:[{
+        model: Plates,
+        as:'plate',
+        include: [{
+          model: User,
+          as:'chef'
+        },
+        {
+          model: PlateImage
+        }]
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        attributes: ["id"],
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
+      }
+      ]
+    }]
   });
   return order;
 
@@ -146,40 +145,72 @@ exports.getCompletedDeliveriesByUser = async (data) => {
 
 exports.getPendingDeliveriesByUser = async (data) => {
   let order = await Order.findAll({
-    where: {userId:data},
+    where: {userId:data.userId},
     order: [["id", "DESC"]],
     include: [
-      {
-        model: OrderPayment,
-        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
-      },
-      {
-        model: OrderItem,
-        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
-        include:[{
-          model: Plates,
-          as:'plate',
-          include: [{
-            model: User,
-            as:'chef',
-            include:[{model:ShippingAddress, as: 'address'}]
-          },
-
-          {
-            model: PlateImage
-        }]
-      }]
+    {
+      model: OrderPayment,
+      attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
     },
     {
-    model: OrderDelivery,
-    required: true,
-    attributes: ["id"],
-    where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
-   }]
+      model: OrderItem,
+      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+      include:[{
+        model: Plates,
+        as:'plate',
+        include: [{
+          model: User,
+          as:'chef',
+          include:[{model:ShippingAddress, as: 'address'}]
+        },
+
+        {
+          model: PlateImage
+        }]
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
+      }]
+    }
+    ]
   });
   return order;
 
 }
+
+exports.getPendingDeliveriesByDriver = async (data) => {
+ 
+  let order = await OrderItem.findAll({
+    where: {deliveryType: data.deliveryType},
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: Plates,
+        as:'plate',
+        include: [{
+          model: User,
+          as:'chef',
+          include:[{model:ShippingAddress, as: 'address'}]
+        },
+
+        {
+          model: PlateImage
+        }]
+      },
+      {
+        model: OrderDelivery,
+        required: false,
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
+      }]
+    
+  });
+  return order;
+
+}
+
+
 
 
   //TODO waiting OrderDelivey to be implemented

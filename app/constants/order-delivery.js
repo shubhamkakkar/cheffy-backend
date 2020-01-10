@@ -17,3 +17,11 @@ exports.STATE_TYPE_PICKED_UP = 'picked_up';
 exports.DELIVERY_TYPE_ORDER = 'order';
 //applicable for chef, when he only needs to deliver order_item
 exports.DELIVERY_TYPE_ORDER_ITEM = 'order_item';
+
+exports.DELIVERY_TYPE_USER = 'user';
+
+exports.DELIVERY_TYPE_CHEF = 'chef';
+
+exports.DELIVERY_TYPE_DRIVER = 'driver';
+
+

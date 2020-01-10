@@ -18,10 +18,8 @@ userActivitySlack.setWebhook(userActivityWebhookURI);
  * @param req
  * @param error
  */
-exports.logError = (error, req, name) => {
-
+exports.logError = ({error, req, name}) => {
   if(!error.stack) return;
-
   bugSlack.webhook({
     channel: `#${appConfig.slack.bugChannel}`,
     username: `${appConfig.slack.username}`,

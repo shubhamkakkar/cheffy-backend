@@ -21,63 +21,6 @@ exports.listCategories = async ({pagination}) => {
   return categories;
 }
 
-exports.categoriesListPlates = async (data) => {
-  let options =   {
-    where: {categoryId:data},
-    attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'sell_count', 'rating','categoryId', 'createdAt' ],
-    include: [
-      {
-        model: PlateCategory,
-        as: 'category',
-        attributes: [ 'name', 'description', 'url' ]
-      },
-      {
-        model: Ingredient,
-        attributes: [ 'id', 'name', 'purchase_date' ]
-      },
-      {
-        model: PlateImage,
-        attributes: [ 'id', 'name', 'url' ]
-      },
-      {
-        model: KitchenImage,
-        attributes: [ 'id', 'name', 'url' ]
-      },
-      {
-        model: ReceiptImage,
-        attributes: [ 'id', 'name', 'url' ]
-      },
-      {
-        model: Review,
-        attributes: [ 'comment','rating' ],
-        as:'reviews',
-        include: [{
-          model: User,
-          attributes: ['id', 'name'],
-          as:'user'
-        }]
-      },
-      {
-        model: User,
-        as:'chef',
-        include: [{
-          model: ShippingAddress,
-          as:"address"
-        }]
-      }
-    ]
-  };
-
-  try {
-    const platesFromCategory = await Plates.findAll (options);
-    return platesFromCategory;
-  } catch (e) {
-    console.log("Error: ", e);
-     return { message: "Fail to get Plate!", error: e };
-  }
-  return categories;
-}
-
 exports.editCategory = async (id, data) => {
   const category = await PlateCategory.findByPk(id);
   /*category.name = data.name;

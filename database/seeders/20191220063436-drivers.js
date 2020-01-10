@@ -17,7 +17,7 @@ module.exports = {
         country_code: faker.address.countryCode(),
         location_lat: faker.address.latitude(),
         location_lon: faker.address.longitude(),
-        user_type: 'chef',
+        user_type: 'driver',
         verification_email_status: 'verified',
         verification_email_token: null,
         verification_phone_status: 'verified',
