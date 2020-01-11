@@ -156,6 +156,7 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
 exports.authenticate = asyncHandler(async (req, res, next) => {
 
   const { password } = req.body;
+  const {device_id} = req.body;
   debug('body', req.body);
 
   let customer
@@ -205,6 +206,8 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
   });
 
   customer.auth_token = token;
+  customer.device_id = device_id;
+
   await customer.save();
 
   const userResponse = userResponseHelper({user: customer});
