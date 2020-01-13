@@ -1,4 +1,5 @@
 const distance = require('google-distance-matrix');
+const path = require('path');
 const matrixKey = require(path.resolve('config/distance')).distance
 distance.key (matrixKey.matrixKey) ;
 distance.units('metric');
@@ -13,13 +14,9 @@ exports.getDistance = asyncHandler(async (origins, destinations, mode) => {
 
 	try{
 
-		let mode = mode!==undefined ? mode : mode = 'driving'
-
         /* Default mode is driving, if no mode selected driving will be set as default
         * we can use it as walking, train, bicycle*/
 
-        const origins = origins
-        const destinations = destinations
         distance.mode(mode);
         let resp = {};
         distance.matrix(origins, destinations, function (err, distances) {
