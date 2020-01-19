@@ -11,7 +11,7 @@ const categoryController = require(path.resolve('app/controlers/category-control
 const platePolicies = require(path.resolve('app/policies/plate'));
 
 const imageFields = [
-  'profile_photo', 'kitchen_image', 'receipt_image'
+  'plate_image', 'kitchen_image', 'receipt_image'
 ];
 
 const fieldsFile = imageFields.map((field) => {
@@ -28,7 +28,7 @@ router.get('/show/:id', authService.authorizeOptional, userController.getAuthUse
 router.post('/edit/:id', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(),  controller.edit);
 router.delete('/:id', authService.authorize,userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.delete);
 
-router.post('/images/:id',authService.authorize,multerStart(fieldsFile),platePolicies.isOwnerMiddleware(), controller.uploadImages);
+router.post('/images/:id',authService.authorize,userController.getAuthUserMiddleware,multerStart(fieldsFile),platePolicies.isOwnerMiddleware(), controller.uploadImages);
 
 //TODO add permission
 router.delete('/:id/images/:type_image/:plateImageId', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.deleteImage);
