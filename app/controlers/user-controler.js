@@ -346,6 +346,19 @@ exports.getDriverBalance = asyncHandler(async (req, res, next) => {
       ]
     })
 
+    let data = {};
+
+    if(!wallet){
+
+      let total = 0;
+
+      data.userId = req.userId;
+      data.state_type = 'open';
+      data.balance = total;
+      wallet = await Wallet.create(data);
+
+    }
+
 
     res.status(HttpStatus.ACCEPTED).send(wallet);
 
