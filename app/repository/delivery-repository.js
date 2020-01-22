@@ -124,7 +124,8 @@ exports.getCompletedDeliveriesByUser = async (data) => {
         as:'plate',
         include: [{
           model: User,
-          as:'chef'
+          as:'chef',
+          attributes:userConstants.userSelectFields,
         },
         {
           model: PlateImage
@@ -133,7 +134,6 @@ exports.getCompletedDeliveriesByUser = async (data) => {
       {
         model: OrderDelivery,
         required: true,
-        attributes: ["id"],
         where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
       }
       ]
@@ -162,6 +162,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
         include: [{
           model: User,
           as:'chef',
+          attributes:userConstants.userSelectFields,
           include:[{model:ShippingAddress, as: 'address'}]
         },
 
