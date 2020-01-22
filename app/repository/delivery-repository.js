@@ -2,6 +2,7 @@
 const path = require('path');
 const {sequelize, Plates, Review,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+const userConstants = require(path.resolve('app/constants/users'));
 
 
 exports.getById = async (orderDeliveryId) => {
@@ -192,6 +193,7 @@ exports.getPendingDeliveriesByDriver = async (data) => {
         include: [{
           model: User,
           as:'chef',
+          attributes: userConstants.userSelectFields,
           include:[{model:ShippingAddress, as: 'address'}]
         },
 
