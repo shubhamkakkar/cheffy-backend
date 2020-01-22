@@ -191,7 +191,14 @@ exports.listTrackingUser  = async (data) => {
       {
         model: OrderItem,
         attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
-        include:[{
+        include:[
+        {
+          model: User,
+          as: 'chef',
+          attributes: userConstants.userSelectFields
+
+        },
+        {
           model: Plates,
           as:'plate',
           include: [
@@ -236,7 +243,15 @@ exports.listTrackingDriver  = async (data) => {
       {
         model: OrderItem,
         attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
-        include:[{
+        include:[
+        {
+          model: User,
+          as: 'chef',
+          attributes: userConstants.userSelectFields
+
+        },
+
+        {
           model: Plates,
           as:'plate',
           include: [
