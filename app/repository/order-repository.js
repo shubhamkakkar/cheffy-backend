@@ -274,7 +274,12 @@ exports.listTrackingDriver  = async (data) => {
     {
     model: OrderDelivery,
     required: true,
-    attributes: ["id","state_type"],
+    attributes: ["id","state_type","driverId"],
+    include:[{
+    model: User,
+    as: 'driver',
+    attributes: userConstants.userSelectFields
+    }],
     where: {driverId:data},
   }]
   });
