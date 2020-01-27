@@ -778,6 +778,10 @@ exports.put = asyncHandler(async (req, res, next) => {
       updates.imagePath = req.files['profile_photo'][0].url;
     }
 
+    else if(req.body.image_path){
+      updates.imagePath = req.body.image_path;
+    }
+
     //need to send verification email when email change
     if(req.body.email && prevEmail !== req.body.email) {
       debug('email changed');
