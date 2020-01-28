@@ -157,9 +157,17 @@ exports.chefOrderList = asyncHandler(async (req, res, next) => {
     query.state_type = state_type;
   }
 
-  const orderItems = await repository.getChefOrders(query);
+  let orderItems = await repository.getChefOrders(query);
 
   const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}orders!`;
+
+  if(req.query.item_type == 'plate'){
+    orderItems = orderItems.filter(x => x.plate != null)
+  }
+
+  if(req.query.item_type == 'custom_plate'){
+    orderItems = orderItems.filter(x => x.custom_plate_order != null)
+  }
 
   res.status(HttpStatus.ACCEPTED).send({
     message,
