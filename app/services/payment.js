@@ -145,6 +145,11 @@ exports.attachPaymentMethod = async (card, user) => {
   return card_req;
 }
 
+exports.detachPaymentMethod = async (card) => {
+  const card_req = await stripe.paymentMethods.detach(card);
+  return card_req;
+}
+
 exports.confirmPayment = async (ammount, card, customer) => {
   debug("STRIPE Confirm payment: ", card)
   const paymentIntent = await stripe.paymentIntents.create({

@@ -16,6 +16,23 @@ function createStripePaginateQuery(req) {
 /**
 * List user cards saved in stripe
 */
+
+async function getcreditCardList(req) {
+  if(!req.user.stripe_id){
+    return res.status(HttpStatus.NOT_FOUND).send({message:"This user has no credit cards saved"});
+  }
+
+  const stripeQuery = createStripePaginateQuery(req);
+  const creditCardList = await paymentService.getUserCardsList(req.user.stripe_id, stripeQuery);
+  return creditCardList;
+}
+
+exports.getCustomer = asyncHandler(async (req, res) => {
+  let customer = await paymentService.getUser(req.user.stripe_id);
+  return res.status(HttpStatus.OK).send(customer);
+})
+
+
 exports.listUserCards = asyncHandler(async (req,res) => {
 
     //getAuthUserMiddleware handles user not found
@@ -106,6 +123,28 @@ exports.updateCustomer = asyncHandler(async (req, res, next) => {
 
   res.status(HttpStatus.OK).send(stripeResponse);
 
+});
+
+exports.setAsDefaultCard = asyncHandler(async (req, res) => {
+  //getAuthUserMiddleware handles user not found
+  let user = req.user;
+
+  const creditCardList = await getcreditCardList(req)
+  if (!creditCardList.data.some(card => card.id === req.params.cardId)) {
+    return res.status(HttpStatus.NOT_FOUND).send({message:"This card does not exists for this user"});
+  }
+
+  let updates = {
+    invoice_settings: {default_payment_method: req.params.cardId}
+  }
+  const updatedUser = await paymentService.updateUser(user, updates);
+  res.status(HttpStatus.OK).send(updatedUser);
+})
+
+
+exports.deleteCard = asyncHandler(async (req, res) => {
+  let deletedCard = await paymentService.detachPaymentMethod(req.params.cardId);
+  return res.status(HttpStatus.OK).send(deletedCard);
 });
 
 /**
