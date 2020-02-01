@@ -99,7 +99,7 @@ exports.addNewCard = asyncHandler(async (req, res) => {
     const stripeNewCard = await paymentService.createCard(user, userShippingAddress, card);
     const attachedCard = await paymentService.attachPaymentMethod(stripeNewCard.id, user.stripe_id);
 
-    res.status(HttpStatus.CREATED).send(attachedCard);
+    res.status(200).send({ message: "successfully created the card account!", status: HttpStatus.OK, data: attachedCard});
 
     /*if(err.raw.code === "incorrect_number"){
         return res.status(HttpStatus.CONFLICT).send({message:"The credit card number is incorrect"});
@@ -121,7 +121,8 @@ exports.updateCustomer = asyncHandler(async (req, res, next) => {
 
   const stripeResponse = await paymentService.updateUser(user, updates);
 
-  res.status(HttpStatus.OK).send(stripeResponse);
+  res.status(200).send({ message: "successfully updated the card account!", status: HttpStatus.OK, data: stripeResponse});
+
 
 });
 
@@ -138,13 +139,24 @@ exports.setAsDefaultCard = asyncHandler(async (req, res) => {
     invoice_settings: {default_payment_method: req.params.cardId}
   }
   const updatedUser = await paymentService.updateUser(user, updates);
-  res.status(HttpStatus.OK).send(updatedUser);
+  
+  res.status(200).send({ message: "success!", status: HttpStatus.OK, data: updatedUser});
+
 })
 
 
 exports.deleteCard = asyncHandler(async (req, res) => {
-  let deletedCard = await paymentService.detachPaymentMethod(req.params.cardId);
-  return res.status(HttpStatus.OK).send(deletedCard);
+  try{
+    let deletedCard = await paymentService.detachPaymentMethod(req.params.cardId);
+
+    return res.status(200).send({ message: "successfully deleted the card account!", status: HttpStatus.OK, data: deletedCard});
+
+  }
+
+  catch(e){
+    return res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your card for id", status: HttpStatus.CONFLICT});  
+
+  }
 });
 
 /**
