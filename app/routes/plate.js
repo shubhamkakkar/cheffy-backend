@@ -24,7 +24,7 @@ router.post('/', authService.authorize, shippingController.getAuthUserShippingAd
 router.get('/', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.list);
 router.get('/help', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.searchHelp);
 
-router.get('/show/:id', authService.authorizeOptional,userController.getAuthUserMiddleware, userController.getAuthUserIfPresentMiddleware, controller.getPlate);
+router.get('/show/:id', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.getPlate);
 router.post('/edit/:id', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(),  controller.edit);
 router.delete('/:id', authService.authorize,userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.delete);
 

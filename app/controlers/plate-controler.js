@@ -105,22 +105,10 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 
 exports.getPlate = asyncHandler(async (req, res, next) => {
-  try{
 
   const detailPlate = await repository.getPlate({req, plateId: req.params.id});
 
-  let checkFavourite = null;
-  let is_favourite = "NO!";
-
-  if(detailPlate){
-  checkFavourite = await repository.checkFavourite(detailPlate.id, req.userId);
-}
-
-  if(checkFavourite.length){
-    is_favourite = "YES";
-  }
-
-  res.status(200).send({ message: 'Plate find!', favourite:is_favourite ,data: detailPlate });
+  res.status(200).send({ message: 'Plate find!', data: detailPlate });
 
   events.publish({
       action: appConstants.ACTION_TYPE_VIEWED,
@@ -129,11 +117,6 @@ exports.getPlate = asyncHandler(async (req, res, next) => {
       scope: appConstants.SCOPE_ALL,
       type: 'plate'
   }, req);
-
-}
-catch(e){
-  console.log(e)
-}
 
 });
 
