@@ -346,19 +346,6 @@ exports.getDriverBalance = asyncHandler(async (req, res, next) => {
       ]
     })
 
-    let data = {};
-
-    if(!wallet){
-
-      let total = 0;
-
-      data.userId = req.userId;
-      data.state_type = 'open';
-      data.balance = total;
-      wallet = await Wallet.create(data);
-
-    }
-
 
     res.status(HttpStatus.ACCEPTED).send(wallet);
 
@@ -776,10 +763,6 @@ exports.put = asyncHandler(async (req, res, next) => {
 
     if(req.files && req.files['profile_photo']) {
       updates.imagePath = req.files['profile_photo'][0].url;
-    }
-
-    else if(req.body.image_path){
-      updates.imagePath = req.body.image_path;
     }
 
     //need to send verification email when email change

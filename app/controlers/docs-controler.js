@@ -556,6 +556,7 @@ exports.createDriverLicense = asyncHandler(async (req, res, next) => {
 
   let saved_data = await Documents.findOne({
     where: { userId: token_return.id },
+    attributes: ["description", "url", "state_type"],
     attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [{
       model: DriverLicenseFrontSide,

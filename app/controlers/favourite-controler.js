@@ -52,7 +52,7 @@ exports.favourite = async (req, res, next) => {
       return 0;
     }
 
-    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId, req.userId);
+    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId);
     if (existPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Already exists in favourites", status: HttpStatus.CONFLICT});
       return 0;
@@ -76,7 +76,7 @@ exports.favourite = async (req, res, next) => {
       return 0;
     }
 
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId, req.userId);
+    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId);
     if (existCustomPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Already exists in favourites", status: HttpStatus.CONFLICT});
       return 0;
@@ -136,13 +136,13 @@ exports.removeFavourite = async (req, res, next) => {
       return 0;
     }
 
-    let existPlateInFav = await repoFav.findPlateinFav(req.params.id, req.userId);
+    let existPlateInFav = await repoFav.findPlateinFav(req.params.id);
     if (!existPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Cann't find in favourites", status: HttpStatus.CONFLICT});
       return 0;
     }
 
-    response = await repoFav.delete(existPlateInFav.id, req.userId);
+    response = await repoFav.delete(existPlateInFav.id);
 
 
     }
@@ -160,14 +160,14 @@ exports.removeFavourite = async (req, res, next) => {
       return 0;
     }
 
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.params.id, req.userId);
+    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.params.id);
     if (!existCustomPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Can't find in favourites", status: HttpStatus.CONFLICT});
       return 0;
     }
 
 
-    response = await repoFav.delete(existCustomPlateInFav.id,req.userId);
+    response = await repoFav.delete(existCustomPlateInFav.id);
 
 
     }
