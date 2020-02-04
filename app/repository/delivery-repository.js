@@ -63,7 +63,7 @@ exports.getOrderDeliveriesByUserId = async (data,driver) => {
     },
     {
     model: OrderDelivery,
-    required: true,
+    required: false,
     attributes: ["id","state_type"]
     //where: {state_type: 'pending'}
    }]
