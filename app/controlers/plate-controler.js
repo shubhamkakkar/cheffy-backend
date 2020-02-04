@@ -350,8 +350,6 @@ exports.uploadImages = async (req, res, next) => {
         receipt_image: returnReceiptImages
       }});
   }
-
-
 };
 
 exports.deleteImage = async (req, res, next) => {

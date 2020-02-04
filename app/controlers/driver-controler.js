@@ -82,11 +82,11 @@ exports.getDriverPosition = async (req, res, next) => {
    const token_return = await authService.decodeToken(req.headers['x-access-token']);
    const existUser = await User.findOne({ where: { id: token_return.id } });
    let payload = {};
-   /*if (!existUser || existUser.user_type !== 'driver') {
+   if (!existUser || existUser.user_type !== 'driver') {
       payload.status = HttpStatus.CONFLICT;
       res.status(payload.status).send({ message: 'Could not update user position', status: HttpStatus.CONFLICT});
       return 0;
-   }*/
+   }
 
    let contract = new ValidationContract();
    contract.isEmail(req.body.email, 'This email is correct?');
