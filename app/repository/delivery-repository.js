@@ -2,6 +2,7 @@
 const path = require('path');
 const {sequelize, Plates, Review,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+const userConstants = require(path.resolve('app/constants/users'));
 
 
 exports.getById = async (orderDeliveryId) => {
@@ -123,20 +124,23 @@ exports.getCompletedDeliveriesByUser = async (data) => {
         as:'plate',
         include: [{
           model: User,
-          as:'chef'
+          as:'chef',
+          attributes:userConstants.userSelectFields,
+          include:[{model:ShippingAddress, as: 'address'}]
         },
+
         {
           model: PlateImage
         }]
-      },
-      {
-        model: OrderDelivery,
-        required: true,
-        attributes: ["id"],
-        where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
       }
       ]
-    }]
+    },
+    {
+        model: OrderDelivery,
+        required: true,
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
+      }
+    ]
   });
   return order;
 
@@ -161,6 +165,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
         include: [{
           model: User,
           as:'chef',
+          attributes:userConstants.userSelectFields,
           include:[{model:ShippingAddress, as: 'address'}]
         },
 
@@ -192,6 +197,7 @@ exports.getPendingDeliveriesByDriver = async (data) => {
         include: [{
           model: User,
           as:'chef',
+          attributes: userConstants.userSelectFields,
           include:[{model:ShippingAddress, as: 'address'}]
         },
 

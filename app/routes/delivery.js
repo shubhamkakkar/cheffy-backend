@@ -15,6 +15,7 @@ router.get('/', authService.authorize,controller.list);
 router.get('/complete', authService.authorize,controller.listCompleteDeliveries);
 router.get('/user/pending', authService.authorize,controller.listPendingDeliveries);
 router.get('/driver/pending', authService.authorize,controller.listPendingDeliveriesDriver);
+router.post('/time', controller.calculateDeliveryTime);
 router.get('/:orderDeliveryId',authService.authorize, controller.getById);
 
 router.get('/price/calculate', controller.getDeliveryPrice);
