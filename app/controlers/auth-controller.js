@@ -32,50 +32,50 @@ const { generateHash } = require('../../helpers/password');
 
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
-    const contract = new ValidationContract();
+  const contract = new ValidationContract();
 
-    contract.isRequired(req.body.provider, 'provider is Required');
-    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
-    contract.isRequired(req.body.email, 'email is Required');
+  contract.isRequired(req.body.provider, 'provider is Required');
+  contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+  contract.isRequired(req.body.email, 'email is Required');
 
-    if (!contract.isValid()) {
-        return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
-    }
-    const existUser = await User.findOne({
-     where: { email: req.body.email },
-     attributes: userConstants.privateSelectFields,
-     include: [{
-        model: ShippingAddress,
-        attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
-        as:'address'
-      }]
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
+  }
+  const existUser = await User.findOne({
+    where: { email: req.body.email },
+    attributes: userConstants.privateSelectFields,
+    include: [{
+      model: ShippingAddress,
+      attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
+      as:'address'
+    }]
 
-   });
-    if (!existUser) {
-      res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
-      return 0;
-    }
+  });
+  if (!existUser) {
+    res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
+    return 0;
+  }
 
-    existUser.provider = req.body.provider;
-    existUser.provider_user_id = req.body.provider_user_id;
+  existUser.provider = req.body.provider;
+  existUser.provider_user_id = req.body.provider_user_id;
 
-    const token = await authService.generateToken({
-      id: existUser.id,
-      email: existUser.email,
-      name: existUser.name
-    });
+  const token = await authService.generateToken({
+    id: existUser.id,
+    email: existUser.email,
+    name: existUser.name
+  });
 
-    existUser.auth_token = token;
-    existUser.verification_email_status = 'verified';
+  existUser.auth_token = token;
+  existUser.verification_email_status = 'verified';
 
-    await existUser.save();
+  await existUser.save();
 
-    const userResponse = userResponseHelper({user: existUser});
+  const userResponse = userResponseHelper({user: existUser});
 
-    res.status(200).send({
-      token: token,
-      data: userResponse
-    });
+  res.status(200).send({
+    token: token,
+    data: userResponse
+  });
 
 });
 
@@ -94,7 +94,7 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
 
 
   if (!contract.isValid()) {
-      return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
+    return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
   }
   const existUser = await User.findOne({ where: { email: req.body.email } });
   if (existUser) {
@@ -136,15 +136,15 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
   await createdUser.save();
 
   const existUserNew = await User.findOne({
-   where: { email: req.body.email },
-   attributes: userConstants.privateSelectFields,
-   include: [{
+    where: { email: req.body.email },
+    attributes: userConstants.privateSelectFields,
+    include: [{
       model: ShippingAddress,
       attributes: ['addressLine1', 'addressLine2','city','state','zipCode','lat','lon'],
       as:'address'
     }]
 
- });
+  });
 
   res.status(200).send({
     token: token,
@@ -156,6 +156,7 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
 exports.authenticate = asyncHandler(async (req, res, next) => {
 
   const { password } = req.body;
+  const {device_id} = req.body;
   debug('body', req.body);
 
   let customer
@@ -205,7 +206,34 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
   });
 
   customer.auth_token = token;
+  customer.device_id = device_id;
+
   await customer.save();
+
+  let id = customer.id;
+
+  var tokenExist = await repositoryUserAuthTokens.getUserAuthTokens(id);
+  if(tokenExist.length)
+  {
+    const existUser = await User.findOne({ where: { id: id } });
+
+    if (!existUser) {
+      return res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
+    }
+
+    existUser.auth_token = null;
+
+    existUser.save();
+
+    var updatedStatus = await repositoryUserAuthTokens.updateAuthToken(id,token);
+  }
+  else{
+    let newData = authTokenInputFilters.filter(req.body);;
+    newData.id=customer.id;
+    newData.auth_token=token;
+
+    const response = await repositoryUserAuthTokens.createUserAuthTokens(newData)
+  }
 
   const userResponse = userResponseHelper({user: customer});
 
@@ -216,31 +244,31 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
 
   //publish create action
   events.publish({
-      action: 'login',
-      user: customer.get({}),
-      query: req.query,
+    action: 'login',
+    user: customer.get({}),
+    query: req.query,
       //login can be by any user so scope is all
       scope: appConstants.SCOPE_ALL,
       type: 'user'
-  }, req);
+    }, req);
 
 });
 
 exports.logout = asyncHandler(async(req, res, next) =>{
 
-    const existUser = await User.findOne({ where: { id: req.userId } });
+  const existUser = await User.findOne({ where: { id: req.userId } });
 
-    if (!existUser) {
-      return res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
-    }
+  if (!existUser) {
+    return res.status(HttpStatus.NOT_FOUND).send({ message: 'error when updating: user not found', status: HttpStatus.NOT_FOUND});
+  }
 
-    existUser.auth_token = null;
+  existUser.auth_token = null;
 
-    existUser.save();
+  existUser.save();
 
-    res.status(200).send({
-      message: 'successfully logged out!'
-    });
+  res.status(200).send({
+    message: 'successfully logged out!'
+  });
 
 
 })

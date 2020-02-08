@@ -70,9 +70,9 @@ exports.getShippingAddressByIdMiddleware = asyncHandler(async(req, res, next, sh
   next();
 });
 
-exports._updateUserLocation = async(req, lat, lon) => {
+exports._updateUserLocation = asyncHandler(async(req, lat, lon) => {
   return await req.user.update({location_lat: lat, location_lon: lon});
-};
+});
 
 exports.create = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
@@ -127,33 +127,39 @@ exports.create = asyncHandler(async (req, res, next) => {
     }
   }
 
-  const address = await repository.createAddress(full_data);
+  if(shippingAddressCount<3)
+  {
+    const address = await repository.createAddress(full_data);
 
-  res
+    res
     .status(HttpStatus.ACCEPTED)
     .send({ message: "Successfully created shipping address!", data: address });
 
-  //publish create action
-  events.publish({
-      action: appConstants.ACTION_TYPE_CREATED,
-      user: req.user,
-      shippingAddress: address,
-      body: req.body,
-      scope: appConstants.SCOPE_ALL,
-      type: 'shippingAddress'
-  }, req);
+      //publish create action
+      events.publish({
+        action: appConstants.ACTION_TYPE_CREATED,
+        user: req.user,
+        shippingAddress: address,
+        body: req.body,
+        scope: appConstants.SCOPE_ALL,
+        type: 'shippingAddress'
+      }, req);
+    }
+    else{
+      return res.status(HttpStatus.CONFLICT).send({ message: "A user can have a maximum of 3 shipping address" });
+    }
 
-});
+  });
 
 /**
 * Set user default shipping address
 */
 exports.setDefaultAddress = asyncHandler(async (req, res, next) => {
-   let existAddress = req.shippingAddress;
+  let existAddress = req.shippingAddress;
 
-   if(existAddress.isDefaultAddress === true) {
-     return res.status(HttpStatus.BAD_REQUEST).send({ message: 'This address is already a default address'});
-   }
+  if(existAddress.isDefaultAddress === true) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: 'This address is already a default address'});
+  }
 
    //set all the user shipping address default to false;
    await ShippingAddress.update({isDefaultAddress: false}, {where: {userId: req.userId}});
@@ -165,27 +171,42 @@ exports.setDefaultAddress = asyncHandler(async (req, res, next) => {
 
    res.status(HttpStatus.OK).send({ message: 'User default address successfully set!'});
 
+ });
+
+/**
+* Check user's shipping address limit
+*/
+exports.checkShippingAddressLimit = asyncHandler(async (req, res, next) => {
+
+  let response;
+  const shippingAddressCount = await repository.userShippingAddressCount(req.userId);
+  if(shippingAddressCount<3)
+    response = "user can add new address"
+  else
+    response = "A user can have a maximum of 3 shipping address"
+  res.status(HttpStatus.ACCEPTED).send({status: response});
+
 });
 
 /**
-* Set user default shipping address
+* Remove user's shipping address
 */
 exports.remove = asyncHandler(async (req, res, next) => {
-   let existAddress = req.shippingAddress;
+  let existAddress = req.shippingAddress;
 
-   if(existAddress.isDefaultAddress === true) {
-     res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove default address'});
-   }
+  if(existAddress.isDefaultAddress === true) {
+    res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove default address'});
+  }
 
-   const orderExists = await Order.findOne({where: {shippingId: existAddress.id}});
+  const orderExists = await Order.findOne({where: {shippingId: existAddress.id}});
 
-   if(orderExists) {
-     res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove address. Order exists for this address'});
-   }
+  if(orderExists) {
+    res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove address. Order exists for this address'});
+  }
 
-   await existAddress.destroy();
+  await existAddress.destroy();
 
-   res.status(HttpStatus.OK).send({ message: 'User address removed!'});
+  res.status(HttpStatus.OK).send({ message: 'User address removed!'});
 
 });
 
@@ -195,21 +216,21 @@ exports.remove = asyncHandler(async (req, res, next) => {
 */
 exports.edit = asyncHandler(async (req, res, next) => {
 
-    let existAddress = req.shippingAddress;
-    const userId = req.userId;
+  let existAddress = req.shippingAddress;
+  const userId = req.userId;
 
-    let contract = new ValidationContract();
-    contract.isRequired(req.body.addressLine1,"It is mandatory to inform the address!");
-    contract.isRequired(req.body.city, "The city field is required!");
-    contract.isRequired(req.body.state, "The state field is required!");
-    contract.isRequired(req.body.zipCode, "The zipcode field is required!");
-    contract.isRequired(req.body.lat, "The lat(latitude) field is required!");
-    contract.isRequired(req.body.lon, "The lon(longitude) field is required!");
+  let contract = new ValidationContract();
+  contract.isRequired(req.body.addressLine1,"It is mandatory to inform the address!");
+  contract.isRequired(req.body.city, "The city field is required!");
+  contract.isRequired(req.body.state, "The state field is required!");
+  contract.isRequired(req.body.zipCode, "The zipcode field is required!");
+  contract.isRequired(req.body.lat, "The lat(latitude) field is required!");
+  contract.isRequired(req.body.lon, "The lon(longitude) field is required!");
 
-    if(req.body.isDefaultAddress === true) {
-      if (existAddress.isDefaultAddress === true) {
-        return res.status(HttpStatus.CONFLICT).send({ message: "Already a default address. Please remove isDefaultAddress from request", status: HttpStatus.CONFLICT});
-      }
+  if(req.body.isDefaultAddress === true) {
+    if (existAddress.isDefaultAddress === true) {
+      return res.status(HttpStatus.CONFLICT).send({ message: "Already a default address. Please remove isDefaultAddress from request", status: HttpStatus.CONFLICT});
+    }
 
       //set all the user shipping address default to false;
       await ShippingAddress.update({isDefaultAddress: false}, {where: {userId}});
@@ -246,7 +267,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
 
     res.status(200).send({ message: 'Address successfully updated!', data: updatedAddress });
 
-});
+  });
 
 
 

@@ -98,12 +98,12 @@ exports.list = asyncHandler(async (req, res, next) => {
 
   //publish create action
   events.publish({
-      action: 'listed',
-      user: req.user,
-      query: req.query,
-      params: req.params,
-      scope: appConstants.SCOPE_USER,
-      type: 'basket'
+    action: 'listed',
+    user: req.user,
+    query: req.query,
+    params: req.params,
+    scope: appConstants.SCOPE_USER,
+    type: 'basket'
   }, req);
 
 });
@@ -264,7 +264,7 @@ function prepareCartResponse({basketItems, basket}){
 
 
 
-exports.delItem = async ( req, res, next) => {
+exports.delItem = asyncHandler(async ( req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
     res.status(HttpStatus.CONFLICT).send({
@@ -286,9 +286,9 @@ exports.delItem = async ( req, res, next) => {
   let basket_list = await repository.listBasket(basket[0].id)
 
   res.status(HttpStatus.ACCEPTED).send(basket_list);
-}
+})
 
-exports.peopleAlsoAddedList = async ( req, res, next) => {
+exports.peopleAlsoAddedList = asyncHandler(async ( req, res, next) => {
 
   let list = await repository.peopleAlsoAddedList(req.params.id)
 
@@ -302,4 +302,4 @@ exports.peopleAlsoAddedList = async ( req, res, next) => {
   })
 
   res.status(HttpStatus.ACCEPTED).send(filteredList);
-}
+})

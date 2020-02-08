@@ -9,13 +9,13 @@ const uploadService = require('../services/upload');
 const {
   User, Documents, NIDFrontSide, ChefLicense, ChefCertificate,
   DriverVehicleRegistration, DriverLicenseFrontSide, KitchenPhoto,
-ProfilePhoto } = require("../models/index");
-const debug = require('debug')('docs');
-const asyncHandler = require('express-async-handler');
-const userConstants = require(path.resolve('app/constants/users'));
-const documentConstants = require(path.resolve('app/constants/documents'));
+  ProfilePhoto } = require("../models/index");
+  const debug = require('debug')('docs');
+  const asyncHandler = require('express-async-handler');
+  const userConstants = require(path.resolve('app/constants/users'));
+  const documentConstants = require(path.resolve('app/constants/documents'));
 
-exports.getAuthUserDocMiddleware = asyncHandler(async(req, res, next) => {
+  exports.getAuthUserDocMiddleware = asyncHandler(async(req, res, next) => {
   //extract id, user_type from session
   const { id, user_type } = req.user;
 
@@ -38,86 +38,86 @@ exports.getAuthUserDocMiddleware = asyncHandler(async(req, res, next) => {
 });
 
 
-exports.getDocByIdMiddleware = asyncHandler(async(req, res, next, docId) => {
-  const doc = await repository.getDocById(docId);
-  if(!doc) {
-    return res.status(HttpStatus.NOT_FOUND).send({message: 'Doc Not Found', status: HttpStatus.NOT_FOUND});
-  }
-  req.doc = doc;
-  next();
+  exports.getDocByIdMiddleware = asyncHandler(async(req, res, next, docId) => {
+    const doc = await repository.getDocById(docId);
+    if(!doc) {
+      return res.status(HttpStatus.NOT_FOUND).send({message: 'Doc Not Found', status: HttpStatus.NOT_FOUND});
+    }
+    req.doc = doc;
+    next();
 
-})
+  })
 
-exports.create = asyncHandler(async (req, res, next) => {
+  exports.create = asyncHandler(async (req, res, next) => {
 
-  const actualUser = req.user;
-  let actualDocs;
+    const actualUser = req.user;
+    let actualDocs;
 
-  if (actualUser.user_type === userConstants.USER_TYPE_DRIVER)
-    actualDocs = await repository.getDriverDoc(actualUser.id);
-  if (actualUser.user_type === userConstants.USER_TYPE_CHEF)
-    actualDocs = await repository.getDriverDoc(actualUser.id);
+    if (actualUser.user_type === userConstants.USER_TYPE_DRIVER)
+      actualDocs = await repository.getDriverDoc(actualUser.id);
+    if (actualUser.user_type === userConstants.USER_TYPE_CHEF)
+      actualDocs = await repository.getDriverDoc(actualUser.id);
 
-  if (actualDocs) {
-    res.status(HttpStatus.OK).send({ message: "You already have documents applied", data: actualDocs });
-    return 0;
-  }
+    if (actualDocs) {
+      res.status(HttpStatus.OK).send({ message: "You already have documents applied", data: actualDocs });
+      return 0;
+    }
 
-  let contract = new ValidationContract();
-  if (actualUser.user_type === userConstants.USER_TYPE_CHEF) {
-    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect! field: social_security_number');
-    contract.isRequired(req.files['chef_license'], "Chef's license is missing! field: chef_license ");
-    contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing! field: chef_certificate");
-    contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing! field: kitchen_photo");
-    contract.isRequired(req.files['front_side'], "Front side document is missing. field: front_side");
-    contract.isRequired(req.files['profile_photo'], "User photo is missing. field: profile_photo");
-  }
+    let contract = new ValidationContract();
+    if (actualUser.user_type === userConstants.USER_TYPE_CHEF) {
+      contract.isRequired(req.body.social_security_number, 'The social security number is incorrect! field: social_security_number');
+      contract.isRequired(req.files['chef_license'], "Chef's license is missing! field: chef_license ");
+      contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing! field: chef_certificate");
+      contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing! field: kitchen_photo");
+      contract.isRequired(req.files['front_side'], "Front side document is missing. field: front_side");
+      contract.isRequired(req.files['profile_photo'], "User photo is missing. field: profile_photo");
+    }
 
-  if (actualUser.user_type === userConstants.USER_TYPE_DRIVER) {
-    contract.isRequired(req.files['profile_photo'], "User photo is missing");
-    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
-    contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");
-    contract.isRequired(req.files['driver_vehicle_registration'], "Driver vehicle registration is missing!");
-  }
+    if (actualUser.user_type === userConstants.USER_TYPE_DRIVER) {
+      contract.isRequired(req.files['profile_photo'], "User photo is missing");
+      contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
+      contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");
+      contract.isRequired(req.files['driver_vehicle_registration'], "Driver vehicle registration is missing!");
+    }
 
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
+    if (!contract.isValid()) {
+      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+      return 0;
+    }
 
-  let new_doc = await repository.createDoc({
-    comment: "",
-    userId: actualUser.id,
-    social_security_number: req.body.social_security_number
+    let new_doc = await repository.createDoc({
+      comment: "",
+      userId: actualUser.id,
+      social_security_number: req.body.social_security_number
+    });
+
+    if (actualUser.user_type === 'chef' && req.files['chef_license'])
+      await repository.createChefLicense(new_doc.id, req.files.chef_license.shift());
+    if (actualUser.user_type === 'chef' && req.files['chef_certificate'])
+      await repository.createChefCertificate(new_doc.id, req.files.chef_certificate.shift());
+    if (actualUser.user_type === 'chef' && req.files['kitchen_photo'])
+      await repository.createKitchenPhoto(new_doc.id, req.files.kitchen_photo.shift());
+    if (actualUser.user_type === 'chef' && req.files['front_side'])
+      await repository.createNIDFrontSide(new_doc.id, req.files.front_side.shift());
+    if (req.files['profile_photo']) {
+      const photoResponse = await repository.createProfilePhoto(new_doc.id, req.files.profile_photo.shift());
+      await actualUser.update({'imagePath': photoResponse.url});
+    }
+
+    if (actualUser.user_type === 'driver' && req.files['driver_license_front_side'])
+      await repository.createDriverLicense(new_doc.id, req.files.driver_license_front_side.shift());
+    if (actualUser.user_type === 'driver' && req.files['driver_vehicle_registration'])
+      await repository.createDriverVehicleLicense(new_doc.id, req.files.driver_vehicle_registration.shift());
+
+    let saved_data;
+
+    if (actualUser.user_type === 'driver')
+      saved_data = await repository.getUserDoc(actualUser.id);
+    if (actualUser.user_type === 'chef')
+      saved_data = await repository.getDriverDoc(actualUser.id);
+
+    res.status(HttpStatus.OK).send({ message: "Documents successfully saved", data: saved_data });
   });
-
-  if (actualUser.user_type === 'chef' && req.files['chef_license'])
-    await repository.createChefLicense(new_doc.id, req.files.chef_license.shift());
-  if (actualUser.user_type === 'chef' && req.files['chef_certificate'])
-    await repository.createChefCertificate(new_doc.id, req.files.chef_certificate.shift());
-  if (actualUser.user_type === 'chef' && req.files['kitchen_photo'])
-    await repository.createKitchenPhoto(new_doc.id, req.files.kitchen_photo.shift());
-  if (actualUser.user_type === 'chef' && req.files['front_side'])
-    await repository.createNIDFrontSide(new_doc.id, req.files.front_side.shift());
-  if (req.files['profile_photo']) {
-    const photoResponse = await repository.createProfilePhoto(new_doc.id, req.files.profile_photo.shift());
-    await actualUser.update({'imagePath': photoResponse.url});
-  }
-
-  if (actualUser.user_type === 'driver' && req.files['driver_license_front_side'])
-    await repository.createDriverLicense(new_doc.id, req.files.driver_license_front_side.shift());
-  if (actualUser.user_type === 'driver' && req.files['driver_vehicle_registration'])
-    await repository.createDriverVehicleLicense(new_doc.id, req.files.driver_vehicle_registration.shift());
-
-  let saved_data;
-
-  if (actualUser.user_type === 'driver')
-    saved_data = await repository.getUserDoc(actualUser.id);
-  if (actualUser.user_type === 'chef')
-    saved_data = await repository.getDriverDoc(actualUser.id);
-
-  res.status(HttpStatus.OK).send({ message: "Documents successfully saved", data: saved_data });
-});
 
 /**
 * //TODO since a user only has one document, should we use list method
@@ -226,7 +226,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
 exports.getDocumentStatus = [
 exports.getAuthUserDocMiddleware,
 asyncHandler(async (req, res, next) => {
- res.status(HttpStatus.OK).send({doc_status: req.authUserDoc.state_type, id: req.authUserDoc.id});
+  res.status(HttpStatus.OK).send({doc_status: req.authUserDoc.state_type, id: req.authUserDoc.id});
 })];
 
 
@@ -253,13 +253,13 @@ exports.createChefLicense = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: ChefLicense,
-        attributes: ['id', 'description', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: ChefLicense,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.ChefLicense) {
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -267,9 +267,9 @@ exports.createChefLicense = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   if (req.files['chef_license'])
     await repository.createChefLicense(new_doc.id, req.files.chef_license.shift());
@@ -310,13 +310,13 @@ exports.createChefCertificate = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({//
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: ChefCertificate,
-        attributes: ['id', 'description', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: ChefCertificate,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.ChefCertificate) {
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -324,9 +324,9 @@ exports.createChefCertificate = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   if (req.files['chef_certificate'])
     await repository.createChefCertificate(new_doc.id, req.files.chef_certificate.shift());
@@ -367,13 +367,13 @@ exports.createKitchenPhoto = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({//
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: KitchenPhoto,
-        attributes: ['id', 'description', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: KitchenPhoto,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.KitchenPhoto) {//
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -381,9 +381,9 @@ exports.createKitchenPhoto = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   if (req.files['kitchen_photo'])
     await repository.createKitchenPhoto(new_doc.id, req.files.kitchen_photo.shift());
@@ -419,13 +419,13 @@ exports.createNIDFrontInside = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({//
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: NIDFrontSide,
-        attributes: ['id', 'description', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: NIDFrontSide,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.NIDFrontSide) {//
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -433,9 +433,9 @@ exports.createNIDFrontInside = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   if (req.files['front_side'])//
     await repository.createNIDFrontSide(new_doc.id, req.files.front_side.shift());//
@@ -472,13 +472,13 @@ exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({//
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: ProfilePhoto,
-        attributes: ['id', 'description', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: ProfilePhoto,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.ProfilePhoto) {//
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -486,9 +486,9 @@ exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   const profilePhoto = req.files.profile_photo.shift();
   if (req.files['profile_photo'])//
@@ -497,7 +497,7 @@ exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
   let saved_data = await Documents.findOne({
     where: { userId: token_return.id },
     attributes: ["description", "url", "state_type"],
-    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    //attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [{
       model: ProfilePhoto,
       attributes: ['id', 'description', 'url', 'state_type']
@@ -506,7 +506,7 @@ exports.createProfilePhoto = asyncHandler(async (req, res, next) => {
   saved_data.state_type = 'validated';
   await saved_data.save();
   await actualUser.update({imagePath: profilePhoto.url});
-  
+
   res.status(HttpStatus.OK).send({ message: "Documents successfully saved", result: saved_data });
 });
 
@@ -533,13 +533,13 @@ exports.createDriverLicense = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({//
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: DriverLicenseFrontSide,
-        attributes: ['id', 'description', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: DriverLicenseFrontSide,
+      attributes: ['id', 'description', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.DriverLicenseFrontSide) {//
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -547,16 +547,16 @@ exports.createDriverLicense = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   if (req.files['driver_license_front_side'])//
     await repository.createDriverLicense(new_doc.id, req.files.driver_license_front_side.shift());//
 
   let saved_data = await Documents.findOne({
     where: { userId: token_return.id },
-    attributes: ["description", "url", "state_type"],
+    //attributes: ["description", "url", "state_type"],
     attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [{
       model: DriverLicenseFrontSide,
@@ -591,13 +591,13 @@ exports.createDriverVehicleLicense = asyncHandler(async (req, res, next) => {
   }
 
   const actualDocs = await Documents.findOne({//
-      where: { userId: token_return.id },
-      attributes: ['id', 'state_type', 'userId', 'social_security_number'],
-      include: [{
-        model: DriverVehicleRegistration,
-        attributes: ['id', 'state_type', 'url', 'state_type']
-      }]
-    });
+    where: { userId: token_return.id },
+    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    include: [{
+      model: DriverVehicleRegistration,
+      attributes: ['id', 'state_type', 'url', 'state_type']
+    }]
+  });
 
   if (actualDocs && actualDocs.DriverVehicleRegistration) {//
     res.status(HttpStatus.OK).send({ message: "You already have documents applied", result: actualDocs });
@@ -605,9 +605,9 @@ exports.createDriverVehicleLicense = asyncHandler(async (req, res, next) => {
   }
 
   const new_doc = await repository.createDoc({
-      comment: "",
-      userId: token_return.id
-    });
+    comment: "",
+    userId: token_return.id
+  });
 
   if (req.files['driver_vehicle_registration'])//
     await repository.createDriverVehicleLicense(new_doc.id, req.files.driver_vehicle_registration.shift());//
@@ -615,7 +615,7 @@ exports.createDriverVehicleLicense = asyncHandler(async (req, res, next) => {
   let saved_data = await Documents.findOne({
     where: { userId: token_return.id },
     attributes: ["description", "url", "state_type"],
-    attributes: ['id', 'state_type', 'userId', 'social_security_number'],
+    //attributes: ['id', 'state_type', 'userId', 'social_security_number'],
     include: [{
       model: DriverVehicleRegistration,
       attributes: ['id', 'state_type', 'url', 'state_type']

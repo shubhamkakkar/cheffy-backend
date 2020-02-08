@@ -22,17 +22,23 @@ exports.add = async (user,custom,plate,fav_type) => {
   }
 }
 
-exports.delete = async (id) => {
-  await Favourites.destroy({ where: { id: id } });
+exports.delete = async (id, user) => {
+  await Favourites.destroy({ 
+    where: {[Op.and]: [{userId:user}, {id: id }]}
+  });
 }
 
-exports.findPlateinFav = async (data) => {
-  const existPlate = await Favourites.findOne({ where: { plateId: data } });
+exports.findPlateinFav = async (data, userId) => {
+  const existPlate = await Favourites.findOne({ 
+    where: {[Op.and]: [{userId:userId}, {plateId: data }]}
+  });
   return existPlate;
 }
 
-exports.findCustomPlateinFav = async (data) => {
-  const existPlate = await Favourites.findOne({ where: { CustomplateId: data } });
+exports.findCustomPlateinFav = async (data, userId) => {
+  const existPlate = await Favourites.findOne({ where: {
+    [Op.and]: [{userId:userId}, {CustomplateId: data }]
+ } });
   return existPlate;
 }
 

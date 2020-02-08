@@ -4,8 +4,9 @@ const repository = require("../repository/admin-repository");
 const repositoryDocs = require("../repository/docs-repository");
 const authService = require("../services/auth");
 var HttpStatus = require('http-status-codes');
+const asyncHandler = require('express-async-handler');
 
-exports.authenticate = async (req, res, next) => {
+exports.authenticate = asyncHandler(async (req, res, next) => {
   try {
     const customer = await repository.authenticateToken({
       token: req.body.token,
@@ -31,9 +32,9 @@ exports.authenticate = async (req, res, next) => {
       message: "Fail to process"
     });
   }
-};
+});
 
-exports.listAllDocs = async (req, res, next) => {
+exports.listAllDocs = asyncHandler(async (req, res, next) => {
   try {
     const docs = await repository.listAllDocs();
     res.status(HttpStatus.ACCEPTED).send( docs );
@@ -45,9 +46,9 @@ exports.listAllDocs = async (req, res, next) => {
     });
     return 0;
   }
-}
+})
 
-exports.checkDocs = async (req, res, next) => {
+exports.checkDocs = asyncHandler(async (req, res, next) => {
   try {
     await repositoryDocs.updateChefLicense(req.body.chef_license)
     await repositoryDocs.updateChefCertificate(req.body.chef_certificate)
@@ -67,4 +68,4 @@ exports.checkDocs = async (req, res, next) => {
     });
     return 0;
   }
-}
+})

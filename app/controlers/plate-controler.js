@@ -2,7 +2,7 @@
 const path = require('path');
 const HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
-const { Plates, User, PlateImage, ReceiptImage, KitchenImage, OrderFrequency } = require('../models/index');
+const { Plates, User, PlateImage, ReceiptImage, KitchenImage } = require('../models/index');
 const repository = require('../repository/plate-repository');
 const repoCustom = require('../repository/customPlate-repository');
 const repositoryDocs = require('../repository/docs-repository');
@@ -105,10 +105,22 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 
 exports.getPlate = asyncHandler(async (req, res, next) => {
+  try{
 
   const detailPlate = await repository.getPlate({req, plateId: req.params.id});
 
-  res.status(200).send({ message: 'Plate find!', data: detailPlate });
+  let checkFavourite = null;
+  let is_favourite = "NO!";
+
+  if(detailPlate){
+  checkFavourite = await repository.checkFavourite(detailPlate.id, req.userId);
+}
+
+  if(checkFavourite.length){
+    is_favourite = "YES";
+  }
+
+  res.status(200).send({ message: 'Plate find!', favourite:is_favourite ,data: detailPlate });
 
   events.publish({
       action: appConstants.ACTION_TYPE_VIEWED,
@@ -117,6 +129,11 @@ exports.getPlate = asyncHandler(async (req, res, next) => {
       scope: appConstants.SCOPE_ALL,
       type: 'plate'
   }, req);
+
+}
+catch(e){
+  console.log(e)
+}
 
 });
 
@@ -250,48 +267,48 @@ exports.searchHelp = asyncHandler( async (req, res, next) => {
 
 
 exports.getChefPlates = [
-  async (req, res, next) => {
-    const { chefId } = req.params;
-    req.query.userId = chefId;
-    next();
-  },
+  asyncHandler(async (req, res, next) => {
+      const { chefId } = req.params;
+      req.query.userId = chefId;
+      next();
+    }),
   exports.list
 ];
 
 
 exports.getRelatedPlates = [
-  async (req, res, next) => {
-    req.query.related = req.params.id;
-    next();
-  },
+  asyncHandler(async (req, res, next) => {
+      req.query.related = req.params.id;
+      next();
+    }),
   exports.list
 ];
 
 
 exports.categoryPlates = [
-  async (req, res, next) => {
-    req.query.categoryId = req.params.categoryId;
-    next();
-  },
+  asyncHandler(async (req, res, next) => {
+      req.query.categoryId = req.params.categoryId;
+      next();
+    }),
   exports.list
 ];
 
 
 
 
-exports.imagePlateKitchen = async (req, res, next) => {
+exports.imagePlateKitchen = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const retorno = await PlateImage.findAll({ where: { plateId: id } });
   res.status(HttpStatus.ACCEPTED).send(retorno);
-};
+});
 
-exports.listReceipt = async (req, res, next) => {
+exports.listReceipt = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const retorno = await ReceiptImage.findOne({ where: { plateId: id } });
   res.status(200).send({ message: "Receipt find!", data: retorno });
-};
+});
 
-exports.uploadImages = async (req, res, next) => {
+exports.uploadImages = asyncHandler(async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   const { id } = req.params;
   const existUser = await User.findOne({ where: { id: token_return.id } });
@@ -350,9 +367,9 @@ exports.uploadImages = async (req, res, next) => {
         receipt_image: returnReceiptImages
       }});
   }
-};
+});
 
-exports.deleteImage = async (req, res, next) => {
+exports.deleteImage = asyncHandler(async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   const { plateImageId, type_image } = req.params;
   const existUser = await User.findOne({ where: { id: token_return.id } });
@@ -409,10 +426,10 @@ exports.deleteImage = async (req, res, next) => {
   }
 
   res.status(200).send({ message: message, data: actualImage });
-};
+});
 
 
-exports.popularPlates = async (req, res, next) => {try{
+exports.popularPlates = asyncHandler(async (req, res, next) => {try{
 
   let list = await repository.popularPlates();
 
@@ -436,4 +453,4 @@ exports.popularPlates = async (req, res, next) => {try{
 
   res.status(200).send({ message: "Popular Plates!", data: unique });
 }catch(e){console.log(e)}
-};
+});
