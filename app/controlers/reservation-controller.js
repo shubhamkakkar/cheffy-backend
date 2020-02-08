@@ -34,6 +34,11 @@ exports.list = asyncHandler(async(req, res, next) => {
     contract.isRequired(req.body.allDay, 'allDay is required!');
     contract.isRequired(req.body.deliveryTime, 'deliveryTime is required!');
 
+    if (!contract.isValid()) {
+    res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({ message: contract.errors(), status: HttpStatus.NON_AUTHORITATIVE_INFORMATION }).end();
+    return 0;
+  }
+
     let newData = {};
 
     newData.foodName = req.body.foodName;
