@@ -1028,3 +1028,86 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   res.status(HttpStatus.CONFLICT).send({ message: "Error validating token!", status: HttpStatus.CONFLICT });
 });
+
+
+
+
+// bank endpoints
+
+/*
+Method to get stripe account details for a user
+*/
+
+/*
+exports.stripeDetails = asyncHandler(async (req, res) => {
+  if (!req.user.stripe_id) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: "User does not have a stripe account"});
+  }
+  const customer = await paymentService.getUser(req.user.stripe_id);
+  return res.status(HttpStatus.OK).send(customer);
+})
+
+
+//Method to create a bank account for a user
+
+exports.createBankAccount = asyncHandler(async (req, res, next) => {
+  try{
+    const existUser = req.user;
+    if (!existUser.stripe_id) {
+      return res.status(HttpStatus.BAD_REQUEST).send({ message: "User must have a stripe account before adding a bank account"});
+    }
+    const bank_account = await paymentService.createBankAccount(existUser.stripe_id, req.body);
+    res.status(HttpStatus.CREATED).send({ message: "New Bank Account Created", data: bank_account});
+  } catch (err) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: err.message});
+  }
+})
+
+
+//Method to retrieve a bank account details for a user via bank account ID
+
+exports.retrieveBankAccountById = asyncHandler(async (req, res, next) => {
+  const existUser = req.user;
+  if (!existUser.stripe_id) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: "User must have a stripe account before adding a bank account"});
+  }
+  const bank_account = await paymentService.retrieveBankAccountById(existUser.stripe_id, req.params.bankAccountId);
+  res.status(HttpStatus.CREATED).send({ message: "Here is your Bank Account", data: bank_account});
+})
+
+
+//Method to retrieve all bank accounts for a user
+
+exports.retrieveAllBankAccounts = asyncHandler(async (req, res, next) => {
+  const limit = req.body.limit || 10
+  const existUser = req.user;
+  if (!existUser.stripe_id) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: "User must have a stripe account before adding a bank account"});
+  }
+  const bank_accounts = await paymentService.retrieveAllBankAccounts(existUser.stripe_id, limit);
+  res.status(HttpStatus.CREATED).send({ message: "Here are your Bank Accounts", data: bank_accounts});
+})
+
+
+//Method to delete a bank account for a user
+
+exports.deleteBankAccount = asyncHandler(async (req, res, next) => {
+  const existUser = req.user;
+  if (!existUser.stripe_id) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: "User must have a stripe account before adding a bank account"});
+  }
+  const deleted = await paymentService.deleteBankAccount(existUser.stripe_id, req.params.bankAccountId);
+  res.status(HttpStatus.CREATED).send({ message: "Here are your Bank Accounts", data: deleted});
+})
+
+
+//Method to verify a bank account for a user
+
+exports.verifyBankAccount = asyncHandler(async (req, res, next) => {
+  const existUser = req.user;
+  if (!existUser.stripe_id) {
+    return res.status(HttpStatus.BAD_REQUEST).send({ message: "User must have a stripe account before adding a bank account"});
+  }
+  const bank_account = await paymentService.verifyBankAccount(existUser.stripe_id, req.params.bankAccountId);
+  res.status(HttpStatus.CREATED).send({ message: "Bank Account Verified!", data: bank_account});
+})*/
