@@ -11,6 +11,7 @@ const shippingPolicies = require(path.resolve('app/policies/shipping-address'));
 router.post("/", authService.authorize, userController.getAuthUserMiddleware, controller.create);
 router.get("/", authService.authorize, userController.getAuthUserMiddleware, controller.list);
 
+router.get('/checkLimit', authService.authorize, userController.getAuthUserMiddleware, controller.checkShippingAddressLimit);
 router.put("/:shippingAddressId", authService.authorize, userController.getAuthUserMiddleware, shippingPolicies.isOwnerMiddleware(), controller.edit);
 router.put("/:shippingAddressId/set-default", authService.authorize, userController.getAuthUserMiddleware, shippingPolicies.isOwnerMiddleware(), controller.setDefaultAddress);
 router.delete("/:shippingAddressId", authService.authorize, userController.getAuthUserMiddleware, shippingPolicies.isOwnerMiddleware(), controller.remove);

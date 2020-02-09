@@ -25,8 +25,8 @@ function distance(lat1,lon1,lat2,lon2) {
   var dLat = (lat2-lat1) * Math.PI / 180;
   var dLon = (lon2-lon1) * Math.PI / 180;
   var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-   Math.cos(lat1 * Math.PI / 180 ) * Math.cos(lat2 * Math.PI / 180 ) *
-   Math.sin(dLon/2) * Math.sin(dLon/2);
+  Math.cos(lat1 * Math.PI / 180 ) * Math.cos(lat2 * Math.PI / 180 ) *
+  Math.sin(dLon/2) * Math.sin(dLon/2);
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   var d = R * c;
   if (d>1) return Math.round(d)+"km";
@@ -104,7 +104,7 @@ const post_process = async (user_data, shipping, user_basket, basket_content, co
   return user_info;
 }
 
-exports.orderByIdMiddleware = asyncHandler(async(req, res, next, orderId) => {
+exports.orderByIdMiddleware = asyncHandler(async (req, res, next, orderId) => {
   const order = repository.getById(orderId);
   if(!order) return res.status(HttpStatus.NOT_FOUND).send({message: `Order Not Found by orderId ${req.params.orderId}`});
   req.order = order;
@@ -115,7 +115,7 @@ exports.orderByIdMiddleware = asyncHandler(async(req, res, next, orderId) => {
 * Get User Order List
 * Looks into orders table
 */
-exports.list = async (req, res, next) => {
+exports.list = asyncHandler(async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
     res.status(HttpStatus.CONFLICT).send({
@@ -138,7 +138,7 @@ exports.list = async (req, res, next) => {
     });
     return 0;
   }
-}
+})
 
 
 /**
@@ -157,9 +157,17 @@ exports.chefOrderList = asyncHandler(async (req, res, next) => {
     query.state_type = state_type;
   }
 
-  const orderItems = await repository.getChefOrders(query);
+  let orderItems = await repository.getChefOrders(query);
 
   const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}orders!`;
+
+  if(req.query.item_type == 'plate'){
+    orderItems = orderItems.filter(x => x.plate != null)
+  }
+
+  if(req.query.item_type == 'custom_plate'){
+    orderItems = orderItems.filter(x => x.custom_plate_order != null)
+  }
 
   res.status(HttpStatus.ACCEPTED).send({
     message,
@@ -216,7 +224,7 @@ exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 });
 
 
-exports.listTrackingUser = async (req, res, next) => {
+exports.listTrackingUser = asyncHandler(async (req, res, next) => {
 
   try {
     const user_orders = await repository.listTrackingUser(req.userId)
@@ -233,10 +241,10 @@ exports.listTrackingUser = async (req, res, next) => {
     });
     return 0;
   }
-}
+})
 
-exports.listTrackingDriver = async (req, res, next) => {
-  
+exports.listTrackingDriver = asyncHandler(async (req, res, next) => {
+
   try {
     const user_orders = await repository.listTrackingDriver(req.userId)
     res.status(HttpStatus.ACCEPTED).send({
@@ -252,9 +260,9 @@ exports.listTrackingDriver = async (req, res, next) => {
     });
     return 0;
   }
-}
+})
 
-exports.getOneOrder = async (req, res, next) => {
+exports.getOneOrder = asyncHandler(async (req, res, next) => {
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
     res.status(HttpStatus.CONFLICT).send({
@@ -277,7 +285,7 @@ exports.getOneOrder = async (req, res, next) => {
     });
     return 0;
   }
-}
+})
 
 
 /**
@@ -285,12 +293,12 @@ exports.getOneOrder = async (req, res, next) => {
 * This follows the same process as custom plates
 */
 exports.create = [
-  customPlateControllers.pay
+customPlateControllers.pay
 ];
 
 
 /**Edit order state*/
-exports.editOrderStateType = asyncHandler(async(req, res, next) => {
+exports.editOrderStateType = asyncHandler(async (req, res, next) => {
   const user = req.user;
   const order = req.order;
 
@@ -302,7 +310,7 @@ exports.editOrderStateType = asyncHandler(async(req, res, next) => {
 
 });
 
-exports.createOrderReview = async (req, res, next) => {
+exports.createOrderReview = asyncHandler(async (req, res, next) => {
   try {
     let order,orderItem ,token_return;
 
@@ -352,9 +360,9 @@ exports.createOrderReview = async (req, res, next) => {
       message: 'Failed to process your request'
     });
   }
-};
+});
 
-exports.ordersReadyForDelivery = async (req, res, next) => {
+exports.ordersReadyForDelivery = asyncHandler(async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
     res.status(HttpStatus.CONFLICT).send({
@@ -377,13 +385,13 @@ exports.ordersReadyForDelivery = async (req, res, next) => {
     });
     return 0;
   }
-};
+});
 
 /**
 * Get all orderitems and their respective orderdeliveries if exists
 * Does left outer join of orderitems with orderdeliveries
 */
-exports.orderItemsDelivery = asyncHandler(async(req, res, next) => {
+exports.orderItemsDelivery = asyncHandler(async (req, res, next) => {
   const userId = req.userId;
   const pagination = paginator.paginateQuery(req);
 
@@ -407,21 +415,10 @@ exports.orderItemsDelivery = asyncHandler(async(req, res, next) => {
 });
 
 
-
-
-
-
-
-
-
-
-
 /**
 * Order Items
 */
-
-
-exports.orderItemByIdMiddleware = asyncHandler(async(req, res, next, id) => {
+exports.orderItemByIdMiddleware = asyncHandler(async (req, res, next, id) => {
   const orderItem = await repository.getOrderItemByIdDetails(id);
   if(!orderItem) return res.status(HttpStatus.NOT_FOUND).send({message: `OrderItem Not Found by orderItemId ${req.params.orderItemId}`});
   req.orderItem = orderItem;
@@ -432,7 +429,7 @@ exports.orderItemByIdMiddleware = asyncHandler(async(req, res, next, id) => {
 /**
 * Get Order Item
 */
-exports.getOrderItem = asyncHandler( async(req, res, next)=>{
+exports.getOrderItem = asyncHandler(async (req, res, next)=>{
   const user = req.user;
 
   const orderItem = req.orderItem;
@@ -443,7 +440,7 @@ exports.getOrderItem = asyncHandler( async(req, res, next)=>{
 /**
 * Update Order Item State Type
 */
-exports.editOrderItemStateType = asyncHandler( async(req, res, next)=>{
+exports.editOrderItemStateType = asyncHandler(async (req, res, next)=>{
   const user = req.user;
 
   const updates = {state_type: req.body.state_type};
@@ -459,71 +456,72 @@ exports.editOrderItemStateType = asyncHandler( async(req, res, next)=>{
 /**
 * Check if order item is already canceled by user
 */
-exports.checkOrderItemCanceled = (req, res, next) => {
+exports.checkOrderItemCanceled = asyncHandler(async(req, res, next) => {
   if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED) {
     return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Canceled by user. orderItemId: ${req.orderItem.id}`})
   }
   next();
-};
+});
+
 /**
 * Chef Accept Order Item by user
 */
 exports.chefAcceptOrderItem = [
-  exports.checkOrderItemCanceled,
-  (req, res, next) => {
-    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
-      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`})
-    }
-    req.body.state_type = orderItemConstants.STATE_TYPE_APPROVED;
-    next();
-  },
-  exports.editOrderItemStateType
+exports.checkOrderItemCanceled,
+asyncHandler(async (req, res, next) => {
+  if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`})
+  }
+  req.body.state_type = orderItemConstants.STATE_TYPE_APPROVED;
+  next();
+}),
+exports.editOrderItemStateType
 ];
 
 /**
 * Chef Reject Order Item by user
 */
 exports.chefRejectOrderItem = [
-  exports.checkOrderItemCanceled,
-  (req, res, next) => {
-    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_REJECTED) {
-      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Rejected. orderItemId: ${req.orderItem.id}`})
-    }
-    req.body.state_type = orderItemConstants.STATE_TYPE_REJECTED;
-    next();
-  },
-  exports.editOrderItemStateType
+exports.checkOrderItemCanceled,
+asyncHandler(async (req, res, next) => {
+  if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_REJECTED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Rejected. orderItemId: ${req.orderItem.id}`})
+  }
+  req.body.state_type = orderItemConstants.STATE_TYPE_REJECTED;
+  next();
+}),
+exports.editOrderItemStateType
 ];
 
 /**
 * This route should be called when chef finishes preparing the order
 */
 exports.chefReadyOrderItem = [
-  exports.checkOrderItemCanceled,
-  (req, res, next) => {
-    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_READY) {
-      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Ready. orderItemId: ${req.orderItem.id}`})
-    }
-    req.body.state_type = orderItemConstants.STATE_TYPE_READY;
-    next();
-  },
-  exports.editOrderItemStateType
+exports.checkOrderItemCanceled,
+asyncHandler(async (req, res, next) => {
+  if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_READY) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Ready. orderItemId: ${req.orderItem.id}`})
+  }
+  req.body.state_type = orderItemConstants.STATE_TYPE_READY;
+  next();
+}),
+exports.editOrderItemStateType
 ];
 
 /**
 * This route should be called when user wants to cancel orderitem before chef approves the orderitem
 */
 exports.userCancelOrderItem = [
-  (req, res, next) => {
-    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
-      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Approved by Chef. Cannot cancel order. orderItemId: ${req.orderItem.id}`})
-    }
+asyncHandler(async (req, res, next) => {
+  if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Approved by Chef. Cannot cancel order. orderItemId: ${req.orderItem.id}`})
+  }
 
-    if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED) {
-      return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Canceled. orderItemId: ${req.orderItem.id}`})
-    }
-    req.body.state_type = orderItemConstants.STATE_TYPE_CANCELED;
-    next();
-  },
-  exports.editOrderItemStateType
+  if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Canceled. orderItemId: ${req.orderItem.id}`})
+  }
+  req.body.state_type = orderItemConstants.STATE_TYPE_CANCELED;
+  next();
+}),
+exports.editOrderItemStateType
 ];

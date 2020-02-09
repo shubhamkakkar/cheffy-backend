@@ -2,6 +2,7 @@
 const path = require('path');
 const {sequelize, Plates, Review,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
+const userConstants = require(path.resolve('app/constants/users'));
 
 
 exports.getById = async (orderDeliveryId) => {
@@ -9,7 +10,6 @@ exports.getById = async (orderDeliveryId) => {
 };
 
 
-//TODO waiting OrderDelivey to be implemented
 exports.createOrderDelivery = async (data) => {
     try {
         const order = await OrderDelivery.create(data);
@@ -23,7 +23,6 @@ exports.createOrderDelivery = async (data) => {
 
 
 
-//TODO waiting OrderDelivey to be implemented
 exports.edit = async (data,driver) => {
     // try {
     //     const order = await OrderDelivery.create({...data});
@@ -35,7 +34,6 @@ exports.edit = async (data,driver) => {
 
   }
 
-  //TODO waiting OrderDelivey to be implemented
 exports.getOrderDeliveriesByUserId = async (data,driver) => {
   let order = await Order.findAll({
     where: {userId:data},
@@ -63,14 +61,13 @@ exports.getOrderDeliveriesByUserId = async (data,driver) => {
     {
     model: OrderDelivery,
     required: true,
-    attributes: ["id","state_type"]
+    attributes: ["id"],
     //where: {state_type: 'pending'}
    }]
   });
 
   return order;
 }
-  //TODO waiting OrderDelivey to be implemented
 exports.getOrderDeliveriesPendingByUserId = async (data,driver) => {
   let order = await Order.findAll({
     where: {userId:data},
@@ -106,6 +103,7 @@ exports.getOrderDeliveriesPendingByUserId = async (data,driver) => {
   return order;
 }
 
+
 exports.getCompletedDeliveriesByUser = async (data) => {
   let order = await Order.findAll({
     where: {userId:data},
@@ -123,20 +121,23 @@ exports.getCompletedDeliveriesByUser = async (data) => {
         as:'plate',
         include: [{
           model: User,
-          as:'chef'
+          as:'chef',
+          attributes:userConstants.userSelectFields,
+          include:[{model:ShippingAddress, as: 'address'}]
         },
+
         {
           model: PlateImage
         }]
-      },
-      {
-        model: OrderDelivery,
-        required: true,
-        attributes: ["id"],
-        where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
       }
       ]
-    }]
+    },
+    {
+        model: OrderDelivery,
+        required: true,
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
+      }
+    ]
   });
   return order;
 
@@ -152,15 +153,20 @@ exports.getPendingDeliveriesByUser = async (data) => {
       model: OrderPayment,
       attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
     },
+      {
+        model: ShippingAddress,
+        attributes: ["id", "addressLine1", "addressLine2", "lat", "lon", "city","state"]
+      },
     {
       model: OrderItem,
-      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity","orderId"],
       include:[{
         model: Plates,
         as:'plate',
         include: [{
           model: User,
           as:'chef',
+          attributes:userConstants.userSelectFields,
           include:[{model:ShippingAddress, as: 'address'}]
         },
 
@@ -171,7 +177,8 @@ exports.getPendingDeliveriesByUser = async (data) => {
       {
         model: OrderDelivery,
         required: true,
-        where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
+        where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING},
+        attributes:["pickup_time","dropoff_time"]
       }]
     }
     ]
@@ -181,7 +188,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
 }
 
 exports.getPendingDeliveriesByDriver = async (data) => {
- 
+
   let order = await OrderItem.findAll({
     where: {deliveryType: data.deliveryType},
     order: [["id", "DESC"]],
@@ -192,6 +199,7 @@ exports.getPendingDeliveriesByDriver = async (data) => {
         include: [{
           model: User,
           as:'chef',
+          attributes: userConstants.userSelectFields,
           include:[{model:ShippingAddress, as: 'address'}]
         },
 
@@ -204,7 +212,7 @@ exports.getPendingDeliveriesByDriver = async (data) => {
         required: false,
         where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
       }]
-    
+
   });
   return order;
 
@@ -213,7 +221,6 @@ exports.getPendingDeliveriesByDriver = async (data) => {
 
 
 
-  //TODO waiting OrderDelivey to be implemented
   exports.getByIdDetails = async (data) => {
     try {
       let deliveryId = parseInt(data);

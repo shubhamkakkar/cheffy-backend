@@ -15,7 +15,10 @@ const driver = require(path.resolve('./app/routes/driver'));
 const customPlate = require(path.resolve('./app/routes/customPlate'));
 const favourite = require(path.resolve('./app/routes/favourite'));
 const rating = require(path.resolve('./app/routes/rating'));
-const reservation = require(path.resolve('./app/routes/reservation'));
+const locationTracking = require(path.resolve('./app/routes/location_tracking'));
+const foodTracking = require(path.resolve('./app/routes/order_tracking'));
+const distanceController = require(path.resolve('./app/routes/distance_controller'));
+const groupNotifications = require(path.resolve('./app/routes/group_notifications'));
 
 const router = express.Router(); // eslint-disable-line new-cap
 
@@ -34,7 +37,9 @@ router.use("/driver", driver);
 router.use("/custom-plate", customPlate);
 router.use("/favourite", favourite);
 router.use("/rating", rating);
-router.use("/reservation", reservation);
-
+router.use("/location", locationTracking);
+router.use("/trackorder", foodTracking);
+router.use("/distanceController", distanceController);
+router.use("/groupNotifications", groupNotifications);
 
 module.exports = router;

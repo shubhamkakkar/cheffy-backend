@@ -2,7 +2,9 @@
 
 module.exports = (sequelize, DataTypes) => {
   const Reservation = sequelize.define('Reservation', {
-
+    orderId: {
+        type:DataTypes.INTEGER, primaryKey: true, allowNull: false
+    },
     foodName: DataTypes.STRING,
     description: DataTypes.STRING,
     photo: DataTypes.STRING,

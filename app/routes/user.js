@@ -12,11 +12,11 @@ const creditCardRouter = require("../routes/card");
 const multerStart = require(path.resolve("config/multer"));
 
 const udpateFields = [
-  'profile_photo',
+'profile_photo',
 ];
 
 const fieldsFile = udpateFields.map((field) => {
-  return {name: field, maxCount: 1};
+    return {name: field, maxCount: 1};
 });
 
 router.get('/dummy', controller.dummy);
@@ -49,7 +49,6 @@ router.post('/forgot-password', controller.forgotPassword);
 router.post('/verify-email-token-forgot-password', controller.veryifyTokenforgotPassword);
 router.post('/reset-password', controller.resetPassword);
 
-router.get('/balance/history/:from/:to', authService.authorize, controller.getAuthUserMiddleware, controller.getUserBalanceHistory);
 
 //Facebook
 router.use('/facebook',facebookRouter);
@@ -59,7 +58,7 @@ router.use('/card',creditCardRouter);
 
 //balance
 router.get('/chef/balance', authService.authorize, controller.getAuthUserMiddleware, controller.getChefBalance);
-// router.get('/balance/history/?:from:to', authService.authorize, controller.getUserBalanceHistory);
+router.get('/balance/history/:from/:to', authService.authorize, controller.getAuthUserMiddleware, controller.getUserBalanceHistory);
 router.get('/driver/balance', authService.authorize, controller.getAuthUserMiddleware, controller.getDriverBalance);
 
 // Message module
@@ -77,12 +76,12 @@ router.get('/searchPredictions', controller.searchPredictions);
 router.get('/peopleAlsoAdded/:id', basketController.peopleAlsoAddedList);
 
 //Bank Accounts
-/*router.get('/stripeDetails', authService.authorize, controller.getAuthUserMiddleware, controller.stripeDetails);
+router.get('/stripeDetails', authService.authorize, controller.getAuthUserMiddleware, controller.stripeDetails);
 router.post('/bankAccount', authService.authorize, controller.getAuthUserMiddleware, controller.createBankAccount);
 router.get('/bankAccount', authService.authorize, controller.getAuthUserMiddleware, controller.retrieveAllBankAccounts);
 router.get('/bankAccount/:bankAccountId', authService.authorize, controller.getAuthUserMiddleware, controller.retrieveBankAccountById);
 router.delete('/bankAccount/:bankAccountId', authService.authorize, controller.getAuthUserMiddleware, controller.deleteBankAccount);
-router.post('/bankAccount/:bankAccountId/verify', authService.authorize, controller.getAuthUserMiddleware, controller.verifyBankAccount);*/
+router.post('/bankAccount/:bankAccountId/verify', authService.authorize, controller.getAuthUserMiddleware, controller.verifyBankAccount);
 
 
 module.exports = router;

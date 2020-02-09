@@ -62,6 +62,52 @@ exports.getOrderDeliveriesByDriver = async ({driverId, state_type, pagination}) 
   return deliveries;
 };
 
+exports.getOrderDeliveriesByStateType = async (pagination) => {
+
+  const deliveries = await OrderDelivery.findAll(
+    {
+      where: { state_type: 'pending', OrderItemId:null },
+      ...pagination
+    }
+  );
+  return deliveries;
+};
+
+
+exports.acceptOrder = async (orderId,driverId) => {
+
+  const deliveries = await OrderDelivery.update({state_type: 'approved', driverId:driverId},
+    {
+      where: { orderId:orderId }
+    }
+  );
+  return "Driver successfully accepted the order";
+};
+
+// exports.rejectOrder = async (orderId,driverId) => {
+//   const orderDeliveryDetails = await OrderDelivery.findAll({
+//     where: { orderId:orderId }
+//   })
+//   let drivers = orderDeliveryDetails[0].availableDrivers;
+//   const deliveries = await OrderDelivery.update({state_type: 'approved', driverId:driverId},
+//     {
+//       where: { orderId:orderId }
+//     }
+//   );
+//   return "Driver successfully accepted the order";
+// };
+
+
+exports.currentOrder = async (driverId) => {
+
+  const order = await OrderDelivery.findAll(
+    {
+      where: { driverId:driverId, state_type: 'approved' }
+    }
+  );
+  return order;
+};
+
 exports.getOrderDeliveriesByUser = async ({userId, state_type, pagination}) => {
   const whereQuery = {userId};
   if(state_type) {

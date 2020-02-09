@@ -40,6 +40,37 @@ exports.getUserById = async (userId) => {
     return user;
 }
 
+exports.getAllDriver = async (pagination) => {
+    let driver = await User.findAll(
+        {
+            where: { user_type: 'driver' },
+            ...pagination
+        }
+    );
+
+    return driver;
+}
+
+exports.getSelectedDrivers = async (pagination) => {
+
+    let driver = await User.findAll(
+        {
+            attributes: [ 'id','location_lat','location_lon' ],
+            where: {
+                user_type: 'driver',
+                location_lat: {
+                    [Op.ne]: null
+                  },
+                location_lon: {
+                    [Op.ne]: null
+                }
+            },
+            ...pagination
+        }
+    );
+    return driver;
+}
+
 exports.saveStripeinfo = async (userId,stripeUser) => {
     let user = await User.findByPk(userId);
     user.stripe_id = stripeUser.id;

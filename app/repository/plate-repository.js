@@ -4,7 +4,7 @@
 const path = require('path');
 const Sequelize = require('sequelize');
 const debug = require('debug')('plate-repository');
-const {sequelize, OrderFrequency,OrderItem, ShippingAddress, Review, PlateReview, AggregateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, DietCategory } = require('../models/index');
+const {sequelize,Favourites, OrderFrequency,OrderItem, ShippingAddress, Review, PlateReview, AggregateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, DietCategory } = require('../models/index');
 const Op = Sequelize.Op;
 const regexpService = require(path.resolve('app/services/regexp'));
 const plateConstants = require(path.resolve('app/constants/plates'));
@@ -367,6 +367,9 @@ exports.searchPlates = async({req, query, pagination}) => {
   if(query.categoryId) {
     whereQuery.categoryId = query.categoryId;
   }
+  if(query.rating) {
+    whereQuery.rating = query.rating;
+  }
 
   //filter queries
   //'sort','priceRange','deliveryPrice','dietary'
@@ -570,3 +573,19 @@ exports.popularPlates = async (data) => {
   }
 };
 
+exports.checkFavourite = async (plateId, userId) => {
+
+  try {
+    let list = Favourites.findAll({
+      where:{
+          [Op.and]: [{userId:userId}, {plateId: plateId }]
+      }
+
+    })
+
+    return list;
+  } catch (e) {
+    console.log("Error: ", e);
+    return { message: "Fail the plates", error: e }
+  }
+};

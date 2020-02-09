@@ -44,7 +44,8 @@ module.exports = (sequelize, DataTypes) => {
     promotionalContent: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-    }
+    },
+    device_id: DataTypes.STRING
 
   });
 
