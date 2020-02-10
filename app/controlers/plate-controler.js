@@ -106,7 +106,6 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 exports.getPlate = asyncHandler(async (req, res, next) => {
   
-
   const detailPlate = await repository.getPlate({req, plateId: req.params.id});
 
   res.status(200).send({ message: 'Plate find!', data: detailPlate });
