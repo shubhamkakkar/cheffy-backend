@@ -5,6 +5,8 @@ const repositoryOrder = require("../repository/order-repository");
 const paymentService = require('../services/payment');
 const { OrderItem, User } = require('../models/index');
 const paypal = require('paypal-rest-sdk');
+const asyncHandler = require('express-async-handler');
+
 
 paypal.configure({
   'mode': 'sandbox',
@@ -106,3 +108,9 @@ exports.confirm = async (req, res, next) => {
     }
   )
 }
+
+
+exports.getUserWallet = asyncHandler(async(req, res, next) => {
+  const wallet = await walletRepository.getWallet(req.user.id);
+  return wallet;
+})

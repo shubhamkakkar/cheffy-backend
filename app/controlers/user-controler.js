@@ -1111,3 +1111,27 @@ exports.verifyBankAccount = asyncHandler(async (req, res, next) => {
   const bank_account = await paymentService.verifyBankAccount(existUser.stripe_id, req.params.bankAccountId);
   res.status(HttpStatus.CREATED).send({ message: "Bank Account Verified!", data: bank_account});
 })*/
+
+
+exports.getPayments = asyncHandler(async (req, res, next) => {
+  try {
+    if (req.user.user_type !== userConstants.USER_TYPE_DRIVER) {
+      return res.status(HttpStatus.FORBIDDEN).send({ message: "Only a Driver type user can get payments to their linked Bank Account"});
+    }
+    const wallet = await walletRepository.getWallet(req.user.id);
+    if (!wallet || !wallet[0].dataValues.balance || wallet[0].dataValues.balance <= 0) {
+      return res.status(HttpStatus.BAD_REQUEST).send({ message: "Cannot transfer zero or negative wallet balance to your bank account"});
+    }
+    const payout = await paymentService.createPayout(wallet[0].dataValues.balance, req.body.bankAccount);
+    wallet.balance = 0;
+    await wallet.save();
+    res.status(HttpStatus.OK).send({ message: "Congratulations! Your wallet amount will be transferred to your bank account within 7 working days.", data: payout});
+  } catch (err) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message: err.message});
+  }
+})
+
+exports.addMoneyToWallet = asyncHandler(async (req, res, next) => {
+  await walletRepository.addMoneyToWallet(req.userId, req.body.amount);
+  res.status(HttpStatus.OK).send({ message: "Wallet balance updated"});
+})

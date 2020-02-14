@@ -158,6 +158,18 @@ exports.confirmPayment = async (ammount, card, customer) => {
   return paymentIntent;
 }
 
+exports.createPayout = async (amount, bankAccount) => {
+  let payload = {
+    amount: amount,
+    currency: 'usd'
+  }
+  if (bankAccount) {
+    payload.destination = bankAccount
+  }
+  const payout = await stripe.payouts.create(payload)
+  return payout;
+}
+
 //STRIPE METHOD
 /**
   try {

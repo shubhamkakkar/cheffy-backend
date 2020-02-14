@@ -84,5 +84,8 @@ router.get('/bankAccount/:bankAccountId', authService.authorize, controller.getA
 router.delete('/bankAccount/:bankAccountId', authService.authorize, controller.getAuthUserMiddleware, controller.deleteBankAccount);
 router.post('/bankAccount/:bankAccountId/verify', authService.authorize, controller.getAuthUserMiddleware, controller.verifyBankAccount);*/
 
+router.post('/getPayments', authService.authorize, controller.getAuthUserMiddleware, controller.getPayments)
+router.post('/wallet/addMoney', authService.authorize, controller.getAuthUserMiddleware, controller.addMoneyToWallet)
+
 
 module.exports = router;
