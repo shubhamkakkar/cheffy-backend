@@ -28,6 +28,8 @@ const events = require(path.resolve('app/services/events'));
 const _ = require('lodash');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+const paymentService = require('../services/payment');
+
 
 const { generateHash } = require('../../helpers/password');
 
@@ -1038,13 +1040,16 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 Method to get stripe account details for a user
 */
 
-/*
+
 exports.stripeDetails = asyncHandler(async (req, res) => {
+  try{
   if (!req.user.stripe_id) {
     return res.status(HttpStatus.BAD_REQUEST).send({ message: "User does not have a stripe account"});
   }
   const customer = await paymentService.getUser(req.user.stripe_id);
   return res.status(HttpStatus.OK).send(customer);
+}
+catch(e){console.log(e)}
 })
 
 
@@ -1110,7 +1115,7 @@ exports.verifyBankAccount = asyncHandler(async (req, res, next) => {
   }
   const bank_account = await paymentService.verifyBankAccount(existUser.stripe_id, req.params.bankAccountId);
   res.status(HttpStatus.CREATED).send({ message: "Bank Account Verified!", data: bank_account});
-})*/
+})
 
 
 exports.getPayments = asyncHandler(async (req, res, next) => {

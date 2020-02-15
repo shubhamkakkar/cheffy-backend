@@ -77,12 +77,12 @@ router.get('/searchPredictions', controller.searchPredictions);
 router.get('/peopleAlsoAdded/:id', basketController.peopleAlsoAddedList);
 
 //Bank Accounts
-/*router.get('/stripeDetails', authService.authorize, controller.getAuthUserMiddleware, controller.stripeDetails);
+router.get('/stripeDetails', authService.authorize, controller.getAuthUserMiddleware, controller.stripeDetails);
 router.post('/bankAccount', authService.authorize, controller.getAuthUserMiddleware, controller.createBankAccount);
 router.get('/bankAccount', authService.authorize, controller.getAuthUserMiddleware, controller.retrieveAllBankAccounts);
 router.get('/bankAccount/:bankAccountId', authService.authorize, controller.getAuthUserMiddleware, controller.retrieveBankAccountById);
 router.delete('/bankAccount/:bankAccountId', authService.authorize, controller.getAuthUserMiddleware, controller.deleteBankAccount);
-router.post('/bankAccount/:bankAccountId/verify', authService.authorize, controller.getAuthUserMiddleware, controller.verifyBankAccount);*/
+router.post('/bankAccount/:bankAccountId/verify', authService.authorize, controller.getAuthUserMiddleware, controller.verifyBankAccount);
 
 router.post('/getPayments', authService.authorize, controller.getAuthUserMiddleware, controller.getPayments)
 router.post('/wallet/addMoney', authService.authorize, controller.getAuthUserMiddleware, controller.addMoneyToWallet)

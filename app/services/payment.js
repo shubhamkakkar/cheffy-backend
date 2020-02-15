@@ -140,6 +140,62 @@ exports.createCard = async (user, address, card) => {
   return card_req;
 }
 
+exports.createBankAccount = async (stripeCustomerId, accountDetails) => {
+  try{
+    const bank_account = await stripe.customers.createSource(stripeCustomerId, {source:
+      {
+        object: 'bank_account',
+        country: 'US',
+        currency: 'usd',
+        account_holder_type: 'individual',
+        account_holder_name: accountDetails.account_holder_name,
+        account_number: accountDetails.account_number,
+        routing_number: accountDetails.routing_number
+      }});
+    return bank_account;
+  } catch (err) {
+    throw err.raw;
+  }
+}
+
+/**
+* Gets a Bank Account object for a customer via Bank Account ID
+*/
+exports.retrieveBankAccountById = async (stripeCustomerId, bankAccountId) => {
+  const bank_account = await stripe.customers.retrieveSource(stripeCustomerId, bankAccountId);
+  return bank_account;
+}
+
+/**
+* Gets all Bank Account objects for a customer
+*/
+exports.retrieveAllBankAccounts = async (stripeCustomerId, limit) => {
+  const bank_account = await stripe.customers.listSources(stripeCustomerId,
+  {
+    object: 'bank_account',
+    limit: limit
+  });
+  return bank_account;
+}
+
+/**
+* Delete a Bank Account object for a customer via Bank Account ID
+*/
+exports.deleteBankAccount = async (stripeCustomerId, bankAccountId) => {
+  const response = await stripe.customers.deleteSource(stripeCustomerId, bankAccountId);
+  return response;
+}
+
+/**
+* Verify a Bank Account object for a customer via Bank Account ID
+*/
+exports.verifyBankAccount = async (stripeCustomerId, bankAccountId) => {
+  const response = await stripe.customers.verifySource(stripeCustomerId, bankAccountId, {
+    amounts: [32, 45]
+  });
+  return response;
+}
+
 exports.attachPaymentMethod = async (card, user) => {
   const card_req = await stripe.paymentMethods.attach(card, { customer: user });
   return card_req;
