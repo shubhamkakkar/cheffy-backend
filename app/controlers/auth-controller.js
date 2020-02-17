@@ -147,9 +147,11 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
  });
 
   res.status(200).send({
-    token: token,
-    data: existUserNew
+    "message": "Congratulations, successfully created user type "+ user.user_type+" !",
+    "status": "201",
+    result: existUserNew
   });
+
 
 });
 
