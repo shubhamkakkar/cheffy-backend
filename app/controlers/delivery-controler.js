@@ -16,6 +16,10 @@ const appConfig = require(path.resolve('config/app'));
 const shippingAddressConstants = require(path.resolve('app/constants/shipping-address'));
 const utils = require(path.resolve('app/utils'));
 const walletRepository = require(path.resolve('app/repository/wallet-repository'))
+const distance_mat = require('google-distance-matrix');
+const matrixKey = require(path.resolve('config/distance')).distance
+distance_mat.key (matrixKey.matrixKey) ;
+distance_mat.units('metric');
 
 exports.orderDeliveryByIdMiddleware = asyncHandler(async(req, res, next, orderDeliveryId) => {
   const orderDelivery = await deliveryRepository.getById(orderDeliveryId);
@@ -46,6 +50,64 @@ exports.list = asyncHandler(async (req, res, next) => {
   payload.deliveries = deliveries;
   res.status(payload.status).send(payload);
 });
+
+exports.calculateDeliveryTime = async(req, res, next) => {
+  let origins = req.body.origins;
+  let destinations = req.body.destinations;
+  let mode = req.body.mode;
+
+
+  // const response = await distanceMatrix.getDistance(origin, destination, mode);
+  
+  try{
+
+        /* Default mode is driving, if no mode selected driving will be set as default
+        * we can use it as walking, train, bicycle*/
+
+        distance_mat.mode(mode);
+        let resp = {};
+        distance_mat.matrix(origins, destinations, function (err, distances) {
+          if (err) {
+            return console.log(err);
+          }
+          if(!distances) {
+            return console.log('no distances');
+          }
+          if (distances.status == 'OK') {
+            for (let i=0; i < origins.length; i++) {
+              for (let j = 0; j < destinations.length; j++) {
+                let origin = distances.origin_addresses[i];
+                let destination = distances.destination_addresses[j];
+                if (distances.rows[0].elements[j].status == 'OK') {
+                  let distance = distances.rows[i].elements[j].distance.text;
+                  let time = distances.rows[i].elements[j].duration.text;
+                  resp.distance = distance;
+                  resp.time = time;
+                  resp.Pickup_address = origin;
+                  resp.Delivery_address = destination;
+                  return res.status(HttpStatus.ACCEPTED).send({
+                              message: 'Success!',
+                              data: resp,
+                  });
+
+
+                } 
+              }
+            }
+          }
+        })
+    }catch (e) {
+      console.log(e);
+      return res.status(HttpStatus.ACCEPTED).send({
+                              message: 'Error!',
+                              data: null,
+                  });
+    }
+
+
+
+
+};
 
 /*
 exports.pendingList = asyncHandler(async (req, res, next) => {
