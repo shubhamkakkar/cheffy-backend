@@ -63,10 +63,10 @@ exports.list = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.listPlates = asyncHandler(async (req, res, next) => {
+exports.listPlates = async (req, res, next) => {
   const categories = await repository.categoriesListPlates(req.params.categoryId);
   res.status(HttpStatus.ACCEPTED).send(categories);
-})
+}
 
 exports.edit = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();

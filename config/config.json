@@ -1,7 +1,7 @@
 {
   "development": {
-    "username": "root",
-    "password": "3008",
+    "username": "phpmyadmin",
+    "password": "root",
     "database": "database_development",
     "host": "localhost",
     "dialect": "mysql"
@@ -15,7 +15,7 @@
   },
   "production": {
     "username": "n2ad1m9h9pnmrnhx",
-    "password": "nuarueewww9a4b0n",
+    "password": "ed7p75oo3nw0m7kc",
     "database": "c821iyxdz9lgx1ut",
     "host": "umabrisfx8afs3ja.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
     "dialect": "mysql"

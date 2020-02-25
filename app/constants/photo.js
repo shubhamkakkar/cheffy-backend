@@ -7,6 +7,7 @@ exports.folderMap = {
   profile_photo:'profile_photo',
   front_side:'front_side',
   chef_license:'chef_license',
+  front_side:'front_side',
   category_image:'category_image',
   plate_image:'plate_image',
   custom_plate_image:'custom_plate_image',

@@ -31,82 +31,81 @@ const orderDeliveryConstants = require(path.resolve('app/constants/order-deliver
 const orderItemConstants = require(path.resolve('app/constants/order-item'));
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
-const FCM = require('../services/fcm')
 
 
 
 /**
- * Helper method
- * add one day for closing date of the custom plate auction.
- */
- function addDays() {
-   var result = new Date();
-   result.setDate(result.getDate() + 1);
-   return result;
- }
+* Helper method
+* add one day for closing date of the custom plate auction.
+*/
+function addDays() {
+  var result = new Date();
+  result.setDate(result.getDate() + 1);
+  return result;
+}
 
- function dollarToCents(dollar) {
-   return dollar * 100;
- }
+function dollarToCents(dollar) {
+  return dollar * 100;
+}
 
- function centsToDollar(cents) {
-   return cents/100;
- }
+function centsToDollar(cents) {
+  return cents/100;
+}
 
- function orderPaymentErrorResponseBuilder({error, create_order, total_cart, req}) {
+function orderPaymentErrorResponseBuilder({error, create_order, total_cart, req}) {
 
-   let orderPayment = {
-     orderId: create_order.id,
-     payment_id: null,
-     amount: total_cart,
-     client_secret: null,
-     customer: error.raw && error.raw.requestId,
-     payment_method: null,
-     status: error.raw.code,
-     receipt_url: null,
-     card_brand: null,
-     card_country: null,
-     card_exp_month: null,
-     card_exp_year: null,
-     card_fingerprint: null,
-     card_last: null,
-     network_status: null,
-     risk_level: null,
-     risk_score: null,
-     seller_message: error.raw.message,
-     type: error.raw.type,
-     paid: false,
-   }
-   return orderPayment;
- }
+  let orderPayment = {
+    orderId: create_order.id,
+    payment_id: null,
+    amount: total_cart,
+    client_secret: null,
+    customer: error.raw && error.raw.requestId,
+    payment_method: null,
+    status: error.raw.code,
+    receipt_url: null,
+    card_brand: null,
+    card_country: null,
+    card_exp_month: null,
+    card_exp_year: null,
+    card_fingerprint: null,
+    card_last: null,
+    network_status: null,
+    risk_level: null,
+    risk_score: null,
+    seller_message: error.raw.message,
+    type: error.raw.type,
+    paid: false,
+  }
+  return orderPayment;
+}
 
- exports.customPlateByIdMiddleware = asyncHandler(async(req, res, next, customPlateId) => {
-   const customPlate = await repository.getCustomPlate(customPlateId);
-   if(!customPlate) return res.status(HttpStatus.NOT_FOUND).send({message: `Custom Plate Not Found by id ${customPlateId}`});
-   req.customPlate = customPlate;
-   next();
- });
+exports.customPlateByIdMiddleware = asyncHandler(async(req, res, next, customPlateId) => {
+  const customPlate = await repository.getCustomPlate(customPlateId);
+  if(!customPlate) return res.status(HttpStatus.NOT_FOUND).send({message: `Custom Plate Not Found by id ${customPlateId}`});
+  req.customPlate = customPlate;
+  next();
+});
 
 
- exports.customPlateImageByIdMiddleware = asyncHandler(async(req, res, next, customPlateImageId) => {
-   const customPlateImage = await repository.getCustomPlateImage(customPlateImageId);
-   if(!customPlateImage) return res.status(HttpStatus.NOT_FOUND).send({message: `Custom Plate Image Not Found by id ${customPlateImageId}`});
-   req.customPlateImage = customPlateImage;
-   next();
- });
+exports.customPlateImageByIdMiddleware = asyncHandler(async(req, res, next, customPlateImageId) => {
+  const customPlateImage = await repository.getCustomPlateImage(customPlateImageId);
+  if(!customPlateImage) return res.status(HttpStatus.NOT_FOUND).send({message: `Custom Plate Image Not Found by id ${customPlateImageId}`});
+  req.customPlateImage = customPlateImage;
+  next();
+});
 
 /**
- * Method: POST
- * Add Custom plate by 'user' role type
- */
- exports.addCustomPlate = asyncHandler(async (req, res, next) => {
-   debug('req.body', req.body);
-   let contract = new ValidationContract();
-   contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
-   contract.isRequired(req.body.description, 'Plate description is required!');
-   contract.isRequired(req.body.price_min, 'Minimum price is required!');
-   contract.isRequired(req.body.price_max  , 'The maximum price is required!');
-   contract.isRequired(req.body.quantity, 'The amount of plates is obligatory!');
+* Method: POST
+* Add Custom plate by 'user' role type
+*/
+exports.addCustomPlate = asyncHandler(async (req, res, next) => {
+  debug('req.body', req.body);
+  let contract = new ValidationContract();
+  contract.hasMinLen(req.body.name, 3, 'The plate name should have more than 3 caracteres');
+  contract.isRequired(req.body.description, 'Plate description is required!');
+  contract.isRequired(req.body.price_min, 'Minimum price is required!');
+  contract.isRequired(req.body.price_max  , 'The maximum price is required!');
+  contract.isRequired(req.body.quantity, 'The amount of plates is obligatory!');
   //contract.isRequired(req.body.chef_location_radius, 'The amount of plates is obligatory!');
 
   if (!contract.isValid()) {
@@ -167,56 +166,56 @@ const FCM = require('../services/fcm')
 
   //publish create action
   events.publish({
-    action: appConstants.ACTION_TYPE_CREATED,
-    user: req.user,
-    cutomPlate: customPlate,
-    payload: payload,
-    scope: appConstants.SCOPE_USER,
-    type: 'customPlate'
+      action: appConstants.ACTION_TYPE_CREATED,
+      user: req.user,
+      cutomPlate: customPlate,
+      payload: payload,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
   }, req);
 
 });
 
 /**
- * Edit Custom Plate
- * Don't allow to edit if auction is closed
- */
- exports.editCustomPlate = [
- asyncHandler(async(req, res, next) => {
-   const customPlateAuction = await repository.getCustomPlateAuctionByCustomPlate(req.customPlate.id);
+* Edit Custom Plate
+* Don't allow to edit if auction is closed
+*/
+exports.editCustomPlate = [
+  asyncHandler(async(req, res, next) => {
+    const customPlateAuction = await repository.getCustomPlateAuctionByCustomPlate(req.customPlate.id);
 
-   if(!customPlateAuction) {
-     return res.status(HttpStatus.BAD_REQUEST).send({message: 'The auction for this is already removed! Contact Support'});
-   }
+    if(!customPlateAuction) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: 'The auction for this is already removed! Contact Support'});
+    }
 
-   if(customPlateAuction.state_type === customPlateConstants.STATE_TYPE_CLOSED) {
-     return res.status(HttpStatus.BAD_REQUEST).send({message: 'The auction is already closed.'});
-   }
-   next();
+    if(customPlateAuction.state_type === customPlateConstants.STATE_TYPE_CLOSED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: 'The auction is already closed.'});
+    }
+    next();
 
- }),
- asyncHandler(async (req, res, next) => {
-   debug('req.body', req.body);
-   let contract = new ValidationContract();
+  }),
+  asyncHandler(async (req, res, next) => {
+    debug('req.body', req.body);
+    let contract = new ValidationContract();
 
-   if (!contract.isValid()) {
-     res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
-     return 0;
-   }
+    if (!contract.isValid()) {
+      res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+      return 0;
+    }
 
-   const user = req.user;
+    const user = req.user;
 
-   if(user.user_type !== userConstants.USER_TYPE_USER) {
-     return res.status(HttpStatus.BAD_REQUEST).send({message: `Only 'user' role can create custom plate.`, status: HttpStatus.BAD_REQUEST});
-   }
+    if(user.user_type !== userConstants.USER_TYPE_USER) {
+      return res.status(HttpStatus.BAD_REQUEST).send({message: `Only 'user' role can create custom plate.`, status: HttpStatus.BAD_REQUEST});
+    }
 
-   let data_received = customPlateInputFilter.filter(req.body, 'form-data');
-   let images, images_create;
+    let data_received = customPlateInputFilter.filter(req.body, 'form-data');
+    let images, images_create;
 
-   if (data_received.images) {
-     images = data_received.images;
-     delete data_received.images;
-   }
+    if (data_received.images) {
+      images = data_received.images;
+      delete data_received.images;
+    }
 
     //const customPlate = await repository.create(data_received);
     const customPlate = await req.customPlate.update(data_received);
@@ -255,126 +254,126 @@ const FCM = require('../services/fcm')
 
     //publish edit action
     events.publish({
-      action: appConstants.ACTION_TYPE_UPDATED,
-      user: req.user,
-      cutomPlate: customPlate,
-      payload: payload,
-      scope: appConstants.SCOPE_USER,
-      type: 'customPlate'
+        action: appConstants.ACTION_TYPE_UPDATED,
+        user: req.user,
+        cutomPlate: customPlate,
+        payload: payload,
+        scope: appConstants.SCOPE_USER,
+        type: 'customPlate'
     }, req);
 
-  })];
+})];
 
 
- exports.addImages = asyncHandler(async(req, res, next) => {
-   const customPlate = req.customPlate;
-   let images = null;
-   if(req.files && req.files['custom_plate_image']) {
-     images = req.files['custom_plate_image'];
-   }
+exports.addImages = asyncHandler(async(req, res, next) => {
+  const customPlate = req.customPlate;
+  let images = null;
+  if(req.files && req.files['custom_plate_image']) {
+    images = req.files['custom_plate_image'];
+  }
 
-   if(!images) return res.status(HttpStatus.BAD_REQUEST).send({message: 'No images sent for upload'});
+  if(!images) return res.status(HttpStatus.BAD_REQUEST).send({message: 'No images sent for upload'});
 
-   let images_data = [];
-   images.forEach(elem => {
-     elem.customPlateId = customPlate.id;
-     elem.name = customPlate.name;
-     elem.url = elem.key;
-     images_data.push(elem);
-   });
+  let images_data = [];
+  images.forEach(elem => {
+    elem.customPlateId = customPlate.id;
+    elem.name = customPlate.name;
+    elem.url = elem.key;
+    images_data.push(elem);
+  });
 
-   const createdImages = await repository.createPlateImage(images_data)
+  const createdImages = await repository.createPlateImage(images_data)
 
-   res.status(HttpStatus.OK).send({message: 'Custom Plate images uploaded successfully.', images: createdImages});
-
-
-   events.publish({
-     action: appConstants.ACTION_TYPE_IMAGE_ADDED,
-     user: req.user,
-     cutomPlate: customPlate,
-     payload: images_data,
-     scope: appConstants.SCOPE_USER,
-     type: 'customPlate'
-   }, req);
-
- });
+  res.status(HttpStatus.OK).send({message: 'Custom Plate images uploaded successfully.', images: createdImages});
 
 
- exports.deleteImage = asyncHandler(async(req, res, next) => {
-   const customPlateImage = req.customPlateImage;
+  events.publish({
+      action: appConstants.ACTION_TYPE_IMAGE_ADDED,
+      user: req.user,
+      cutomPlate: customPlate,
+      payload: images_data,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
 
-   await customPlateImage.destroy();
+});
 
-   res.status(HttpStatus.OK).send({message: `Custom Plate Image by Id : ${customPlateImage.id} removed`})
 
-   events.publish({
-     action: appConstants.ACTION_TYPE_IMAGE_DELETED,
-     user: req.user,
-     cutomPlate: req.customPlate,
-     payload: customPlateImage,
-     scope: appConstants.SCOPE_USER,
-     type: 'customPlate'
-   }, req);
+exports.deleteImage = asyncHandler(async(req, res, next) => {
+  const customPlateImage = req.customPlateImage;
 
- });
+  await customPlateImage.destroy();
+
+  res.status(HttpStatus.OK).send({message: `Custom Plate Image by Id : ${customPlateImage.id} removed`})
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_IMAGE_DELETED,
+      user: req.user,
+      cutomPlate: req.customPlate,
+      payload: customPlateImage,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
+
+});
 
 /**
- * Method: POST
- * Place custom bid by chef user for a custom plate
- */
- exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
-   const authUser = req.user;
-   debug('req body', req.body);
-   if (authUser.user_type !== userConstants.USER_TYPE_CHEF) {
-     return res.status(HttpStatus.CONFLICT).send({
-       message: `Only 'chef' user can place a bid for a custom plate.`,
-       error: true
-     });
-   }
+* Method: POST
+* Place custom bid by chef user for a custom plate
+*/
+exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
+  const authUser = req.user;
+  debug('req body', req.body);
+  if (authUser.user_type !== userConstants.USER_TYPE_CHEF) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: `Only 'chef' user can place a bid for a custom plate.`,
+      error: true
+    });
+  }
 
-   if (!req.body.auction) {
-     return res.status(HttpStatus.CONFLICT).send({
-       message: "You need to send auction(customPlateId)",
-       status: HttpStatus.CONFLICT
-     });
-   }
+  if (!req.body.auction) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to send auction(customPlateId)",
+      status: HttpStatus.CONFLICT
+    });
+  }
 
-   if (!req.body.price) {
-     return res.status(HttpStatus.CONFLICT).send({
-       message: "You need to give a price!",
-       status: HttpStatus.CONFLICT
-     });
-   }
+  if (!req.body.price) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to give a price!",
+      status: HttpStatus.CONFLICT
+    });
+  }
 
-   if (!req.body.preparation_time) {
-     return res.status(HttpStatus.CONFLICT).send({
-       message: "You need to estimate a preparation time!",
-       status: HttpStatus.CONFLICT
-     });
-   }
+  if (!req.body.preparation_time) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to estimate a preparation time!",
+      status: HttpStatus.CONFLICT
+    });
+  }
 
-   if (!req.body.chefDeliveryAvailable) {
-     return res.status(HttpStatus.CONFLICT).send({
-       message: "You need to state whether you deliver or not!",
-       status: HttpStatus.CONFLICT
-     });
-   }
+  if (!req.body.chefDeliveryAvailable) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to state whether you deliver or not!",
+      status: HttpStatus.CONFLICT
+    });
+  }
 
-   if (req.body.chefDeliveryAvailable && !req.body.delivery_time) {
-     return res.status(HttpStatus.CONFLICT).send({
-       message: "You need to state whether delivery time in minutes!",
-       status: HttpStatus.CONFLICT
-     });
-   }
+  if (req.body.chefDeliveryAvailable && !req.body.delivery_time) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to state whether delivery time in minutes!",
+      status: HttpStatus.CONFLICT
+    });
+  }
 
-   let context = {
-     CustomPlateAuctionID: req.body.auction,
-     chefID: authUser.id,
-     price: req.body.price,
-     preparation_time: req.body.preparation_time,
-     chefDeliveryAvailable: req.body.chefDeliveryAvailable,
-     delivery_time: req.body.delivery_time
-   };
+  let context = {
+    CustomPlateAuctionID: req.body.auction,
+    chefID: authUser.id,
+    price: req.body.price,
+    preparation_time: req.body.preparation_time,
+    chefDeliveryAvailable: req.body.chefDeliveryAvailable,
+    delivery_time: req.body.delivery_time
+  };
 
   //check if auction is closed;
   const auction = await repository.getCustomPlateAuction(req.body.auction);
@@ -402,23 +401,23 @@ const FCM = require('../services/fcm')
   });
 
   events.publish({
-    action: appConstants.ACTION_TYPE_CREATED,
-    user: req.user,
-    customPlate: customPlate,
-    customPlateAuctionBid: data,
-    payload: data,
-    scope: appConstants.SCOPE_CHEF,
-    type: 'customPlateAuctionBid'
+      action: appConstants.ACTION_TYPE_CREATED,
+      user: req.user,
+      customPlate: customPlate,
+      customPlateAuctionBid: data,
+      payload: data,
+      scope: appConstants.SCOPE_CHEF,
+      type: 'customPlateAuctionBid'
   }, req);
 
 });
 
 /**
- * Method: POST
- * User accept auction bid for a chef
- * CustomPlateOrder is created when user accepts auction bid
- */
- exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
+* Method: POST
+* User accept auction bid for a chef
+* CustomPlateOrder is created when user accepts auction bid
+*/
+exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
   //get bid document by id
   let customPlateAuctionBid = await repository.getCustomPlateBid(req.params.auctionBidId);
 
@@ -478,45 +477,42 @@ const FCM = require('../services/fcm')
   await repository.updateCustomPlateBidById({id: customPlateAuctionBid.id, data:{winner: true}});
 
   events.publish({
-    action: appConstants.ACTION_TYPE_ACCEPTED,
-    user: req.user,
-    payload: {
-      customPlate: customPlateAuctionBid.custom_plate,
-      customOrder: custom_order,
-    },
-    customPlateAuctionBid: customPlateAuctionBid,
-    scope: appConstants.SCOPE_USER,
-    type: 'customPlateAuctionBid'
+      action: appConstants.ACTION_TYPE_ACCEPTED,
+      user: req.user,
+      payload: {
+        customPlate: customPlateAuctionBid.custom_plate,
+        customOrder: custom_order,
+      },
+      customPlateAuctionBid: customPlateAuctionBid,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlateAuctionBid'
   }, req);
 
 });
 
 /**
- * Method: POST
- * Pay for custom plate, once the bid is accepted and the custom plate is in the basket items.
- * This handles both plate and custom plate checkout
- * payment is done through stripe
- * transfer basket to order and basketItems to orderItems
- * Process:
- * Get User basket
- * Get Basket Items
- * Check if user BasketItems is empty. If empty send No Items Response
- * Payment is done through stripe so check if user exists as customer in stripe
- * If Customer User doesn't exist create one.
- * Get User card from stripe if no card information is sent in request body
- * Create New Card in Stripe and attach it to user in stripe if new card information is sent in request body
- * Pay through card
- * If Payment is successfull, Create Order and OrderPayment
- * Create OrderItems
- * Remove BasketItems
- * Send Back Response
- */
- exports.pay = asyncHandler(async (req, res, next) => {
+* Method: POST
+* Pay for custom plate, once the bid is accepted and the custom plate is in the basket items.
+* This handles both plate and custom plate checkout
+* payment is done through stripe
+* transfer basket to order and basketItems to orderItems
+* Process:
+* Get User basket
+* Get Basket Items
+* Check if user BasketItems is empty. If empty send No Items Response
+* Payment is done through stripe so check if user exists as customer in stripe
+* If Customer User doesn't exist create one.
+* Get User card from stripe if no card information is sent in request body
+* Create New Card in Stripe and attach it to user in stripe if new card information is sent in request body
+* Pay through card
+* If Payment is successfull, Create Order and OrderPayment
+* Create OrderItems
+* Remove BasketItems
+* Send Back Response
+*/
+exports.pay = asyncHandler(async (req, res, next) => {
 
-   let existUser = req.user;
-   console.log("Existing user")
-   console.log(existUser.id)
-   console.log("Existing user")
+  let existUser = req.user;
 
   //user shipping address. if req.body.shipping_id || req.query.shipping_id is sent, it is that shipping address,
   //otherwise it is set to default user shipping address
@@ -567,109 +563,109 @@ const FCM = require('../services/fcm')
   };
 
   events.publish({
-    action: appConstants.ACTION_TYPE_PRE_CHECKOUT,
-    user: req.user,
-    payload: {cart_items, payload},
-    body: req.body,
-    scope: appConstants.SCOPE_USER,
-    type: 'checkout'
+      action: appConstants.ACTION_TYPE_PRE_CHECKOUT,
+      user: req.user,
+      payload: {cart_items, payload},
+      body: req.body,
+      scope: appConstants.SCOPE_USER,
+      type: 'checkout'
   }, req);
 
   let card_return, stripeCustomerResponse, confirm;
     //create order
-    let create_order = await repositoryOrder.create(payload);
+  let create_order = await repositoryOrder.create(payload);
 
-    try {
-      if (existUser.stripe_id) {
-        stripeCustomerResponse = await paymentService.getUser(existUser.stripe_id);
+  try {
+    if (existUser.stripe_id) {
+      stripeCustomerResponse = await paymentService.getUser(existUser.stripe_id);
+    } else {
+      stripeCustomerResponse = await paymentService.createUser(existUser, user_address);
+      existUser = await User.findOne({ where: { id: req.userId } });
+      existUser.stripe_id = stripeCustomerResponse.id
+      await existUser.save()
+    }
+  } catch (e) {
+    const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
+    await repositoryOrderPayment.create(orderPaymentFail);
+    await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED);
+    return res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to create your payment data!',
+      data: e,
+      error: true
+    });
+
+  }
+
+  let cardAlreadyAttached = false;
+  try {
+    if(!req.body.card) {
+      const cardList = await paymentService.getUserCardsList(existUser.stripe_id, {limit: 1});
+      card_return = cardList.data[0];
+      if(!card_return) {
+        res.status(HttpStatus.NOT_FOUND).send({message: 'User have no default card saved. Please send card information'});
       } else {
-        stripeCustomerResponse = await paymentService.createUser(existUser, user_address);
-        existUser = await User.findOne({ where: { id: req.userId } });
-        existUser.stripe_id = stripeCustomerResponse.id
-        await existUser.save()
+        cardAlreadyAttached = true;
       }
-    } catch (e) {
-      const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
-      await repositoryOrderPayment.create(orderPaymentFail);
-      await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED);
-      return res.status(HttpStatus.CONFLICT).send({
-        message: 'There was a problem to create your payment data!',
-        data: e,
-        error: true
-      });
-
+    } else {
+      card_return = await paymentService.createCard(existUser, user_address, req.body.card);
     }
 
-    let cardAlreadyAttached = false;
-    try {
-      if(!req.body.card) {
-        const cardList = await paymentService.getUserCardsList(existUser.stripe_id, {limit: 1});
-        card_return = cardList.data[0];
-        if(!card_return) {
-          res.status(HttpStatus.NOT_FOUND).send({message: 'User have no default card saved. Please send card information'});
-        } else {
-          cardAlreadyAttached = true;
-        }
-      } else {
-        card_return = await paymentService.createCard(existUser, user_address, req.body.card);
-      }
+  } catch (e) {
+    const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
+    await repositoryOrderPayment.create(orderPaymentFail);
+    await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
 
-    } catch (e) {
-      const orderPaymentFail = orderPaymentErrorResponseBuilder({error: e, create_order, total_cart, req});
-      await repositoryOrderPayment.create(orderPaymentFail);
-      await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
+    return res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to validate your card!',
+      data: e,
+      error: true
+    });
+  }
 
-      return res.status(HttpStatus.CONFLICT).send({
-        message: 'There was a problem to validate your card!',
-        data: e,
-        error: true
-      });
-    }
+  let user_card = card_return;
+  if(!cardAlreadyAttached) {
+    user_card = await paymentService.attachPaymentMethod(card_return.id, stripeCustomerResponse.id);
+  }
 
-    let user_card = card_return;
-    if(!cardAlreadyAttached) {
-      user_card = await paymentService.attachPaymentMethod(card_return.id, stripeCustomerResponse.id);
-    }
+  try {
+    confirm = await paymentService.confirmPayment(total_cart, user_card.id, stripeCustomerResponse.id);
+  } catch (e) {
+    console.log("confirmPayment: ", e)
+    await repository.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
+    return res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to confirm your payment!',
+      data: e,
+      error: true
+    });
+  }
 
-    try {
-      confirm = await paymentService.confirmPayment(total_cart, user_card.id, stripeCustomerResponse.id);
-    } catch (e) {
-      console.log("confirmPayment: ", e)
-      await repository.editState(create_order.id, orderConstants.STATE_TYPE_REJECTED)
-      return res.status(HttpStatus.CONFLICT).send({
-        message: 'There was a problem to confirm your payment!',
-        data: e,
-        error: true
-      });
-    }
+  let data_full = await helpers.change_data(create_order.id, confirm);
 
-    let data_full = await helpers.change_data(create_order.id, confirm);
+  try {
+    await repositoryWallet.getWallet(existUser.id);
+  } catch (e) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: 'There was a problem to get your Wallet!',
+      data: e,
+      error: true
+    });
+  }
 
-    try {
-      await repositoryWallet.getWallet(existUser.id);
-    } catch (e) {
-      return res.status(HttpStatus.CONFLICT).send({
-        message: 'There was a problem to get your Wallet!',
-        data: e,
-        error: true
-      });
-    }
+  const create_orderPayment = await repositoryOrderPayment.create(data_full);
 
-    const create_orderPayment = await repositoryOrderPayment.create(data_full);
+  if (create_orderPayment.status === orderPaymentConstants.STATUS_SUCCEEDED && create_orderPayment.type === 'authorized') {
+    await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_APPROVED)
 
-    if (create_orderPayment.status === orderPaymentConstants.STATUS_SUCCEEDED && create_orderPayment.type === 'authorized') {
-      await repositoryOrder.editState(create_order.id, orderConstants.STATE_TYPE_APPROVED)
-
-      events.publish({
+    events.publish({
         action: appConstants.ACTION_TYPE_PAYMENT_SUCCESS,
         user: req.user,
         payload: confirm,
         body: req.body,
         scope: appConstants.SCOPE_USER,
         type: 'checkout'
-      }, req);
+    }, req);
 
-      events.publish({
+    events.publish({
         action: appConstants.ACTION_TYPE_ORDER_APPROVED,
         user: req.user,
         order: create_order,
@@ -677,10 +673,10 @@ const FCM = require('../services/fcm')
         payload: create_orderPayment,
         scope: appConstants.SCOPE_USER,
         type: 'order'
-      }, req);
+    }, req);
 
 
-      let bulkTransactions = cart_items.map(elem => (
+    let bulkTransactions = cart_items.map(elem => (
       {
         identifier:'order_payment',
         userId:elem.chef_id,
@@ -688,10 +684,10 @@ const FCM = require('../services/fcm')
         orderPaymentId:create_orderPayment.id,
         amount:elem.amount
       }
-      ));
+    ));
 
-      let transactionsService = new TransactionsService();
-      transactionsService.recordBulkCreditTransaction(bulkTransactions)
+    let transactionsService = new TransactionsService();
+    transactionsService.recordBulkCreditTransaction(bulkTransactions)
 
     //create order items and remove basket items
     const oderItemsPayload = basketItems.map( async (basketItem) => {
@@ -738,7 +734,7 @@ const FCM = require('../services/fcm')
     await basketRepository.removeBasketItems(user_basket.id);
 
     //if not pickup by user create order deliveries
-    if(deliveryType !== orderItemConstants.DELIVERY_TYPE_USER) {
+    if(deliveryType != orderItemConstants.DELIVERY_TYPE_DRIVER) {
       //create delivery for items which offers delivery
       const oderDeliveryPayload = basketItems.filter((basketItem) => {
         const basketType = basketItem.basket_type;
@@ -801,7 +797,7 @@ const FCM = require('../services/fcm')
       let existRecord = await OrderFrequency.findOne({
 
         where:{
-          [Op.or]: [{plate1: obj.plate1, plate2: obj.plate2}, {plate1: obj.plate2, plate2: obj.plate1}]
+        [Op.or]: [{plate1: obj.plate1, plate2: obj.plate2}, {plate1: obj.plate2, plate2: obj.plate1}]
         }
       })
 
@@ -809,178 +805,103 @@ const FCM = require('../services/fcm')
         await OrderFrequency.create(obj);
       }
       else{
-        existRecord.frequency = existRecord.frequency+1;
-        existRecord.save();
-      }
+      existRecord.frequency = existRecord.frequency+1;
+      existRecord.save();
+    }
 
-    });
+  });
 
-    /*We will send fcm notification to user here after payment is successful*/
-
-    /*We will fetch auth_token from  user modal and pass that to fcm API */
-
-    let userToken = await User.findOne({where: {id: existUser.id } ,
-      attributes:['device_id']
-    })
-
-    let fcmOrderDetails = {
-      orderTitle: "Received",
-      orderBrief: "Your Order is Paid Successfully",
-      activity: "orderActivity", // Need's to be set with the name of activity set by android team
-      device_id: [userToken.device_id]  // Need to pass token/deviceID as an array
-
-      /* example of usertoken
-       auth_token: ["foePVAATw9I:APA91bFzo1ip6CiSF9FS5BjExP3cFXTd9KaHpEV6SxtKezLkhlelncqZB-lw6dSTJTmOE0B7I12RdHEAbrzbNs-OtLq6X4zenoAkd6YfRwBBLACAFQL2TQK2XkB0pAsjcXBNSsPR4-MW"]
-       */
-     }
-     await FCM(fcmOrderDetails)
-
-     /*Updating First Time Order Flag To false after payments*/
-
-     let details ={
-       order_flag:false
-     }
-
-     await User.update({details,
-       where:{
-         id: req.userId
-       }
-     })
-
-     let drivers = [];
-     if(req.body.deliveryType==='driver')
-     {
-       const userDetail = await repositoryUser.getUserById(req.userId)
-       let lat1 = userDetail.location_lat;
-       let lon1 = userDetail.location_lon;
-
-       const getSelectedDrivers = await repositoryUser.getSelectedDrivers()
-       for(let i=0;i<getSelectedDrivers.length;i++)
-       {
-         let lat2 = getSelectedDrivers[i].location_lat;
-         let lon2 = getSelectedDrivers[i].location_lon;
-
-         var dist = calcDistance(lat1,lon1,lat2,lon2).toFixed(2);
-         if(dist<2)
-           drivers.push(getSelectedDrivers[i].id);
-
-       }
-
-       function calcDistance(lat1, lon1, lat2, lon2)
-       {
-         var R = 3963;
-         var dLat = (lat2-lat1) * Math.PI / 180;
-         var dLon = (lon2-lon1) * Math.PI / 180;
-         var lat1 = lat1 * Math.PI / 180;
-         var lat2 = lat2 * Math.PI / 180;
-
-         var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-         Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
-         var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-         var d = R * c;
-         return d;
-       }
-       drivers = drivers.toString();
-       let data = {
-         availableDrivers : drivers,
-         orderId : create_orderPayment.orderId,
-         userId : req.userId,
-         order_delivery_type : orderDeliveryConstants.STATE_TYPE_PENDING,
-         order_delivery_type : orderDeliveryConstants.DELIVERY_TYPE_ORDER
-       }
-       const createdOrder = await repositoryOrderDelivery.createOrderDelivery(data);
-     }
-     return res.status(HttpStatus.ACCEPTED).send({
-       message: 'Your order was successfully paid!',
-       payment_return: create_orderPayment,
+    return res.status(HttpStatus.ACCEPTED).send({
+      message: 'Your order was successfully paid!',
+      payment_return: create_orderPayment,
       //orderDeliveries: orderDeliveries
     });
-   }
+  }
 
-   res.status(HttpStatus.CONFLICT).send({
-     message: "There was a problem validating the data!",
-     user_address: user_address,
-     user_basket: user_basket,
-     basket_content: basket_content,
-     cart_items: cart_items,
-     total_cart: total_cart,
-     payload: payload,
-     create_order: create_order
-   });
+  res.status(HttpStatus.CONFLICT).send({
+    message: "There was a problem validating the data!",
+    user_address: user_address,
+    user_basket: user_basket,
+    basket_content: basket_content,
+    cart_items: cart_items,
+    total_cart: total_cart,
+    payload: payload,
+    create_order: create_order
+  });
 
-   events.publish({
-     action: appConstants.ACTION_TYPE_CHECKOUT_FAILED,
-     user: req.user,
-     body: req.body,
-     payload: {
-       order: create_order,
-       cart_items,
-       total_cart
-     },
-     scope: appConstants.SCOPE_USER,
-     type: 'checkout'
-   }, req);
+  events.publish({
+      action: appConstants.ACTION_TYPE_CHECKOUT_FAILED,
+      user: req.user,
+      body: req.body,
+      payload: {
+        order: create_order,
+        cart_items,
+        total_cart
+      },
+      scope: appConstants.SCOPE_USER,
+      type: 'checkout'
+  }, req);
 
- });
-
-/**
- * Method: GET
- * Get custom plate orders of a user.
- */
- exports.listUserCustomOrders = asyncHandler(async (req, res, next) => {
-   const { userId } = req.params;
-   const query = { where: { userId }, ...paginator.paginateQuery(req)};
-   const customPlateOrders = await CustomPlateOrder.findAll(query);
-   res.status(HttpStatus.ACCEPTED).send({
-     message: "Your custom order's",
-     ...paginator.paginateInfo(query),
-     data: customPlateOrders
-   });
-
-   events.publish({
-     action: appConstants.ACTION_TYPE_LISTED,
-     user: req.user,
-     payload: customPlateOrders,
-     scope: appConstants.SCOPE_ALL,
-     type: 'customPlateOrder'
-   }, req);
-
- });
-
+});
 
 /**
- * Method: GET
- * Get custom plates of a user.
- * don't check for user roles as well. just show empty plates for driver, chef user type
- * All user can see each other custom plates
- */
- exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
-   const { userId } = req.params;
-   const query = { where: { userId }, ...paginator.paginateQuery(req)};
-   const customPlates = await CustomPlate.findAll(query);
-   res.status(HttpStatus.ACCEPTED).send({
-     message: `Custom Plates of: ${req.paramUser.name}`,
-     ...paginator.paginateInfo(query),
-     data: customPlates
-   });
+* Method: GET
+* Get custom plate orders of a user.
+*/
+exports.listUserCustomOrders = asyncHandler(async (req, res, next) => {
+  const { userId } = req.params;
+  const query = { where: { userId }, ...paginator.paginateQuery(req)};
+  const customPlateOrders = await CustomPlateOrder.findAll(query);
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "Your custom order's",
+    ...paginator.paginateInfo(query),
+    data: customPlateOrders
+  });
 
-   events.publish({
-     action: appConstants.ACTION_TYPE_LISTED,
-     user: req.user,
-     params: req.params,
-     payload: customPlates,
-     scope: appConstants.SCOPE_ALL,
-     type: 'customPlate'
-   }, req);
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      payload: customPlateOrders,
+      scope: appConstants.SCOPE_ALL,
+      type: 'customPlateOrder'
+  }, req);
 
- });
+});
+
+
 /**
- * Method: GET
- * Get custom plates of auth user.
- */
- exports.listMyCustomPlates = asyncHandler(async (req, res, next) => {
-   const userId = req.userId;
-   const query = { userId, pagination: paginator.paginateQuery(req)};
+* Method: GET
+* Get custom plates of a user.
+* don't check for user roles as well. just show empty plates for driver, chef user type
+* All user can see each other custom plates
+*/
+exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
+  const { userId } = req.params;
+  const query = { where: { userId }, ...paginator.paginateQuery(req)};
+  const customPlates = await CustomPlate.findAll(query);
+  res.status(HttpStatus.ACCEPTED).send({
+    message: `Custom Plates of: ${req.paramUser.name}`,
+    ...paginator.paginateInfo(query),
+    data: customPlates
+  });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      params: req.params,
+      payload: customPlates,
+      scope: appConstants.SCOPE_ALL,
+      type: 'customPlate'
+  }, req);
+
+});
+/**
+* Method: GET
+* Get custom plates of auth user.
+*/
+exports.listMyCustomPlates = asyncHandler(async (req, res, next) => {
+  const userId = req.userId;
+  const query = { userId, pagination: paginator.paginateQuery(req)};
 
   //const customPlates = await CustomPlate.findAll(query);
   const myCustomPlates = await repository.myCustomPlates(query)
@@ -991,80 +912,80 @@ const FCM = require('../services/fcm')
   });
 
   events.publish({
-    action: appConstants.ACTION_TYPE_LISTED,
-    user: req.user,
-    payload: myCustomPlates,
-    scope: appConstants.SCOPE_USER,
-    type: 'customPlate'
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      payload: myCustomPlates,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
   }, req);
 });
 
 /**
- * Method: GET
- * Get custom plates of all users.
- */
- exports.listAllCustomPlates = asyncHandler(async (req, res, next) => {
-   const query = {...paginator.paginateQuery(req)};
-   const customPlates = await CustomPlate.findAll(query);
+* Method: GET
+* Get custom plates of all users.
+*/
+exports.listAllCustomPlates = asyncHandler(async (req, res, next) => {
+  const query = {...paginator.paginateQuery(req)};
+  const customPlates = await CustomPlate.findAll(query);
 
-   res.status(HttpStatus.ACCEPTED).send({
-     message: "All custom plates from users.",
-     ...paginator.paginateInfo(query),
-     data: customPlates
-   });
+  res.status(HttpStatus.ACCEPTED).send({
+    message: "All custom plates from users.",
+    ...paginator.paginateInfo(query),
+    data: customPlates
+  });
 
-   events.publish({
-     action: appConstants.ACTION_TYPE_LISTED,
-     user: req.user,
-     payload: customPlates,
-     scope: appConstants.SCOPE_USER,
-     type: 'customPlate'
-   }, req);
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      payload: customPlates,
+      scope: appConstants.SCOPE_USER,
+      type: 'customPlate'
+  }, req);
 
- });
-
-/**
- * Custom Plates search/filter for Chef
- * Get custom plates with all infos like auctions
- * Filter by params
- */
- exports.chefSearchCustomPlates = asyncHandler(async (req, res, next) => {
-   const options = { req, query: req.query, pagination: paginator.paginateQuery(req)};
-
-   const result = await repository.chefGetPlates(options);
-
-   res.status(HttpStatus.ACCEPTED).send({
-     data: result,
-     ...paginator.paginateInfo(options.pagination)
-   });
-
-   events.publish({
-     action: appConstants.ACTION_TYPE_LISTED,
-     user: req.user,
-     query: req.query,
-     payload: result,
-     scope: appConstants.SCOPE_CHEF,
-     type: 'customPlate'
-   }, req);
- });
-
+});
 
 /**
- * Get one custom plate with all infos like auctions
- */
- exports.customPlate = asyncHandler(async (req, res, next) => {
-   const result = await repository.getPlate(req.params.customPlateId);
-   if(!result) {
-     return res.status(HttpStatus.NOT_FOUND).send({message: 'Custom Plate Not Found'});
-   }
+* Custom Plates search/filter for Chef
+* Get custom plates with all infos like auctions
+* Filter by params
+*/
+exports.chefSearchCustomPlates = asyncHandler(async (req, res, next) => {
+  const options = { req, query: req.query, pagination: paginator.paginateQuery(req)};
 
-   res.status(HttpStatus.ACCEPTED).send(result);
+  const result = await repository.chefGetPlates(options);
 
-   events.publish({
-     action: appConstants.ACTION_TYPE_VIEWED,
-     user: req.user,
-     customPlate: result,
-     scope: appConstants.SCOPE_ALL,
-     type: 'customPlate'
-   }, req);
- });
+  res.status(HttpStatus.ACCEPTED).send({
+    data: result,
+    ...paginator.paginateInfo(options.pagination)
+  });
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_LISTED,
+      user: req.user,
+      query: req.query,
+      payload: result,
+      scope: appConstants.SCOPE_CHEF,
+      type: 'customPlate'
+  }, req);
+});
+
+
+/**
+* Get one custom plate with all infos like auctions
+*/
+exports.customPlate = asyncHandler(async (req, res, next) => {
+  const result = await repository.getPlate(req.params.customPlateId);
+  if(!result) {
+    return res.status(HttpStatus.NOT_FOUND).send({message: 'Custom Plate Not Found'});
+  }
+
+  res.status(HttpStatus.ACCEPTED).send(result);
+
+  events.publish({
+      action: appConstants.ACTION_TYPE_VIEWED,
+      user: req.user,
+      customPlate: result,
+      scope: appConstants.SCOPE_ALL,
+      type: 'customPlate'
+  }, req);
+});

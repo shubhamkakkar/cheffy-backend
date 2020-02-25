@@ -185,20 +185,13 @@ exports.listTrackingUser  = async (data) => {
       },
       {
         model: ShippingAddress,
-        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode","lat", "lon"],
+        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode"],
         as:'shipping'
       },
       {
         model: OrderItem,
         attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
-        include:[
-        {
-          model: User,
-          as: 'chef',
-          attributes: userConstants.userSelectFields
-
-        },
-        {
+        include:[{
           model: Plates,
           as:'plate',
           include: [
@@ -220,14 +213,10 @@ exports.listTrackingUser  = async (data) => {
     },
     {
     model: OrderDelivery,
-    required: true,
-    attributes: ["id","state_type", "driverId"],
-    include:[{
-    model: User,
-    as: 'driver',
-    attributes: userConstants.userSelectFields
-    }]
-  }]
+    // required: true,
+    attributes: ["id","state_type"]
+  }
+  ]
   });
   return order;
 }
@@ -242,21 +231,13 @@ exports.listTrackingDriver  = async (data) => {
       },
       {
         model: ShippingAddress,
-        attributes: ["id", "addressLine1","lat", "lon", "addressLine2", "city", "state", "zipCode"],
+        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode"],
         as:'shipping'
       },
       {
         model: OrderItem,
         attributes: ["id","plate_id", "customPlateId", "item_type", "user_id", "chef_id", "chef_location", "name", "description", "amount", "quantity", "deliveryType"],
-        include:[
-        {
-          model: User,
-          as: 'chef',
-          attributes: userConstants.userSelectFields
-
-        },
-
-        {
+        include:[{
           model: Plates,
           as:'plate',
           include: [
@@ -279,12 +260,7 @@ exports.listTrackingDriver  = async (data) => {
     {
     model: OrderDelivery,
     required: true,
-    attributes: ["id","state_type","driverId"],
-    include:[{
-    model: User,
-    as: 'driver',
-    attributes: userConstants.userSelectFields
-    }],
+    attributes: ["id","state_type"],
     where: {driverId:data},
   }]
   });
@@ -297,7 +273,7 @@ exports.getUserOrder = async (data, id) => {
     include: [
       {
         model: OrderPayment,
-        attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+        attributes: ["payment_id", "amount", "client_secret", "customer", "payment_method", "status"]
       },
       {
         model: OrderItem,

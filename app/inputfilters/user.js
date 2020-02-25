@@ -12,7 +12,6 @@ exports.updateFields = require(path.resolve('app/inputfilters/whitelist'))(
   'restaurant_name',
   'location_lat',
   'location_lon',
-  'imagePath'
 ], 'form-data');
 
 exports.locationFields = require(path.resolve('app/inputfilters/whitelist'))(

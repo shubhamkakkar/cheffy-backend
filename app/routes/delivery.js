@@ -26,27 +26,8 @@ router.put('/accept/:orderDeliveryId',authService.authorize, userController.getA
 router.put('/reject/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.reject);
 router.put('/pickup/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.pickupDelivery);
 router.put('/complete/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.completeDelivery);
+
 router.param('orderId', orderController.orderByIdMiddleware);
 router.param('orderDeliveryId', controller.orderDeliveryByIdMiddleware);
-
-/*Delivery APIS'*/
-
-/*Chef Accepts customers order, Notify to customer*/
-
-router.put('/accept/:orderDeliveryId',authService.authorize,userController.getAuthUserMiddleware,controller.acceptOrder)
-
-/*Chef Rejects Order, Notify to customer*/
-router.put('/reject/:orderDeliveryId',authService.authorize,userController.getAuthUserMiddleware,controller.rejectOrder)
-
-/*Marked Ready to Deliver, Notify to Driver and User*/
-router.put('/ready/:orderDeliveryId/:driverId',authService.authorize,userController.getAuthUserMiddleware,controller.orderReady)
-
-/*Marked Completed, Notify to User*/
-router.put('/complete/:orderDeliveryId',authService.authorize,userController.getAuthUserMiddleware,controller.orderCompleted)
-
-/*Review To Chef*/
-
-router.post('/review',authService.authorize,controller.createReview)
-
 
 module.exports = router;

@@ -1,7 +1,7 @@
 'use strict';
 const path = require('path');
 const moment = require('moment')
-const {CustomPlate, CustomPlateImage,Favourites, sequelize,OrderItem, ShippingAddress,Review, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory } = require('../models/index');
+const {CustomPlate, CustomPlateImage,Favourites, sequelize,OrderItem, ShippingAddress,Review, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, Notification } = require('../models/index');
 const userConstants = require(path.resolve('app/constants/users'));
 const FCM = require(path.resolve('app/services/fcm'))
 const Sequelize = require('sequelize');
@@ -37,13 +37,14 @@ exports.listNewUser = asyncHandler(async (req,res)=>{
 
 
             let groupNewUsers = {
-                orderTitle: req.body.orderTitle, //  req.body.orderTitle
-                orderBrief: req.body.orderBrief,  //req.body.orderBrief
-                activity: 'Same Name as set from android app',     //req.body.activity
+                orderTitle: req.body.orderTitle,
+                orderBrief: req.body.orderBrief,
+                activity: req.body.activity,
                 device_id: device_id
             }
 
-            let responseData =    await FCM(groupNewUsers)
+            let responseData = await FCM(groupNewUsers)
+            await Notification.create(groupNewUsers)
 
             res.json({
 
@@ -92,13 +93,14 @@ exports.listNewDrivers = asyncHandler(async (req,res)=> {
             })
 
             let groupNewDrivers = {
-                orderTitle: req.body.orderTitle, //  req.body.orderTitle
-                orderBrief: req.body.orderBrief,  //req.body.orderBrief
-                activity: 'Same Name as set from android app',     //req.body.activity
+                orderTitle: req.body.orderTitle,
+                orderBrief: req.body.orderBrief,
+                activity: req.body.activity,
                 device_id: device_id
             }
 
-            let responseData =    await FCM(groupNewDrivers)
+            let responseData = await FCM(groupNewDrivers)
+            await Notification.create(groupNewDrivers)
 
             res.json({
 
@@ -148,13 +150,14 @@ exports.listOldDrivers = asyncHandler(async (req,res)=>{
             })
 
             let groupOldDrivers = {
-                orderTitle: req.body.orderTitle, //  req.body.orderTitle
-                orderBrief: req.body.orderBrief,  //req.body.orderBrief
-                activity: 'Same Name as set from android app',     //req.body.activity
+                orderTitle: req.body.orderTitle,
+                orderBrief: req.body.orderBrief,
+                activity: req.body.activity,
                 device_id: device_id
             }
 
-            let responseData =    await FCM (groupOldDrivers)
+            let responseData = await FCM(groupOldDrivers)
+            await Notification.create(groupOldDrivers)
 
             res.json({
 
@@ -204,13 +207,14 @@ exports.listNewChef = asyncHandler(async (req,res)=>{
             })
 
             let groupNewChef = {
-                orderTitle: req.body.orderTitle, //  req.body.orderTitle
-                orderBrief: req.body.orderBrief,  //req.body.orderBrief
-                activity: 'Same Name as set from android app',     //req.body.activity
+                orderTitle: req.body.orderTitle,
+                orderBrief: req.body.orderBrief,
+                activity: req.body.activity,
                 device_id: device_id
             }
 
-            let responseData =    await FCM(groupNewChef)
+            let responseData = await FCM(groupNewChef)
+            await Notification.create(groupNewChef)
 
             res.json({
 
@@ -259,13 +263,14 @@ exports.listOldChef = asyncHandler(async (req,res)=>{
             })
 
             let groupOldChef = {
-                orderTitle: req.body.orderTitle, //  req.body.orderTitle
-                orderBrief: req.body.orderBrief,  //req.body.orderBrief
-                activity: 'Same Name as set from android app',     //req.body.activity
+                orderTitle: req.body.orderTitle,
+                orderBrief: req.body.orderBrief,
+                activity: req.body.activity,
                 device_id: device_id
             }
 
-            let responseData =    await FCM (groupOldChef)
+            let responseData = await FCM(groupOldChef)
+            await Notification.create(groupOldChef)
 
             res.json({
 
@@ -308,13 +313,14 @@ exports.listFirstOrder = asyncHandler(async (req,res)=>{
             })
 
             let firstOrderUsers = {
-                orderTitle: req.body.orderTitle, //  req.body.orderTitle
-                orderBrief: req.body.orderBrief,  //req.body.orderBrief
-                activity: 'Same Name as set from android app',     //req.body.activity
+                orderTitle: req.body.orderTitle,
+                orderBrief: req.body.orderBrief,
+                activity: req.body.activity,
                 device_id: device_id
             }
 
-            let responseData =    await FCM(firstOrderUsers)
+            let responseData = await FCM(firstOrderUsers)
+            await Notification.create(firstOrderUsers)
 
             res.json({
 

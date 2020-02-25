@@ -9,7 +9,6 @@ const repositoryCategory = require('../repository/category-repository');
 const md5 = require('md5');
 const authService = require('../services/auth');
 const phoneService = require('../services/twillio');
-const paymentService = require('../services/payment');
 const mailer = require('../services/mailer');
 const kue = require("../services/kue");
 const userRepository = require("../repository/user-repository");
@@ -29,6 +28,8 @@ const events = require(path.resolve('app/services/events'));
 const _ = require('lodash');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
+const paymentService = require('../services/payment');
+
 
 const { generateHash } = require('../../helpers/password');
 
@@ -66,7 +67,6 @@ exports.userResponseHelper = userResponseHelper;
 * Sets user in express req object
 */
 exports.getAuthUserMiddleware = asyncHandler(async(req, res, next) => {
-
   const user = await User.findByPk(req.userId , {
     attributes: userConstants.privateSelectFields,
     //raw: true
@@ -125,7 +125,7 @@ exports.getUserByUserIdParamMiddleware = asyncHandler(async(req, res, next, user
 
 });
 
-exports.dummy = asyncHandler(async (req, res, next) => {
+exports.dummy = async (req, res, next) => {
   const category = await repositoryCategory.createCategory({ name: 'Dummy', description: 'Dummy category', url: '#' });
   let ingred, images, kitchen, receipt, full_data;
   for (let i = 0; i < plates.length; i++) {
@@ -195,7 +195,7 @@ exports.dummy = asyncHandler(async (req, res, next) => {
   }
 
   res.status(HttpStatus.ACCEPTED).send({ message: 'Plates are being created', status: HttpStatus.ACCEPTED });
-})
+}
 
 exports.create = asyncHandler(async (req, res, next) => {
   let payload = {};
@@ -228,13 +228,13 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     //publish create action
     return events.publish({
-      action: 'email-token-resend',
-      user: existUser.get({}),
-      query: req.query,
+        action: 'email-token-resend',
+        user: existUser.get({}),
+        query: req.query,
         //registration can be by any user so scope is all
         scope: appConstants.SCOPE_ALL,
         type: 'user'
-      }, req);
+    }, req);
 
   }
 
@@ -275,139 +275,127 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   //publish create action
   events.publish({
-    action: 'create',
-    user: newuser.get({}),
-    query: req.query,
+      action: 'create',
+      user: newuser.get({}),
+      query: req.query,
       //registration can be by any user so scope is all
       scope: appConstants.SCOPE_ALL,
       type: 'user'
-    }, req);
+  }, req);
 
 });
 
 exports.getChefBalance = asyncHandler(async (req, res, next) => {
 
-  let wallet = await Wallet.findOne({
-    where:{userId: req.userId},
-    include:[
+    let wallet = await Wallet.findOne({
+      where:{userId: req.userId},
+      include:[
 
-    {
-      model:User,
-      as:'user',
-      attributes: [ 'id', 'name', 'email', 'user_type']
+      {
+        model:User,
+        as:'user',
+        attributes: [ 'id', 'name', 'email', 'user_type']
+      }
+
+      ]
+    })
+
+
+    let data = {};
+
+    if(!wallet){
+      const order_items = await OrderItem.findAll({
+
+        where:{chef_id:req.userId}
+      });
+
+      let total = 0;
+
+      if(order_items !== null && order_items.length > 0){
+
+        total = order_items.reduce( function( prevVal, elem ) {
+          return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+        }, 0 );
+
+      }
+
+      data.userId = req.userId;
+      data.state_type = 'open';
+      data.balance = total;
+      wallet = await Wallet.create(data);
+
     }
 
-    ]
-  })
 
-
-  let data = {};
-
-  if(!wallet){
-    const order_items = await OrderItem.findAll({
-
-      where:{chef_id:req.userId}
-    });
-
-    let total = 0;
-
-    if(order_items !== null && order_items.length > 0){
-
-      total = order_items.reduce( function( prevVal, elem ) {
-        return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
-      }, 0 );
-
-    }
-
-    data.userId = req.userId;
-    data.state_type = 'open';
-    data.balance = total;
-    wallet = await Wallet.create(data);
-
-  }
-
-
-  res.status(HttpStatus.ACCEPTED).send(wallet);
+    res.status(HttpStatus.ACCEPTED).send(wallet);
 
 
 })
 
 exports.getDriverBalance = asyncHandler(async (req, res, next) => {
 
-  let wallet = await Wallet.findOne({
-    where:{userId: req.userId},
-    include:[
+    let wallet = await Wallet.findOne({
+      where:{userId: req.userId},
+      include:[
 
-    {
-      model:User,
-      as:'user',
-      attributes: [ 'id', 'name', 'email', 'user_type']
-    }
+      {
+        model:User,
+        as:'user',
+        attributes: [ 'id', 'name', 'email', 'user_type']
+      }
 
-    ]
-  })
+      ]
+    })
 
-  let data = {};
 
-  if(!wallet){
-
-    let total = 0;
-
-    data.userId = req.userId;
-    data.state_type = 'open';
-    data.balance = total;
-    wallet = await Wallet.create(data);
-
-  }
-
-  res.status(HttpStatus.ACCEPTED).send(wallet);
+    res.status(HttpStatus.ACCEPTED).send(wallet);
 
 
 })
 
 exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
 
-  const order_items = await OrderItem.findAll({
+        const order_items = await OrderItem.findAll({
 
-    where:{
-      [Op.and]: [{chef_id:req.userId}, {createdAt:{[Op.between]: [req.params.from, req.params.to]} }]
+        where:{
+          [Op.and]: [{chef_id:req.userId}, {createdAt:{[Op.between]: [req.params.from, req.params.to]} }]
+          
+        }
 
-    }
+      });
 
-  });
-
-  const user = req.user;
-  const userResponse = userResponseHelper({user});
-
-
-  let total = 0;
-
-  let balance_history = [];
-
-  let prev_bal = 0;
-
-  if(order_items !== null && order_items.length > 0){
-
-    order_items.map((elem) =>{
-      let hist = {};
-      hist.date = elem.updatedAt;
-      hist.balance = prev_bal + parseFloat(elem.amount * elem.quantity);
-      prev_bal = hist.balance;
-      balance_history.push(hist);
-
-    })
+      const user = req.user;
+      const userResponse = userResponseHelper({user});
 
 
+      let total = 0;
 
-    total = order_items.reduce( function( prevVal, elem ) {
+      let balance_history = [];
 
-      return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
-    }, 0 );
+      let prev_bal = 0;
 
-  }
+      if(order_items !== null && order_items.length > 0){
+
+        order_items.map((elem) =>{
+          let hist = {};
+          hist.date = elem.updatedAt;
+          hist.balance = prev_bal + parseFloat(elem.amount * elem.quantity);
+          prev_bal = hist.balance;
+          balance_history.push(hist);
+
+        })
 
 
-  res.status(HttpStatus.ACCEPTED).send({user: userResponse, balance_history:balance_history, total:total});
+
+        total = order_items.reduce( function( prevVal, elem ) {
+
+          return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+        }, 0 );
+
+      }
+
+
+    res.status(HttpStatus.ACCEPTED).send({user: userResponse, balance_history:balance_history, total:total});
 
 
 })
@@ -778,10 +766,6 @@ exports.put = asyncHandler(async (req, res, next) => {
       updates.imagePath = req.files['profile_photo'][0].url;
     }
 
-    else if(req.body.image_path){
-      updates.imagePath = req.body.image_path;
-    }
-
     //need to send verification email when email change
     if(req.body.email && prevEmail !== req.body.email) {
       debug('email changed');
@@ -828,7 +812,7 @@ exports.put = asyncHandler(async (req, res, next) => {
       await phoneService.sendMessage(phone, existUser.verification_phone_token);
     }
 
-  });
+});
 
 
 /**
@@ -858,7 +842,7 @@ exports.updateLocation = asyncHandler(async(req, res, next) => {
 });
 
 
-exports.search = asyncHandler(async (req, res, next) => {
+exports.search = async (req, res, next) => {
   // const token_return = await authService.decodeToken(req.headers['x-access-token'])
   try {
 
@@ -870,42 +854,42 @@ exports.search = asyncHandler(async (req, res, next) => {
 
   // let contract = new ValidationContract();
 
-  try {
-    let plates = await repository.getPlateSearch(req.params.text);
-    let restaurants = await userRepository.getRestaurantSearch(req.params.text);
-    let payload = {};
-    payload.status = HttpStatus.OK;
-    payload.plates = plates;
-    payload.restaurants = restaurants;
-    res.status(payload.status).send(payload);
-  } catch (error) {
-    res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
+    try {
+      let plates = await repository.getPlateSearch(req.params.text);
+      let restaurants = await userRepository.getRestaurantSearch(req.params.text);
+      let payload = {};
+      payload.status = HttpStatus.OK;
+      payload.plates = plates;
+      payload.restaurants = restaurants;
+      res.status(payload.status).send(payload);
+    } catch (error) {
+      res.status(HttpStatus.CONFLICT).send({ message: "An error occurred", error: true}).end();
+    }
+
+  } catch (e) {
+    res.status(500).send({
+      message: 'Failed to process your request'
+    });
   }
+};
 
-} catch (e) {
-  res.status(500).send({
-    message: 'Failed to process your request'
-  });
-}
-});
-
-exports.searchPredictions = asyncHandler(async (req, res, next) => {
+exports.searchPredictions = async (req, res, next) => {
   try {
 
     try {
       let type_plate = await Plates.findAll({ attributes:['id','name'] } );
 
       let type_chef = await Plates.findAll({
-        attributes:['userId'] ,
-        include:{
-          model:User,
-          as:"chef",
+       attributes:['userId'] ,
+       include:{
+        model:User,
+        as:"chef",
 
-          attributes:['restaurant_name']
+        attributes:['restaurant_name']
 
-        }
+       }
 
-      });
+     });
       let type_category = await PlateCategory.findAll({ attributes:['id','name'] } );
 
       let payload = {};
@@ -923,7 +907,7 @@ exports.searchPredictions = asyncHandler(async (req, res, next) => {
       message: 'Failed to process your request'
     });
   }
-});
+};
 
 /**
 * Method: POST
@@ -1046,20 +1030,30 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.CONFLICT).send({ message: "Error validating token!", status: HttpStatus.CONFLICT });
 });
 
+
+
+
+// bank endpoints
+
 /*
 Method to get stripe account details for a user
 */
+
+
 exports.stripeDetails = asyncHandler(async (req, res) => {
+  try{
   if (!req.user.stripe_id) {
     return res.status(HttpStatus.BAD_REQUEST).send({ message: "User does not have a stripe account"});
   }
   const customer = await paymentService.getUser(req.user.stripe_id);
   return res.status(HttpStatus.OK).send(customer);
+}
+catch(e){console.log(e)}
 })
 
-/*
-Method to create a bank account for a user
-*/
+
+//Method to create a bank account for a user
+
 exports.createBankAccount = asyncHandler(async (req, res, next) => {
   try{
     const existUser = req.user;
@@ -1073,9 +1067,9 @@ exports.createBankAccount = asyncHandler(async (req, res, next) => {
   }
 })
 
-/*
-Method to retrieve a bank account details for a user via bank account ID
-*/
+
+//Method to retrieve a bank account details for a user via bank account ID
+
 exports.retrieveBankAccountById = asyncHandler(async (req, res, next) => {
   const existUser = req.user;
   if (!existUser.stripe_id) {
@@ -1085,9 +1079,9 @@ exports.retrieveBankAccountById = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.CREATED).send({ message: "Here is your Bank Account", data: bank_account});
 })
 
-/*
-Method to retrieve all bank accounts for a user
-*/
+
+//Method to retrieve all bank accounts for a user
+
 exports.retrieveAllBankAccounts = asyncHandler(async (req, res, next) => {
   const limit = req.body.limit || 10
   const existUser = req.user;
@@ -1098,9 +1092,9 @@ exports.retrieveAllBankAccounts = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.CREATED).send({ message: "Here are your Bank Accounts", data: bank_accounts});
 })
 
-/*
-Method to delete a bank account for a user
-*/
+
+//Method to delete a bank account for a user
+
 exports.deleteBankAccount = asyncHandler(async (req, res, next) => {
   const existUser = req.user;
   if (!existUser.stripe_id) {
@@ -1110,9 +1104,9 @@ exports.deleteBankAccount = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.CREATED).send({ message: "Here are your Bank Accounts", data: deleted});
 })
 
-/*
-Method to verify a bank account for a user
-*/
+
+//Method to verify a bank account for a user
+
 exports.verifyBankAccount = asyncHandler(async (req, res, next) => {
   const existUser = req.user;
   if (!existUser.stripe_id) {
@@ -1120,4 +1114,28 @@ exports.verifyBankAccount = asyncHandler(async (req, res, next) => {
   }
   const bank_account = await paymentService.verifyBankAccount(existUser.stripe_id, req.params.bankAccountId);
   res.status(HttpStatus.CREATED).send({ message: "Bank Account Verified!", data: bank_account});
+})
+
+
+exports.getPayments = asyncHandler(async (req, res, next) => {
+  try {
+    if (req.user.user_type !== userConstants.USER_TYPE_DRIVER) {
+      return res.status(HttpStatus.FORBIDDEN).send({ message: "Only a Driver type user can get payments to their linked Bank Account"});
+    }
+    const wallet = await walletRepository.getWallet(req.user.id);
+    if (!wallet || !wallet[0].dataValues.balance || wallet[0].dataValues.balance <= 0) {
+      return res.status(HttpStatus.BAD_REQUEST).send({ message: "Cannot transfer zero or negative wallet balance to your bank account"});
+    }
+    const payout = await paymentService.createPayout(wallet[0].dataValues.balance, req.body.bankAccount);
+    wallet.balance = 0;
+    await wallet.save();
+    res.status(HttpStatus.OK).send({ message: "Congratulations! Your wallet amount will be transferred to your bank account within 7 working days.", data: payout});
+  } catch (err) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({message: err.message});
+  }
+})
+
+exports.addMoneyToWallet = asyncHandler(async (req, res, next) => {
+  await walletRepository.addMoneyToWallet(req.userId, req.body.amount);
+  res.status(HttpStatus.OK).send({ message: "Wallet balance updated"});
 })

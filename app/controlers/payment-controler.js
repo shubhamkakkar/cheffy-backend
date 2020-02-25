@@ -7,6 +7,7 @@ const { OrderItem, User } = require('../models/index');
 const paypal = require('paypal-rest-sdk');
 const asyncHandler = require('express-async-handler');
 
+
 paypal.configure({
   'mode': 'sandbox',
   'client_id': 'AX0rIM3otenMBgA2oLXLs0OmV1WsJxNTYOjXoML5J1yv-qe_g6Bj_9pPhQ-dW6PQ5EShQSadLF-UxRNj',
@@ -17,27 +18,27 @@ paypal.configure({
 let payment_object = {
   "intent": "sale",
   "payer": {
-    "payment_method": "paypal"
+      "payment_method": "paypal"
   },
   "redirect_urls": {
-    "return_url": `${process.env.CURRENT_API_URL}/payment/paypal/callback`,
-    "cancel_url": `${process.env.CURRENT_API_URL}/payment/paypal/cancel`
+      "return_url": `${process.env.CURRENT_API_URL}/payment/paypal/callback`,
+      "cancel_url": `${process.env.CURRENT_API_URL}/payment/paypal/cancel`
   },
   "transactions": []
 };
 
 const generateObjectPayment = async (order, orderItens) => {
   payment_object.transactions.push(
-  {
-    "item_list": {
-      "items": []
-    },
-    "amount": {
-      "currency": "BRL",
-      "total": order.order_total.toString()
-    },
-    "description": order.id
-  }
+    {
+      "item_list": {
+          "items": []
+      },
+      "amount": {
+          "currency": "BRL",
+          "total": order.order_total.toString()
+      },
+      "description": order.id
+    }
   );
   orderItens.map(item =>{
     payment_object.transactions[0].item_list.items.push({
@@ -52,7 +53,7 @@ const generateObjectPayment = async (order, orderItens) => {
   return payment_object;
 };
 
-exports.startPaymentPaypal = asyncHandler(async (req, res, next) => {
+exports.startPaymentPaypal = async (req, res, next) => {
   const { orderId } = req.params;
 
   const token_return = await authService.decodeToken(req.headers['x-access-token']);
@@ -75,22 +76,22 @@ exports.startPaymentPaypal = asyncHandler(async (req, res, next) => {
       return 0;
     } else {
       const approvalUrl = payment.links.find(link => link.rel === 'approval_url').href;
-      res.redirect(approvalUrl);
+      res.redirect(approvalUrl); 
       return 0;
     }
   });
-})
+}
 
-exports.callback = asyncHandler(async (req, res, next) => {
+exports.callback = async (req, res, next) => {
   res.render('confirmScreen.html', { ...req.query })
-})
+}
 
-exports.cancel = asyncHandler(async (req, res, next) => {
+exports.cancel = async (req, res, next) => {
   console.log(req.query)
   console.log(req.body)
-})
+}
 
-exports.confirm = asyncHandler(async (req, res, next) => {
+exports.confirm = async (req, res, next) => {
   const { paymentId, PayerID } = req.body;
   await paypal.payment.execute(
     paymentId,
@@ -106,4 +107,10 @@ exports.confirm = asyncHandler(async (req, res, next) => {
       }
     }
   )
+}
+
+
+exports.getUserWallet = asyncHandler(async(req, res, next) => {
+  const wallet = await walletRepository.getWallet(req.user.id);
+  return wallet;
 })

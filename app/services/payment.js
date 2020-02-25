@@ -140,9 +140,6 @@ exports.createCard = async (user, address, card) => {
   return card_req;
 }
 
-/**
-* Creates a Bank Account object for a customer
-*/
 exports.createBankAccount = async (stripeCustomerId, accountDetails) => {
   try{
     const bank_account = await stripe.customers.createSource(stripeCustomerId, {source:
@@ -204,11 +201,6 @@ exports.attachPaymentMethod = async (card, user) => {
   return card_req;
 }
 
-exports.detachPaymentMethod = async (card) => {
-  const card_req = await stripe.paymentMethods.detach(card);
-  return card_req;
-}
-
 exports.confirmPayment = async (ammount, card, customer) => {
   debug("STRIPE Confirm payment: ", card)
   const paymentIntent = await stripe.paymentIntents.create({
@@ -220,6 +212,18 @@ exports.confirmPayment = async (ammount, card, customer) => {
     confirm: true,
   });
   return paymentIntent;
+}
+
+exports.createPayout = async (amount, bankAccount) => {
+  let payload = {
+    amount: amount,
+    currency: 'usd'
+  }
+  if (bankAccount) {
+    payload.destination = bankAccount
+  }
+  const payout = await stripe.payouts.create(payload)
+  return payout;
 }
 
 //STRIPE METHOD
@@ -286,7 +290,7 @@ exports.confirmPayment = async (ammount, card, customer) => {
     });
     return 0;
   }
-  */
+ */
 
 /**
  * if (create_orderPayment.status === 'succeeded' && create_orderPayment.type === 'authorized') {
@@ -313,8 +317,8 @@ exports.confirmPayment = async (ammount, card, customer) => {
  }
  */
 
- exports.payPalConnection = async () => await paypal.configure({
-   'mode': 'sandbox',
-   'client_id': 'AX0rIM3otenMBgA2oLXLs0OmV1WsJxNTYOjXoML5J1yv-qe_g6Bj_9pPhQ-dW6PQ5EShQSadLF-UxRNj',
-   'client_secret': 'ELJGz7y4lKWoRVPdrnxfqUt0NOvFucR9w6_6iGkNVFn7HyBL0QCSYDqwRLrBCPIoOnlHzfSAoAD8EN9f'
- });
+exports.payPalConnection = async () => await paypal.configure({
+  'mode': 'sandbox',
+  'client_id': 'AX0rIM3otenMBgA2oLXLs0OmV1WsJxNTYOjXoML5J1yv-qe_g6Bj_9pPhQ-dW6PQ5EShQSadLF-UxRNj',
+  'client_secret': 'ELJGz7y4lKWoRVPdrnxfqUt0NOvFucR9w6_6iGkNVFn7HyBL0QCSYDqwRLrBCPIoOnlHzfSAoAD8EN9f'
+});

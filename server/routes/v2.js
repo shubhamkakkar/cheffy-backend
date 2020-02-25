@@ -15,23 +15,31 @@ const driver = require(path.resolve('./app/routes/driver'));
 const customPlate = require(path.resolve('./app/routes/customPlate'));
 const favourite = require(path.resolve('./app/routes/favourite'));
 const rating = require(path.resolve('./app/routes/rating'));
+const reservation = require(path.resolve('./app/routes/reservation'));
+const groupNotifications = require(path.resolve('./app/routes/group_notifications'));
+const notification = require(path.resolve('./app/routes/notification'));
 
 const router = express.Router(); // eslint-disable-line new-cap
 
-router.use('/users', user);
-router.use('/cards', card);
-router.use('/plates', plate);
-router.use('/categories', category);
-router.use("/shippings", shipping);
+router.use('/user', user);
+router.use('/card', card);
+router.use('/plate', plate);
+router.use('/category', category);
+router.use("/shipping", shipping);
 router.use("/docs", docs);
-router.use("/baskets", basket);
-router.use("/manages", admin);
-router.use("/payments", payment);
-router.use("/deliveries", delivery);
-router.use("/orders", order);
-router.use("/drivers", driver);
-router.use("/custom-plates", customPlate);
-router.use("/favourites", favourite);
+router.use("/basket", basket);
+router.use("/manage", admin);
+router.use("/payment", payment);
+router.use("/delivery", delivery);
+router.use("/order", order);
+router.use("/driver", driver);
+router.use("/custom-plate", customPlate);
+router.use("/favourite", favourite);
 router.use("/rating", rating);
+router.use("/groupNotifications", groupNotifications);
+router.use("/reservation", reservation);
+router.use("/notification", notification);
+
+
 
 module.exports = router;

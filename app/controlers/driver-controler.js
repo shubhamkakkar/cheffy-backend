@@ -32,17 +32,17 @@ exports.getMyNearDrivers = asyncHandler( async( req, res, next) => {
 
   //publish search action
   events.publish({
-    action: 'near-drivers',
-    user: req.user,
-    query: req.query,
-    params: req.params,
+      action: 'near-drivers',
+      user: req.user,
+      query: req.query,
+      params: req.params,
       //registration can be by any user so scope is all
       scope: appConstants.SCOPE_USER,
       type: 'driver'
-    }, req);
+  }, req);
 });
 
-exports.updateDriverPosition = asyncHandler(async (req, res, next) => {
+exports.updateDriverPosition = async (req, res, next) => {
     let payload = {};
 
     let contract = new ValidationContract();
@@ -76,17 +76,17 @@ exports.updateDriverPosition = asyncHandler(async (req, res, next) => {
    }
 
    res.status(HttpStatus.ACCEPTED).send({ ...response.data });
-})
+}
 
-exports.getDriverPosition = asyncHandler(async (req, res, next) => {
+exports.getDriverPosition = async (req, res, next) => {
    const token_return = await authService.decodeToken(req.headers['x-access-token']);
    const existUser = await User.findOne({ where: { id: token_return.id } });
    let payload = {};
-   /*if (!existUser || existUser.user_type !== 'driver') {
+   if (!existUser || existUser.user_type !== 'driver') {
       payload.status = HttpStatus.CONFLICT;
       res.status(payload.status).send({ message: 'Could not update user position', status: HttpStatus.CONFLICT});
       return 0;
-   }*/
+   }
 
    let contract = new ValidationContract();
    contract.isEmail(req.body.email, 'This email is correct?');
@@ -106,9 +106,9 @@ exports.getDriverPosition = asyncHandler(async (req, res, next) => {
    }
 
    res.status(HttpStatus.ACCEPTED).send({ ...response.data });
-})
+}
 
-exports.createBankAccount = asyncHandler(async (req, res, next) => {
+exports.createBankAccount = async (req, res, next) => {
    const token_return = await authService.decodeToken(req.headers['x-access-token']);
    const existUser = await User.findOne({ where: { id: token_return.id } });
    if (!existUser || existUser.user_type !== 'driver') {
@@ -140,4 +140,4 @@ exports.createBankAccount = asyncHandler(async (req, res, next) => {
    }
 
    res.status(HttpStatus.ACCEPTED).send({ ...response.data });
-})
+}

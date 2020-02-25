@@ -1,23 +1,23 @@
 "use strict";
 var HttpStatus = require("http-status-codes");
 const { Order, OrderItem, User } = require("../models/index");
-const asyncHandler = require('express-async-handler');
 
-exports.createOrderItens = asyncHandler(async (data) => {
+
+exports.createOrderItens = async (data) => {
   let recovery_data = data.map((item) => {
     item.chef_location = item.chef_location
     item.walletId = item.walletId[0].id
     return item
   });
-
+  
   const response = await OrderItem.bulkCreate(recovery_data);
 
-})
+}
 
 /**
 * order payment helper
 */
-exports.change_data = asyncHandler(async (id, data) => {
+exports.change_data = async (id, data) => {
   let base = {
     orderId: id,
     payment_id: data.id,
@@ -41,4 +41,4 @@ exports.change_data = asyncHandler(async (id, data) => {
     paid: data.charges.data[0].paid,
   }
   return base;
-})
+}

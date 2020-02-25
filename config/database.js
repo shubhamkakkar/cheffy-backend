@@ -6,7 +6,7 @@ module.exports = {
     host: process.env.DB_HOST,
     dialect: process.env.DB_DIALECT,
     port: process.env.DB_PORT,
-    logging: console.log
+    logging: process.env.DB_LOGGING
   },
   redis: {
     password: process.env.REDIS_PASSWORD,

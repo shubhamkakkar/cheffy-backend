@@ -11,10 +11,9 @@ const authService = require('../services/auth');
 const upload = require('../services/upload');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
-const asyncHandler = require('express-async-handler');
 
 
-exports.favourite = asyncHandler(async (req, res, next) => {
+exports.favourite = async (req, res, next) => {
 
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
 
@@ -33,7 +32,7 @@ exports.favourite = asyncHandler(async (req, res, next) => {
     res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
-
+  
 
   try {
 
@@ -41,50 +40,50 @@ exports.favourite = asyncHandler(async (req, res, next) => {
 
     if(req.body.fav_type == 'plate'){
 
-      contract.isRequired(req.body.plateId, 'plateId is required!');
+    contract.isRequired(req.body.plateId, 'plateId is required!');
 
-      if (!contract.isValid()) {
-        res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-        return 0;
-      }
-      let existPlate = await repository.findPlate(req.body.plateId);
-      if (!existPlate) {
-        res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-        return 0;
-      }
+    if (!contract.isValid()) {
+      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+      return 0;
+    }
+    let existPlate = await repository.findPlate(req.body.plateId);
+    if (!existPlate) {
+      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
+      return 0;
+    }
 
-    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId, req.userId);
+    let existPlateInFav = await repoFav.findPlateinFav(req.body.plateId);
     if (existPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Already exists in favourites", status: HttpStatus.CONFLICT});
       return 0;
     }
 
-      response = await repoFav.add(token_return.id,null, req.body.plateId,req.body.fav_type);
+    response = await repoFav.add(token_return.id,null, req.body.plateId,req.body.fav_type);
 
 
     }
 
     if(req.body.fav_type == 'custom_plate'){
-      contract.isRequired(req.body.CustomplateId, 'CustomplateId is required!');
+    contract.isRequired(req.body.CustomplateId, 'CustomplateId is required!');
 
-      if (!contract.isValid()) {
-        res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-        return 0;
-      }
-      let existPlate = await repoCustom.getPlate(req.body.CustomplateId);
-      if (!existPlate) {
-        res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-        return 0;
-      }
+    if (!contract.isValid()) {
+      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+      return 0;
+    }
+    let existPlate = await repoCustom.getPlate(req.body.CustomplateId);
+    if (!existPlate) {
+      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
+      return 0;
+    }
 
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId, req.userId);
+    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.body.CustomplateId);
     if (existCustomPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Already exists in favourites", status: HttpStatus.CONFLICT});
       return 0;
     }
 
 
-      response = await repoFav.add(token_return.id,req.body.CustomplateId,null,req.body.fav_type);
+    response = await repoFav.add(token_return.id,req.body.CustomplateId,null,req.body.fav_type);
 
 
     }
@@ -95,10 +94,10 @@ exports.favourite = asyncHandler(async (req, res, next) => {
       message: 'Failed to process your request'
     });
   }
-});
+};
 
 
-exports.removeFavourite = asyncHandler(async (req, res, next) => {
+exports.removeFavourite = async (req, res, next) => {
 
   const token_return = await authService.decodeToken(req.headers['x-access-token'])
 
@@ -117,7 +116,7 @@ exports.removeFavourite = asyncHandler(async (req, res, next) => {
     res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
     return 0;
   }
-
+  
 
   try {
 
@@ -125,25 +124,25 @@ exports.removeFavourite = asyncHandler(async (req, res, next) => {
 
     if(req.params.fav_type == 'plate'){
 
-      contract.isRequired(req.params.id, 'plateId is required!');
+    contract.isRequired(req.params.id, 'plateId is required!');
 
-      if (!contract.isValid()) {
-        res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-        return 0;
-      }
-      let existPlate = await repository.findPlate(req.params.id);
-      if (!existPlate) {
-        res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
-        return 0;
-      }
+    if (!contract.isValid()) {
+      res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+      return 0;
+    }
+    let existPlate = await repository.findPlate(req.params.id);
+    if (!existPlate) {
+      res.status(HttpStatus.CONFLICT).send({ message: "we couldn't find your plate", status: HttpStatus.CONFLICT});
+      return 0;
+    }
 
-    let existPlateInFav = await repoFav.findPlateinFav(req.params.id, req.userId);
+    let existPlateInFav = await repoFav.findPlateinFav(req.params.id);
     if (!existPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Cann't find in favourites", status: HttpStatus.CONFLICT});
       return 0;
     }
 
-    response = await repoFav.delete(existPlateInFav.id, req.userId);
+    response = await repoFav.delete(existPlateInFav.id);
 
 
     }
@@ -161,14 +160,14 @@ exports.removeFavourite = asyncHandler(async (req, res, next) => {
       return 0;
     }
 
-    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.params.id, req.userId);
+    let existCustomPlateInFav = await repoFav.findCustomPlateinFav(req.params.id);
     if (!existCustomPlateInFav) {
       res.status(HttpStatus.CONFLICT).send({ message: "Can't find in favourites", status: HttpStatus.CONFLICT});
       return 0;
     }
 
 
-    response = await repoFav.delete(existCustomPlateInFav.id,req.userId);
+    response = await repoFav.delete(existCustomPlateInFav.id);
 
 
     }
@@ -179,10 +178,10 @@ exports.removeFavourite = asyncHandler(async (req, res, next) => {
       message: 'Failed to process your request'
     });
   }
-});
+};
 
 
-exports.list = asyncHandler(async (req, res, next) => {
+exports.list = async (req, res, next) => {
   const token_return =  await authService.decodeToken(req.headers['x-access-token'])
   if (!token_return) {
     res.status(HttpStatus.CONFLICT).send({
@@ -205,4 +204,4 @@ exports.list = asyncHandler(async (req, res, next) => {
     });
     return 0;
   }
-});
+}

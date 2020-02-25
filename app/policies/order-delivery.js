@@ -49,8 +49,7 @@ exports.isOrderDeliveryDriverMiddleware = () => {
   ];
 };
 
-//checks if user or driver of an orderDelivery
-
+//checks if user or driver of an orderdelivery
 exports.isUserOrDriverMiddleware = () => {
   return [
     middlewares.authorization((req) => {

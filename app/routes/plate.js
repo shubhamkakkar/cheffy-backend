@@ -11,7 +11,7 @@ const categoryController = require(path.resolve('app/controlers/category-control
 const platePolicies = require(path.resolve('app/policies/plate'));
 
 const imageFields = [
-  'plate_image', 'kitchen_image', 'receipt_image'
+  'profile_photo', 'kitchen_image', 'receipt_image'
 ];
 
 const fieldsFile = imageFields.map((field) => {
@@ -24,11 +24,11 @@ router.post('/', authService.authorize, shippingController.getAuthUserShippingAd
 router.get('/', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.list);
 router.get('/help', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.searchHelp);
 
-router.get('/show/:id', authService.authorizeOptional,userController.getAuthUserMiddleware, userController.getAuthUserIfPresentMiddleware, controller.getPlate);
+router.get('/show/:id', authService.authorizeOptional, userController.getAuthUserIfPresentMiddleware, controller.getPlate);
 router.post('/edit/:id', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(),  controller.edit);
 router.delete('/:id', authService.authorize,userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.delete);
 
-router.post('/images/:id',authService.authorize,userController.getAuthUserMiddleware,multerStart(fieldsFile),platePolicies.isOwnerMiddleware(), controller.uploadImages);
+router.post('/images/:id',authService.authorize,multerStart(fieldsFile),platePolicies.isOwnerMiddleware(), controller.uploadImages);
 
 //TODO add permission
 router.delete('/:id/images/:type_image/:plateImageId', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.deleteImage);
