@@ -445,9 +445,8 @@ exports.getOrderItem = asyncHandler( async(req, res, next)=>{
 */
 exports.editOrderItemStateType = asyncHandler( async(req, res, next)=>{
   const user = req.user;
-
   const updates = {state_type: req.body.state_type};
-
+console.log(updates)
   await req.orderItem.update(updates);
 
   const orderItem = await repository.getOrderItemByIdDetails(req.params.orderItemId);
