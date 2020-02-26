@@ -6,7 +6,7 @@ const conf = require('../configs');
 const nunjucks = require('nunjucks');
 const errors = require('./errors');
 const routes = require('./routes');
-
+const morgan = require("morgan");
 var corsOptions = {
   origin: '*',
   optionsSuccessStatus: 200
@@ -19,7 +19,7 @@ nunjucks.configure('views', {
 });
 
 app.use('/tmp', express.static(`${__dirname}/../tmp/`));
-
+app.use(morgan("dev"));
 app.use(cors(corsOptions))
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({

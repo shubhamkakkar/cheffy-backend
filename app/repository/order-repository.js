@@ -213,9 +213,10 @@ exports.listTrackingUser  = async (data) => {
     },
     {
     model: OrderDelivery,
-    required: true,
+    // required: true,
     attributes: ["id","state_type"]
-  }]
+  }
+  ]
   });
   return order;
 }

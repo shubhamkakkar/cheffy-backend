@@ -67,7 +67,6 @@ exports.userResponseHelper = userResponseHelper;
 * Sets user in express req object
 */
 exports.getAuthUserMiddleware = asyncHandler(async(req, res, next) => {
-
   const user = await User.findByPk(req.userId , {
     attributes: userConstants.privateSelectFields,
     //raw: true
