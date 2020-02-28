@@ -494,6 +494,8 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 * Complete user registration
 */
 exports.completeRegistration = asyncHandler(async (req, res, next) => {
+   let {device_id} =  req.body; 
+
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
   contract.isRequired(req.body.name, 'User password is required!');
@@ -552,6 +554,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
   // save token in user auth_token field.
   // for tracking logout
   existUser.auth_token = token;
+  device_id ? existUser.device_id = device_id : null;
 
   await existUser.save();
 
