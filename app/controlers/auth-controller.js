@@ -33,7 +33,7 @@ const { generateHash } = require('../../helpers/password');
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
     const contract = new ValidationContract();
-
+    let {device_id} = req.body;
     contract.isRequired(req.body.provider, 'provider is Required');
     contract.isRequired(req.body.provider_user_id, 'provider id is Required');
     contract.isRequired(req.body.email, 'email is Required');
@@ -67,7 +67,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
 
     existUser.auth_token = token;
     existUser.verification_email_status = 'verified';
-
+    device_id?existUser.device_id = device_id:null;
     await existUser.save();
 
     const userResponse = userResponseHelper({user: existUser});
@@ -82,7 +82,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
 
 exports.socialauthRegister = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
-
+let {device_id} = req.body;
   contract.isRequired(req.body.email, 'email is Required');
   contract.isRequired(req.body.name, 'name is Required');
   contract.isRequired(req.body.user_type, 'user_type is Required');
@@ -130,7 +130,7 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
     email: createdUser.email,
     name: createdUser.name
   });
-
+  device_id ? createdUser.device_id = device_id : null;
   createdUser.auth_token = token;
 
   await createdUser.save();
@@ -156,8 +156,8 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
 });
 
 exports.authenticate = asyncHandler(async (req, res, next) => {
-
-  const { password } = req.body;
+  console.log(req.body)
+  const { password,device_id } = req.body;
   debug('body', req.body);
 
   let customer
@@ -207,6 +207,7 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
   });
 
   customer.auth_token = token;
+  device_id ? customer.device_id = device_id :null;
   await customer.save();
 
   const userResponse = userResponseHelper({user: customer});
