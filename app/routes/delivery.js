@@ -12,8 +12,8 @@ const middlewares = require(path.resolve('server/middlewares'));
 
 router.post('/createdelivery/:orderId',authService.authorize, userController.getAuthUserMiddleware, middlewares.driverRoleRequired, controller.createDelivery);
 router.get('/', authService.authorize,controller.list);
-router.get('/complete', authService.authorize,controller.listCompleteDeliveries);
-router.get('/user/pending', authService.authorize,controller.listPendingDeliveries);
+router.get('/complete', authService.authorize, userController.getAuthUserMiddleware, controller.listCompleteDeliveries);
+router.get('/user/pending', authService.authorize, userController.getAuthUserMiddleware, controller.listPendingDeliveries);
 router.get('/driver/pending', authService.authorize,controller.listPendingDeliveriesDriver);
 router.post('/time', controller.calculateDeliveryTime);
 router.get('/:orderDeliveryId',authService.authorize, controller.getById);

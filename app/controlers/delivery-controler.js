@@ -131,15 +131,9 @@ exports.pendingList = asyncHandler(async (req, res, next) => {
 */
 
 exports.listCompleteDeliveries = async (req, res, next) => {
-  const token_return =  await authService.decodeToken(req.headers['x-access-token'])
-  if (!token_return) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: "You must be logged in to check your orders",
-      error: true
-    });
-  }
+
   try {
-    const user_orders = await deliveryRepository.getCompletedDeliveriesByUser(token_return.id)
+    const user_orders = await deliveryRepository.getCompletedDeliveriesByUser(req.userId)
     res.status(HttpStatus.ACCEPTED).send({
       message: 'Here are your orders!',
       data: user_orders
@@ -156,16 +150,23 @@ exports.listCompleteDeliveries = async (req, res, next) => {
 }
 
 exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
-  const pagination = paginator.paginateQuery(req);
-  const query = { userId: req.userId, pagination};
 
-  const user_orders = await deliveryRepository.getPendingDeliveriesByUser(query);
+   try {
+    const user_orders = await deliveryRepository.getPendingDeliveriesByUser(req.userId)
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Here are your orders!',
+      data: user_orders
+    });
+    return 0;
+  } catch (e) {
+    console.log(e)
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'Fail to get your orders!',
+      error: true
+    });
+    return 0;
+  }
 
-  res.status(HttpStatus.ACCEPTED).send({
-    message: 'Here are your orders!',
-    data: user_orders,
-    ...paginator.paginateInfo(query)
-  });
 
 });
 
