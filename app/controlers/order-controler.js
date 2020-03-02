@@ -147,6 +147,7 @@ exports.list = async (req, res, next) => {
 * optional query state_stype
 */
 exports.chefOrderList = asyncHandler(async (req, res, next) => {
+
   const userId = req.userId;
   const pagination = paginator.paginateQuery(req);
 
@@ -157,15 +158,30 @@ exports.chefOrderList = asyncHandler(async (req, res, next) => {
     query.state_type = state_type;
   }
 
-  const orderItems = await repository.getChefOrders(query);
+  const item_type = req.query.item_type;
+
+
+  let orderItems = await repository.getChefOrders(query);
+  
+  if(item_type == "plate"){
+  orderItems = orderItems.filter( item => item.item_type == "plate");
+  console.log("plate invoked")
+  }
+
+  else if(item_type == "custom_plate"){
+  orderItems = orderItems.filter( item => item.item_type == "custom_plate");
+  console.log("cus_plate invoked")
+  }
 
   const message = `Here are your${ state_type ? ` ${state_type} ` : ' '}orders!`;
+
 
   res.status(HttpStatus.ACCEPTED).send({
     message,
     data: orderItems,
     ...paginator.paginateInfo(pagination)
   });
+
 
 });
 
