@@ -146,13 +146,17 @@ exports.getCompletedDeliveriesByUser = async (data) => {
 }
 
 exports.getPendingDeliveriesByUser = async (data) => {
-     let order = await Order.findAll({
+    let order = await Order.findAll({
     where: {userId:data},
     order: [["id", "DESC"]],
     include: [
     {
       model: OrderPayment,
       attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+    },
+    {
+      model:ShippingAddress,
+      as:"shipping"
     },
     {
       model: OrderItem,
@@ -171,7 +175,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
           model: PlateImage
         }]
       }
-      ]
+      ] 
     },
     {
         model: OrderDelivery,
