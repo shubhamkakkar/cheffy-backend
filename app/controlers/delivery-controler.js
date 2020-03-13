@@ -174,11 +174,8 @@ exports.listPendingDeliveriesDriver = asyncHandler(async (req, res, next) => {
   const pagination = paginator.paginateQuery(req);
   const query = { deliveryType: userConstants.USER_TYPE_DRIVER, pagination};
 
-  const driver_orders = await deliveryRepository.getPendingDeliveriesByDriver(query);
-
-  const driver_pending_orders = driver_orders.filter( item => item.OrderDelivery == null);
-
-  res.status(HttpStatus.ACCEPTED).send({
+  const driver_pending_orders = await deliveryRepository.getPendingDeliveriesByDriver(query);
+    res.status(HttpStatus.ACCEPTED).send({
     message: 'Here are your orders!',
     data: driver_pending_orders,
     ...paginator.paginateInfo(query)

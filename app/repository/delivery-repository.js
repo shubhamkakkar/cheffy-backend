@@ -64,6 +64,7 @@ exports.getOrderDeliveriesByUserId = async (data,driver) => {
     {
     model: OrderDelivery,
     required: true,
+    as: "order_delivery",
     attributes: ["id","state_type"]
     //where: {state_type: 'pending'}
    }]
@@ -98,6 +99,7 @@ exports.getOrderDeliveriesPendingByUserId = async (data,driver) => {
     },
     {
     model: OrderDelivery,
+    as: "order_delivery",
     required: true,
     attributes: ["id"],
     where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
@@ -138,6 +140,7 @@ exports.getCompletedDeliveriesByUser = async (data) => {
     {
         model: OrderDelivery,
         required: true,
+        as: "order_delivery",
         where: {state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED}
       }
     ]
@@ -180,6 +183,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
     {
         model: OrderDelivery,
         required: true,
+        as: "order_delivery",
         where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
       }
     ]
@@ -190,36 +194,39 @@ exports.getPendingDeliveriesByUser = async (data) => {
 
 
 exports.getPendingDeliveriesByDriver = async (data) => {
-  let order = await OrderItem.findAll({
-    where: {deliveryType: data.deliveryType},
-    order: [["id", "DESC"]],
-    include: [
-      {
-        model: Order,
-        as:'order',
-        attributes:["id", 'shippingId'],
-        include:[{model:ShippingAddress, as: "shipping"}]
-      },
-      {
-        model: Plates,
-        as:'plate',
-        include: [{
-          model: User,
-          as:'chef',
-          include:[{model:ShippingAddress, as: 'address'}]
-        },
 
+let order = await Order.findAll({
+  where: {'$order_delivery.orderId$': null},
+  order: [["id", "DESC"]],
+  include:[
+    {
+      model:ShippingAddress, 
+      as: "shipping"
+    },
+    {
+      model:OrderItem,
+      where: {deliveryType: data.deliveryType},
+      include:[
         {
-          model: PlateImage
-        }]
-      },
-      {
-        model: OrderDelivery,
-        required: false,
-        where: {state_type: orderDeliveryConstants.STATE_TYPE_PENDING}
-      }]
-    
-  });
+          model: Plates,
+          as:'plate',
+          include: [{
+            model: User,
+            as:'chef',
+            include:[{model:ShippingAddress, as: 'address'}]
+          },
+          {
+            model: PlateImage
+          }]
+        }
+      ]
+    },
+    {
+      model: OrderDelivery,
+      as: "order_delivery"
+    }
+  ]
+});
   return order;
 
 }

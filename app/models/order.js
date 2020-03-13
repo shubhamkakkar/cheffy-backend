@@ -53,7 +53,7 @@ module.exports = (sequelize, DataTypes) => {
     Order.belongsTo(models.ShippingAddress, {foreignKey: 'shippingId', as: 'shipping'})
     Order.hasMany(models.OrderPayment)
     Order.hasMany(models.OrderItem)
-    Order.hasMany(models.OrderDelivery)
+    Order.hasMany(models.OrderDelivery, {as:'order_delivery'})
     Order.hasMany(models.Transactions)
   };
   return Order;
