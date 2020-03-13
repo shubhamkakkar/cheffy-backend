@@ -146,13 +146,17 @@ exports.getCompletedDeliveriesByUser = async (data) => {
 }
 
 exports.getPendingDeliveriesByUser = async (data) => {
-     let order = await Order.findAll({
+    let order = await Order.findAll({
     where: {userId:data},
     order: [["id", "DESC"]],
     include: [
     {
       model: OrderPayment,
       attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+    },
+    {
+      model:ShippingAddress,
+      as:"shipping"
     },
     {
       model: OrderItem,
@@ -171,7 +175,7 @@ exports.getPendingDeliveriesByUser = async (data) => {
           model: PlateImage
         }]
       }
-      ]
+      ] 
     },
     {
         model: OrderDelivery,
@@ -186,11 +190,16 @@ exports.getPendingDeliveriesByUser = async (data) => {
 
 
 exports.getPendingDeliveriesByDriver = async (data) => {
- 
   let order = await OrderItem.findAll({
     where: {deliveryType: data.deliveryType},
     order: [["id", "DESC"]],
     include: [
+      {
+        model: Order,
+        as:'order',
+        attributes:["id", 'shippingId'],
+        include:[{model:ShippingAddress, as: "shipping"}]
+      },
       {
         model: Plates,
         as:'plate',

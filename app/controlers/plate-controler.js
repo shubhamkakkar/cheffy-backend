@@ -124,25 +124,13 @@ exports.edit = asyncHandler(async (req, res, next) => {
 
   let existPlate = req.plate;
 
-  let updates = plateInputFilter.createFilters.filter(req.body);
-  updates = verifyData(updates)
+  const updates = plateInputFilter.createFilters.filter(req.body);
+
   existPlate = await existPlate.update(updates);
 
   res.status(200).send({ message: 'Plate successfully updated!', data: existPlate });
 
 });
-
-const verifyData = (data = {}) => {
-    var result = {};
-    var count = 0;
-    _.map(data, (val, key) => {
-        if (val && val.length) {
-            result[key] = val;
-        }
-    })
-    return result;
-}
-
 
 exports.delete = asyncHandler(async (req, res, next) => {
 

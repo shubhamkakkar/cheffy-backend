@@ -498,7 +498,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, 'This email is correct?');
-  contract.isRequired(req.body.name, 'User password is required!');
+  contract.isRequired(req.body.name, 'Name is required!');
   contract.isRequired(req.body.password, 'User password is required!');
   contract.isRequired(req.body.user_type, 'User type is required!');
 

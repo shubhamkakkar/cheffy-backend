@@ -25,16 +25,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json({
   limit: '50mb', extended: true
 }));
-// app.use(bodyParser.urlencoded({
-//   limit: '50mb', extended: true
-// }));
-
-// app.use(bodyParser())//add this before any route or before using req.body
-
-app.use((req, res,next) => {
-  console.log(req.body); // console the request           
-  next() 
-});
+app.use(bodyParser.urlencoded({
+  limit: '50mb', extended: true
+}));
 
 app.get('/', (req, res) => {
   res.status(200).send({
