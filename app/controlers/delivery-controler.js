@@ -166,8 +166,25 @@ exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
     });
     return 0;
   }
+});
 
+exports.listApprovedDeliveries = asyncHandler(async (req, res, next) => {
 
+  try {
+   const user_orders = await deliveryRepository.getApprovedDeliveriesByUser(req.userId)
+   res.status(HttpStatus.ACCEPTED).send({
+     message: 'Here are your orders!',
+     data: user_orders
+   });
+   return 0;
+ } catch (e) {
+   console.log(e)
+   res.status(HttpStatus.CONFLICT).send({
+     message: 'Fail to get your orders!',
+     error: true
+   });
+   return 0;
+ }
 });
 
 exports.listPendingDeliveriesDriver = asyncHandler(async (req, res, next) => {
