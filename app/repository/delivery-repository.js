@@ -192,6 +192,49 @@ exports.getPendingDeliveriesByUser = async (data) => {
 
 }
 
+exports.getApprovedDeliveriesByUser = async (data) => {
+  let order = await Order.findAll({
+  where: {userId:data},
+  order: [["id", "DESC"]],
+  include: [
+  {
+    model: OrderPayment,
+    attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+  },
+  {
+    model:ShippingAddress,
+    as:"shipping"
+  },
+  {
+    model: OrderItem,
+    attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+    include:[{
+      model: Plates,
+      as:'plate',
+      include: [{
+        model: User,
+        as:'chef',
+        attributes:userConstants.userSelectFields,
+        include:[{model:ShippingAddress, as: 'address'}]
+      },
+
+      {
+        model: PlateImage
+      }]
+    }
+    ] 
+  },
+  {
+      model: OrderDelivery,
+      required: true,
+      as: "order_delivery",
+      where: {state_type: orderDeliveryConstants.STATE_TYPE_APPROVED}
+    }
+  ]
+});
+return order;
+
+}
 
 exports.getPendingDeliveriesByDriver = async (data) => {
 

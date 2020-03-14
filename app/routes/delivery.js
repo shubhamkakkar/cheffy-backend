@@ -14,6 +14,7 @@ router.post('/createdelivery/:orderId',authService.authorize, userController.get
 router.get('/', authService.authorize,controller.list);
 router.get('/complete', authService.authorize, userController.getAuthUserMiddleware, controller.listCompleteDeliveries);
 router.get('/user/pending', authService.authorize, userController.getAuthUserMiddleware, controller.listPendingDeliveries);
+router.get('/user/approved', authService.authorize, userController.getAuthUserMiddleware, controller.listApprovedDeliveries);
 router.get('/driver/pending', authService.authorize,controller.listPendingDeliveriesDriver);
 router.post('/time', controller.calculateDeliveryTime);
 router.get('/:orderDeliveryId',authService.authorize, controller.getById);
