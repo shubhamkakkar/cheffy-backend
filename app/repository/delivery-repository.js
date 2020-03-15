@@ -421,7 +421,10 @@ let order = await Order.findAll({
         model: OrderDelivery,
         required: true,
         as: "order_delivery",
-        where: {state_type: orderDeliveryConstants.STATE_TYPE_APPROVED, driverId:data}
+        where: {
+          state_type: [orderDeliveryConstants.STATE_TYPE_APPROVED, orderDeliveryConstants.STATE_TYPE_PICKED_UP], 
+          driverId:data
+        }
       }
     ]
   });
