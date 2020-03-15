@@ -373,3 +373,26 @@ exports.getDeliveryPrice = asyncHandler( async(req, res, next) => {
   });
 
 });
+
+/**
+* Method: GET
+* Approved deliveries for driver
+*/
+exports.listDriverApprovedDeliveries = asyncHandler(async (req, res, next) => {
+
+  try {
+   const user_orders = await deliveryRepository.getApprovedDeliveriesByDriver(req.userId)
+   res.status(HttpStatus.ACCEPTED).send({
+     message: 'Here are your orders!',
+     data: user_orders
+   });
+   return 0;
+ } catch (e) {
+   console.log(e)
+   res.status(HttpStatus.CONFLICT).send({
+     message: 'Fail to get your orders!',
+     error: true
+   });
+   return 0;
+ }
+});

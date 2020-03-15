@@ -31,4 +31,7 @@ router.put('/complete/:orderDeliveryId',authService.authorize, userController.ge
 router.param('orderId', orderController.orderByIdMiddleware);
 router.param('orderDeliveryId', controller.orderDeliveryByIdMiddleware);
 
+
+router.get('/driver/approved', authService.authorize, userController.getAuthUserMiddleware, controller.listDriverApprovedDeliveries);
+
 module.exports = router;
