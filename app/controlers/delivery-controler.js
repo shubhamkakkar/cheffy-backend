@@ -378,7 +378,7 @@ exports.getDeliveryPrice = asyncHandler( async(req, res, next) => {
 * Method: GET
 * Approved deliveries for driver
 */
-exports.listDriverApprovedDeliveries = asyncHandler(async (req, res, next) => {
+exports.listApprovedDeliveriesByDriver = asyncHandler(async (req, res, next) => {
 
   try {
    const user_orders = await deliveryRepository.getApprovedDeliveriesByDriver(req.userId)
