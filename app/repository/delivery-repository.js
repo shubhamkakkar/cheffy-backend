@@ -385,3 +385,66 @@ let order = await Order.findAll({
       }
 
   }
+
+  exports.getApprovedDeliveriesByDriver = async (data) => {
+    let orders = await Order.findAll({
+    order: [["id", "DESC"]],
+    include: [
+    {
+      model: User,
+      as:'user',
+      attributes: userConstants.userSelectFields
+    },
+    {
+      model: OrderPayment,
+      attributes: ["id", "amount", "client_secret", "customer", "payment_method", "status"]
+    },
+    {
+      model:ShippingAddress,
+      as:"shipping"
+    },
+    {
+      model: OrderItem,
+      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+      include:[{
+        model: Plates,
+        as:'plate',
+        include: [{
+          model: User,
+          as:'chef',
+          attributes:userConstants.userSelectFields,
+          include:[{model:ShippingAddress, as: 'address'}]
+        },
+  
+        {
+          model: PlateImage
+        }]
+      }
+      ] 
+    },
+    {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        where: {
+          state_type: [orderDeliveryConstants.STATE_TYPE_APPROVED, orderDeliveryConstants.STATE_TYPE_PICKED_UP], 
+          driverId:data
+        }
+      }
+    ]
+  });
+
+  orders = JSON.parse(JSON.stringify(orders));
+
+  for(var i = 0; i < orders.length;i++){
+    const order = orders[i];
+    const chef = order.OrderItems[0].plate.chef;
+    order.OrderItems.forEach(orderItem => {
+      delete orderItem.plate.chef;
+    });
+    order.chef = chef;
+  }
+
+  return orders;
+  
+  }
