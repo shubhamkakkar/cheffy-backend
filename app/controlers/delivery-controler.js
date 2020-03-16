@@ -210,28 +210,35 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
       return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     }
 
-    const existUser = req.user;
-    const user_order = await Order.findOne({where:{id:req.params.orderId}})
+    let createdOrderDelivery;
 
-    const payload = {
-      orderId: user_order.id,
-      order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER,
-      userId: user_order.userId,
-      driverId: req.userId,
-      state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
-      delieryType: orderDeliveryConstants.USER_TYPE_DRIVER
+    createdOrderDelivery = await OrderDelivery.findOne({where:{orderId:req.params.orderId}})
+    
+    if(!createdOrderDelivery) {
+      
+      const existUser = req.user;
+      const user_order = await Order.findOne({where:{id:req.params.orderId}})
 
-    };
+      const payload = {
+        orderId: user_order.id,
+        order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER,
+        userId: user_order.userId,
+        driverId: req.userId,
+        state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+        delieryType: orderDeliveryConstants.USER_TYPE_DRIVER
 
-    if(req.body.pickup_time) {
-        payload.pickup_time = req.body.pickup_time;
+      };
+
+      if(req.body.pickup_time) {
+          payload.pickup_time = req.body.pickup_time;
+      }
+
+      if(req.body.dropoff_time) {
+          payload.dropoff_time = req.body.dropoff_time;
+      }
+
+      createdOrderDelivery = await deliveryRepository.createOrderDelivery(payload);
     }
-
-    if(req.body.dropoff_time) {
-        payload.dropoff_time = req.body.dropoff_time;
-    }
-
-    let createdOrderDelivery = await deliveryRepository.createOrderDelivery(payload);
 
     //demandService.sendToDelivery(orderId,loc,shipping)
 
@@ -372,4 +379,27 @@ exports.getDeliveryPrice = asyncHandler( async(req, res, next) => {
     price: price
   });
 
+});
+
+/**
+* Method: GET
+* Approved deliveries for driver
+*/
+exports.listApprovedDeliveriesByDriver = asyncHandler(async (req, res, next) => {
+
+  try {
+   const user_orders = await deliveryRepository.getApprovedDeliveriesByDriver(req.userId)
+   res.status(HttpStatus.ACCEPTED).send({
+     message: 'Here are your orders!',
+     data: user_orders
+   });
+   return 0;
+ } catch (e) {
+   console.log(e)
+   res.status(HttpStatus.CONFLICT).send({
+     message: 'Fail to get your orders!',
+     error: true
+   });
+   return 0;
+ }
 });
