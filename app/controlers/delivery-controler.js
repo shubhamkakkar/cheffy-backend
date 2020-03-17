@@ -389,10 +389,10 @@ exports.getDeliveryPrice = asyncHandler( async(req, res, next) => {
 exports.listApprovedDeliveriesByDriver = asyncHandler(async (req, res, next) => {
 
   try {
-   const user_orders = await deliveryRepository.getApprovedDeliveriesByDriver(req.userId)
+   const deliveries = await deliveryRepository.getApprovedDeliveriesByDriver(req.userId)
    res.status(HttpStatus.ACCEPTED).send({
      message: 'Here are your orders!',
-     data: user_orders
+     data: deliveries
    });
    return 0;
  } catch (e) {
@@ -407,7 +407,30 @@ exports.listApprovedDeliveriesByDriver = asyncHandler(async (req, res, next) => 
 
 /**
 * Method: GET
-* Approved deliveries for driver
+* Complete deliveries for driver
+*/
+exports.listCompleteDeliveriesByDriver = asyncHandler(async (req, res, next) => {
+
+  try {
+   const deliveries = await deliveryRepository.getCompleteDeliveriesByDriver(req.userId)
+   res.status(HttpStatus.ACCEPTED).send({
+     message: 'Here are your orders!',
+     data: deliveries
+   });
+   return 0;
+ } catch (e) {
+   console.log(e)
+   res.status(HttpStatus.CONFLICT).send({
+     message: 'Fail to get your orders!',
+     error: true
+   });
+   return 0;
+ }
+});
+
+/**
+* Method: GET
+* Get Delivery Details
 */
 exports.getDeliveryDetails = asyncHandler(async (req, res, next) => {
   
