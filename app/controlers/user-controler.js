@@ -512,6 +512,21 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
+  //Check if address is present
+  if(req.body.addressLine1 || req.body.addressLine2) {
+    const shippingAddresses = await existUser.getAddress();
+    const shippingAddress = shippingAddresses[0];
+
+    if(req.body.addressLine1) {
+      shippingAddress.addressLine1 = req.body.addressLine1;
+    }
+
+    if(req.body.addressLine2) {
+      shippingAddress.addressLine2 = req.body.addressLine2;
+    }
+
+    await shippingAddress.save();
+  }
 
   if (!existUser) {
     return res.status(HttpStatus.BAD_REQUEST).send({
@@ -795,6 +810,23 @@ exports.put = asyncHandler(async (req, res, next) => {
     (password) ? updates.password = await generateHash(password) : null ;
 
     await existUser.update(updates);
+
+    //Check if address is present
+    if(req.body.addressLine1 || req.body.addressLine2) {
+      const shippingAddresses = await existUser.getAddress();
+      const shippingAddress = shippingAddresses[0];
+
+      if(req.body.addressLine1) {
+        shippingAddress.addressLine1 = req.body.addressLine1;
+      }
+
+      if(req.body.addressLine2) {
+        shippingAddress.addressLine2 = req.body.addressLine2;
+      }
+
+      await shippingAddress.save();
+    }
+    
 
     const user = await User.findOne({ where: { id: req.userId }, attributes: userConstants.privateSelectFields });
     const userResponse = userResponseHelper({user});
