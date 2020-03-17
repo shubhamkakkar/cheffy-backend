@@ -4,7 +4,7 @@ const express = require("express");
 const path = require('path');
 const controller = require("../controlers/docs-controler");
 const authService = require("../services/auth");
-const multerStart = require("../../config/multer");
+const multerStart = require("../../config/multer_cloudinary");
 const userController = require(path.resolve('app/controlers/user-controler'));
 const docPolicies = require(path.resolve('app/policies/documents'));
 
