@@ -5,6 +5,7 @@ const {sequelize, User, OrderDelivery, Order } = require('../models/index');
 const ValidationContract = require("../services/validator");
 const orderRepository = require("../repository/order-repository");
 const deliveryRepository = require("../repository/delivery-repository");
+const orderDeliveryRepository = require("../repository/orderDelivery-repository");
 const demandService = require('../services/demands');
 const authService = require("../services/auth");
 const NotificationServices = require('../services/notification');
@@ -402,4 +403,27 @@ exports.listApprovedDeliveriesByDriver = asyncHandler(async (req, res, next) => 
    });
    return 0;
  }
+});
+
+/**
+* Method: GET
+* Approved deliveries for driver
+*/
+exports.getDeliveryDetails = asyncHandler(async (req, res, next) => {
+  
+  try {
+    const orderDelivery = await orderDeliveryRepository.getDeliveryDetails(req.params.orderDeliveryId)
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Here are your orders!',
+      data: orderDelivery
+    });
+    return 0;
+  } catch (e) {
+    console.log(e)
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'Fail to get your orders!',
+      error: true
+    });
+    return 0;
+  }
 });
