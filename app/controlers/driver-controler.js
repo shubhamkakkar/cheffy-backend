@@ -6,6 +6,7 @@ const driverAPI = require('../services/driverApi');
 const { User } = require('../models/index');
 const authService = require("../services/auth");
 const driverRepository = require(path.resolve('app/repository/driver-repository'));
+const driverCancellationRepository = require(path.resolve('app/repository/driverCancellation-repository'));
 const userConstants = require(path.resolve('app/constants/users'));
 const asyncHandler = require('express-async-handler');
 const paginator = require(path.resolve('app/services/paginator'));
@@ -141,3 +142,25 @@ exports.createBankAccount = async (req, res, next) => {
 
    res.status(HttpStatus.ACCEPTED).send({ ...response.data });
 }
+
+/**
+* Method: Post
+* Cancel Order by driver
+*/
+exports.cancelOrder = asyncHandler( async( req, res, next) => {
+   try {
+      const orders = await driverCancellationRepository.cancelOrder(req.userId, req.params.orderId)
+      res.status(HttpStatus.ACCEPTED).send({
+        message: 'Cancelled order',
+        data: orders
+      });
+      return 0;
+    } catch (e) {
+      console.log(e)
+      res.status(HttpStatus.CONFLICT).send({
+        message: 'Fail to cancel order!',
+        error: true
+      });
+      return 0;
+    }
+ });
