@@ -1,8 +1,11 @@
 'use strict';
 const path = require('path');
-const {sequelize, Plates, Review,PlateImage, Order, ShippingAddress, OrderPayment, OrderItem,OrderDelivery, User } = require("../models/index");
+const {sequelize, Plates, Review,PlateImage, Order, ShippingAddress, OrderPayment, 
+  OrderItem,OrderDelivery, User, DriverCancellation } = require("../models/index");
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const userConstants = require(path.resolve('app/constants/users'));
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 
 
 exports.getById = async (orderDeliveryId) => {
@@ -236,10 +239,18 @@ return order;
 
 }
 
-exports.getPendingDeliveriesByDriver = async (data) => {
+exports.getPendingDeliveriesByDriver = async (driverId, data) => {
+  let cancelledOrders = await DriverCancellation.findAll({
+    where: { driverId: driverId, isDelivered: 0 }
+  });
 
+  cancelledOrders = JSON.parse(JSON.stringify(cancelledOrders));
+
+  const orderIds = cancelledOrders.map(cancelledOrder => cancelledOrder.orderId);
+
+  // Don't include the cancelled order
   let orders = await Order.findAll({
-    where: {'$order_delivery.orderId$': null},
+    where: {'$order_delivery.orderId$': null, id: {[Op.notIn]: orderIds}},
     order: [["id", "DESC"]],
     include:[
       {
@@ -256,6 +267,7 @@ exports.getPendingDeliveriesByDriver = async (data) => {
             include: [{
               model: User,
               as:'chef',
+              attributes:userConstants.userSelectFields,
               include:[{model:ShippingAddress, as: 'address'}]
             },
             {
@@ -272,9 +284,10 @@ exports.getPendingDeliveriesByDriver = async (data) => {
   });
 
   orders = JSON.parse(JSON.stringify(orders));
+  let order = {};
 
-  for(var i = 0; i < orders.length;i++){
-    const order = orders[i];
+  if(orders.length > 0) {
+    order = orders[0];
     const chef = order.OrderItems[0].plate.chef;
     order.OrderItems.forEach(orderItem => {
       delete orderItem.plate.chef;
@@ -282,7 +295,7 @@ exports.getPendingDeliveriesByDriver = async (data) => {
     order.chef = chef;
   }
 
-  return orders;
+  return order;
 
 }
 
