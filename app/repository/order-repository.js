@@ -213,6 +213,7 @@ exports.listTrackingUser  = async (data) => {
     },
     {
     model: OrderDelivery,
+    as: 'order_delivery',
     // required: true,
     attributes: ["id","state_type"]
   }
