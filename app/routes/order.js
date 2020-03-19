@@ -60,5 +60,6 @@ router.get('/user/deliveries', authService.authorize, userController.getAuthUser
 //plates to be delivered to user
 router.get('/chef/deliveries', authService.authorize, userController.getAuthUserMiddleware, middlewares.chefRoleRequired, controller.chefOrderItemDeliveries);
 
+router.put('/chef/complete/:orderItemId', authService.authorize, userController.getAuthUserMiddleware, middlewares.chefRoleRequired, controller.completeChefOrder);
 
 module.exports = router;

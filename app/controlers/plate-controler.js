@@ -321,7 +321,7 @@ exports.uploadImages = async (req, res, next) => {
     await Object.keys(req.files).map(async keyObject => {
       switch (keyObject) {
         case 'plate_image':
-          req.files[keyObject].map(plateImage => plateImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));
+          req.files[keyObject].map(plateImage => plateImages.push({ name: plateImage.originalname, url: plateImage.url, plateId: actualPlate.id }));
           break;
         case 'kitchen_image':
           req.files[keyObject].map(plateImage => kitchenImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));

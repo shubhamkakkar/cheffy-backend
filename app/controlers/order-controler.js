@@ -542,3 +542,21 @@ exports.userCancelOrderItem = [
   },
   exports.editOrderItemStateType
 ];
+
+exports.completeChefOrder = async (req, res, next) => {
+  try {
+    const completed = await repository.completeChefOrder(req.params.orderItemId);
+    res.status(HttpStatus.ACCEPTED).send({
+      message: 'Completed Order!',
+      data: completed
+    });
+    return 0;
+  } catch (e) {
+    console.log(e)
+    res.status(HttpStatus.CONFLICT).send({
+      message: 'Fail to complete your orders!',
+      error: true
+    });
+    return 0;
+  }
+};
