@@ -1,5 +1,5 @@
 'use strict';
-const { OrderDelivery, User, OrderItem, ShippingAddress, Plates } = require("../models/index");
+const { OrderDelivery, User, OrderItem, ShippingAddress, Plates, Order } = require("../models/index");
 const path = require('path');
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const userConstants = require(path.resolve('app/constants/users'));
@@ -84,32 +84,36 @@ exports.getDeliveryDetails = async (data) => {
     order: [["id", "DESC"]],
     include: [
     {
-      model: OrderItem,
-      as: "order_item",
-      attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
-      include:[{
-        model: Plates,
-        as:'plate',
-        include: [{
-          model: User,
-          as:'chef',
-          attributes:userConstants.userSelectFields,
-          include:[{model:ShippingAddress, as: 'address'}]
-        }]
-      }] 
+      model: Order,
+      as: 'order',
+      include: [
+        {
+        model: OrderItem,
+        attributes: ["plate_id", "chef_location", "name", "description", "amount", "quantity"],
+        include:[{
+          model: Plates,
+          as:'plate',
+          include: [{
+            model: User,
+            as:'chef',
+            attributes:userConstants.userSelectFields,
+            include:[{model:ShippingAddress, as: 'address'}]
+          }]
+        }] 
+      }
+      ]
     }, {
       model: User,
       attributes:userConstants.userSelectFields,
       include:[{model:ShippingAddress, as: 'address'}]
-    }
-    ]
+    }]
   });
 
   orderDelivery = JSON.parse(JSON.stringify(orderDelivery));
 
-  const chef = orderDelivery.order_item.plate.chef;
+  const chef = orderDelivery.order.OrderItems[0].plate.chef;
   orderDelivery.chef = chef;
-  delete orderDelivery.order_item;
+  delete orderDelivery.order;
 
   return orderDelivery;
 
