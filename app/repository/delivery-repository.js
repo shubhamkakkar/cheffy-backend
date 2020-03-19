@@ -239,7 +239,7 @@ return order;
 
 }
 
-exports.getPendingDeliveriesByDriver = async (driverId, data) => {
+exports.getPendingDeliveriesByDriver = async (driverId, data, limit) => {
   let cancelledOrders = await DriverCancellation.findAll({
     where: { driverId: driverId, isDelivered: 0 }
   });
@@ -284,10 +284,9 @@ exports.getPendingDeliveriesByDriver = async (driverId, data) => {
   });
 
   orders = JSON.parse(JSON.stringify(orders));
-  let order = {};
 
-  if(orders.length > 0) {
-    order = orders[0];
+  for(var i = 0; i < orders.length;i++){
+    const order = orders[i];
     const chef = order.OrderItems[0].plate.chef;
     order.OrderItems.forEach(orderItem => {
       delete orderItem.plate.chef;
@@ -295,7 +294,11 @@ exports.getPendingDeliveriesByDriver = async (driverId, data) => {
     order.chef = chef;
   }
 
-  return order;
+  if(!limit) {
+    limit = 1;
+  }
+
+  return orders.slice(0,limit);
 
 }
 
