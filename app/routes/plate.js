@@ -11,7 +11,7 @@ const categoryController = require(path.resolve('app/controlers/category-control
 const platePolicies = require(path.resolve('app/policies/plate'));
 
 const imageFields = [
-  'profile_photo', 'kitchen_image', 'receipt_image'
+  'profile_photo', 'kitchen_image', 'receipt_image', 'plate_image'
 ];
 
 const fieldsFile = imageFields.map((field) => {

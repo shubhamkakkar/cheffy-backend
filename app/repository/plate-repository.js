@@ -122,19 +122,19 @@ exports.getPlate = async ({req, plateId}) => {
       },
       {
         model: Ingredient,
-        attributes: [ 'id','name', 'purchase_date' ]
+        attributes: [ 'id', 'name', 'purchase_date' ]
       },
       {
         model: PlateImage,
-        attributes: [ 'id', 'name', 'url' ]
+        attributes: [ 'name', 'url' ]
       },
       {
         model: KitchenImage,
-        attributes: [ 'id', 'name', 'url' ]
+        attributes: [ 'name', 'url' ]
       },
       {
         model: ReceiptImage,
-        attributes: [ 'id', 'name', 'url' ]
+        attributes: [ 'name', 'url' ]
       },
       {
         model: Review,
