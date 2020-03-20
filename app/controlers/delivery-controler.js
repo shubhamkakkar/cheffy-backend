@@ -210,36 +210,34 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
     if (!contract.isValid()) {
       return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
     }
-
-    let createdOrderDelivery;
-
-    createdOrderDelivery = await OrderDelivery.findOne({where:{orderId:req.params.orderId}})
-    
-    if(!createdOrderDelivery) {
       
-      const existUser = req.user;
-      const user_order = await Order.findOne({where:{id:req.params.orderId}})
-
-      const payload = {
-        orderId: user_order.id,
-        order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER,
-        userId: user_order.userId,
-        driverId: req.userId,
-        state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
-        delieryType: orderDeliveryConstants.USER_TYPE_DRIVER
-
-      };
-
-      if(req.body.pickup_time) {
-          payload.pickup_time = req.body.pickup_time;
-      }
-
-      if(req.body.dropoff_time) {
-          payload.dropoff_time = req.body.dropoff_time;
-      }
-
-      createdOrderDelivery = await deliveryRepository.createOrderDelivery(payload);
+    const existUser = req.user;
+    const user_order = await Order.findOne({where:{id:req.params.orderId}})
+    let orderId = user_order.id;
+    console.log(req.body.deliveryType)
+    console.log(req.body.deliveryType == 'driver');
+    if(req.body.deliveryType == 'driver') {
+      orderId = null;
     }
+
+    const payload = {
+      orderId: orderId,
+      order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER,
+      userId: user_order.userId,
+      state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+      delivery_type: req.body.deliveryType,
+      orderItemId: req.body.orderItemId
+    };
+    console.log(payload);
+    if(req.body.pickup_time) {
+        payload.pickup_time = req.body.pickup_time;
+    }
+
+    if(req.body.dropoff_time) {
+        payload.dropoff_time = req.body.dropoff_time;
+    }
+
+    let createdOrderDelivery = await deliveryRepository.createOrderDelivery(payload);
 
     //demandService.sendToDelivery(orderId,loc,shipping)
 
@@ -328,6 +326,7 @@ exports.accept = [
   exports.checkCanceled,
   (req, res, next) => {
     req.body.state_type = orderDeliveryConstants.STATE_TYPE_APPROVED;
+    req.body.driverId = req.userId;
     next();
   },
   exports.editStateType('Order Delivery Approved!')
