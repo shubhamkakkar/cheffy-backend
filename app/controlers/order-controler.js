@@ -489,7 +489,7 @@ exports.chefAcceptOrderItem = [
     if(req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED) {
       return res.status(HttpStatus.BAD_REQUEST).send({message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`})
     }
-    req.body.state_type = orderItemConstants.STATE_TYPE_APPROVED;
+    req.body.state_type = orderItemConstants.STATE_TYPE_PENDING;
     next();
   },
   exports.editOrderItemStateType
