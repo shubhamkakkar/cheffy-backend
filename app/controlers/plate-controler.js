@@ -324,10 +324,10 @@ exports.uploadImages = async (req, res, next) => {
           req.files[keyObject].map(plateImage => plateImages.push({ name: plateImage.originalname, url: plateImage.url, plateId: actualPlate.id }));
           break;
         case 'kitchen_image':
-          req.files[keyObject].map(plateImage => kitchenImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));
+          req.files[keyObject].map(plateImage => kitchenImages.push({ name: plateImage.originalname, url: plateImage.url, plateId: actualPlate.id }));
           break;
         case 'receipt_image':
-          req.files[keyObject].map(plateImage => receiptImages.push({ name: plateImage.originalname, url: plateImage.key, plateId: actualPlate.id }));
+          req.files[keyObject].map(plateImage => receiptImages.push({ name: plateImage.originalname, url: plateImage.url, plateId: actualPlate.id }));
           break;
         default:
           break;
