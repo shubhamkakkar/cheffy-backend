@@ -4,7 +4,7 @@ const path = require('path');
 const express = require('express');
 const controller = require('../controlers/plate-controler');
 const authService = require("../services/auth");
-const multerStart = require("../../config/multer");
+const multerStart = require("../../config/multer_cloudinary");
 const shippingController = require(path.resolve('app/controlers/shipping-controler'));
 const userController = require(path.resolve('app/controlers/user-controler'));
 const categoryController = require(path.resolve('app/controlers/category-controler'));
@@ -28,7 +28,7 @@ router.get('/show/:id', authService.authorizeOptional, userController.getAuthUse
 router.post('/edit/:id', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(),  controller.edit);
 router.delete('/:id', authService.authorize,userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.delete);
 
-router.post('/images/:id',authService.authorize,multerStart(fieldsFile),platePolicies.isOwnerMiddleware(), controller.uploadImages);
+router.post('/images/:id',authService.authorize, userController.getAuthUserMiddleware, multerStart(fieldsFile), platePolicies.isOwnerMiddleware(), controller.uploadImages);
 
 //TODO add permission
 router.delete('/:id/images/:type_image/:plateImageId', authService.authorize, userController.getAuthUserMiddleware, platePolicies.isOwnerMiddleware(), controller.deleteImage);
