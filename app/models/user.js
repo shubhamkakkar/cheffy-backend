@@ -45,7 +45,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    device_id: DataTypes.STRING
+    device_id: DataTypes.STRING,
+    device_registration_token : DataTypes.STRING,
 
   });
 
