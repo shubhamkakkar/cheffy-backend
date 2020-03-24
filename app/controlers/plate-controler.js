@@ -134,10 +134,26 @@ exports.edit = asyncHandler(async (req, res, next) => {
 
 exports.delete = asyncHandler(async (req, res, next) => {
 
-  let existPlate = req.plate;
+  
+  const plateId = req.params.id;
+  
+  const token_return = await authService.decodeToken(req.headers['x-access-token'])
+  const existUser = await User.findOne({ where: { id: token_return.id } });
 
-  return res.status(HttpStatus.BAD_REQUEST).send({message: "Feature not implemented"});
-  //TODO
+  if (existUser.user_type !== 'chef') {
+    res.status(HttpStatus.CONFLICT).send({ message: "Only chefs can delete plate", error: true}).end();
+    return 0;
+  }
+
+  //If Chef user, then check if plate is not part any Order or Basket (active or completed)
+  var referencedPlateCountInOrders =  await repository.checkPlateExistsInOrder(plateId);
+  var referencedPlateCountInBaskets =  await repository.checkPlateExistsInBasket(plateId);
+   if( referencedPlateCountInOrders || referencedPlateCountInBaskets ) {
+    res.status(HttpStatus.CONFLICT).send({ message: "This plate is referenced in an Order or in Basket and therefore cannot be deleted", error: true}).end();
+    return 0;
+   }
+   await repository.deletePlate(plateId);
+   res.status(200).send({ message: 'Plate successfully deleted!' });    
 });
 
 exports.getPlateReview = asyncHandler(async (req, res, next) => {

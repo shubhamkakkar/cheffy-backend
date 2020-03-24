@@ -492,3 +492,53 @@ exports.getOrderItemsWithRespectiveDelivery = async({user_id, state_type, pagina
     }]
   });
 }
+
+exports.completeChefOrder = async(orderItemId) => {
+  const orderItem = await OrderItem.findByPk(orderItemId);
+  orderItem.state_type = 'approved';
+  await orderItem.save();
+
+  return [];
+}
+
+exports.getOrderItemWithPickupAndDropAddress = async (orderItemId) => {
+  const orderItem = await OrderItem.findByPk(orderItemId, {
+    attributes: orderItemConstants.selectFields,
+    include:[{
+        model: User,
+        foreignKey: 'user_id',
+        as:'user',
+        attributes: userConstants.userSelectFields
+      },{
+        model: User,
+        foreignKey: 'chef_id',
+        as:'chef',
+        attributes: userConstants.userSelectFields,
+        include:[{model:ShippingAddress, as: 'address'}]
+      },
+      {
+        model:Order,
+        foreignKey:'order_id',
+        as: "order",
+        include:[{model:ShippingAddress, as: 'shipping'}]
+      },
+      {
+      model: Plates,
+      as:'plate',
+      include: [{
+        model: PlateImage
+      }]
+      },{
+      model: CustomPlateOrder,
+      as:'custom_plate_order',
+      include: [{
+        model: CustomPlate,
+        as:'custom_plate',
+        include: [{
+          model: CustomPlateImage
+        }]
+      }]
+    }]
+  });
+  return orderItem;
+}
