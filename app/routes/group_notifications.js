@@ -9,11 +9,11 @@ const authService = require("../services/auth");
 
 /***********************Notification to group of users 1 - 2 weeks old*******************/
 
-router.post('/newUsers',controller.listNewUser);
+router.get('/newUsers',controller.listNewUser);
 
 /***********************Notification to group of New Driver/ Registration in previous 1-Month*******************/
 
-router.post('/newDrivers',controller.listNewDrivers);
+router.get('/newDrivers',controller.listNewDrivers);
 
 
 /***********************Notification to group of Old Driver/ Registration in greater than 1-Month*******************/
