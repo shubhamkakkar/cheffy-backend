@@ -4,7 +4,7 @@
 const path = require('path');
 const Sequelize = require('sequelize');
 const debug = require('debug')('plate-repository');
-const {sequelize, OrderFrequency,OrderItem, ShippingAddress, Review, PlateReview, AggregateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, DietCategory, BasketItem } = require('../models/index');
+const {sequelize, OrderFrequency,OrderItem, ShippingAddress, Review, PlateReview, AggregateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, DietCategory } = require('../models/index');
 const Op = Sequelize.Op;
 const regexpService = require(path.resolve('app/services/regexp'));
 const plateConstants = require(path.resolve('app/constants/plates'));
@@ -570,17 +570,3 @@ exports.popularPlates = async (data) => {
   }
 };
 
-exports.checkPlateExistsInOrder = async (data) => {
-  const referencedPlateCount = await OrderItem.count({ where: { plate_id: data}});
-  return referencedPlateCount;
-};
-
-exports.checkPlateExistsInBasket = async (data) => {
-  const referencedPlateCount = await BasketItem.count({ where: { plateId: data}});
-  return referencedPlateCount;
-};
-
-exports.deletePlate = async (plateId) => {
-    //Delete the plate  
-    await Plates.destroy({ where: {id: plateId} });
-}
