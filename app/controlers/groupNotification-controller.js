@@ -114,7 +114,9 @@ exports.listNewDrivers = asyncHandler(async (req, res) => {
                     device_id: item.dataValues.device_id
                 })
 
-            })           
+            })
+            console.log('Notificatins',notifications);
+
             let groupNewDrivers = {
                 orderTitle: req.body.orderTitle,
                 orderBrief: req.body.orderBrief,
@@ -162,44 +164,33 @@ exports.listOldDrivers = asyncHandler(async (req, res) => {
                 },
                 user_type: userConstants.USER_TYPE_DRIVER
 
-            }, attributes:  ['id', 'device_id', 'device_registration_token']
+            }, attributes: ['device_id']
         })
         let device_id = []
-        let device_registration_tokens = [];
-        let notifications = [];
+
         if (oldDrivers.length > 0) {
 
             oldDrivers.forEach(item => {
-                device_id.push(item.dataValues.device_id)
-                device_registration_tokens.push(item.dataValues.device_registration_token)
-                notifications.push({
-                    userId: item.dataValues.id,
-                    timestamp: sequelize.literal('CURRENT_TIMESTAMP'),
-                    state_type: notificationConstants.NOTIFICATION_TYPE_SENT,
-                    orderTitle: req.body.orderTitle,
-                    orderBrief: req.body.orderBrief,
-                    activity: req.body.activity,
-                    device_id: item.dataValues.device_id
-                })
+                device_id.push(item.device_id)
+
             })
 
             let groupOldDrivers = {
                 orderTitle: req.body.orderTitle,
                 orderBrief: req.body.orderBrief,
                 activity: req.body.activity,
-                device_id: device_id,
-                device_registration_tokens: device_registration_tokens
+                device_id: device_id
             }
 
-            await FCM(groupOldDrivers).then((response) => {
-                res.json({
+            let responseData = await FCM(groupOldDrivers)
+            await Notification.create(groupOldDrivers)
 
-                    data: {
-                        response: JSON.parse(response)
-                    }
-                })
-            });
-            await Notification.bulkCreate(notifications);
+            res.json({
+
+                data: {
+                    response: responseData
+                }
+            })
         } else {
             res.json({
                 data: {
@@ -230,25 +221,14 @@ exports.listNewChef = asyncHandler(async (req, res) => {
                 },
                 user_type: userConstants.USER_TYPE_CHEF
 
-            }, attributes: ['id', 'device_id', 'device_registration_token']
+            }, attributes: ['device_id']
         })
         let device_id = []
-        let device_registration_tokens = [];
-        let notifications = [];
+
         if (newChef.length > 0) {
 
             newChef.forEach(item => {
-                device_id.push(item.dataValues.device_id)
-                device_registration_tokens.push(item.dataValues.device_registration_token)
-                notifications.push({
-                    userId: item.dataValues.id,
-                    timestamp: sequelize.literal('CURRENT_TIMESTAMP'),
-                    state_type: notificationConstants.NOTIFICATION_TYPE_SENT,
-                    orderTitle: req.body.orderTitle,
-                    orderBrief: req.body.orderBrief,
-                    activity: req.body.activity,
-                    device_id: item.dataValues.device_id
-                })
+                device_id.push(item.device_id)
 
             })
 
@@ -256,19 +236,18 @@ exports.listNewChef = asyncHandler(async (req, res) => {
                 orderTitle: req.body.orderTitle,
                 orderBrief: req.body.orderBrief,
                 activity: req.body.activity,
-                device_id: device_id,
-                device_registration_tokens: device_registration_tokens
+                device_id: device_id
             }
 
-            await FCM(groupNewChef).then((response) => {
-                res.json({
+            let responseData = await FCM(groupNewChef)
+            await Notification.create(groupNewChef)
 
-                    data: {
-                        response: JSON.parse(response)
-                    }
-                })
-            });
-            await Notification.bulkCreate(notifications);
+            res.json({
+
+                data: {
+                    response: responseData
+                }
+            })
         } else {
             res.json({
                 data: {

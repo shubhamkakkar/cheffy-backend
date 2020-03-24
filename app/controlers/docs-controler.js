@@ -171,16 +171,13 @@ exports.getOne = asyncHandler(async (req, res, next) => {
 //TODO while editing docs. I thought the id we get was documentId.
 //But infact what is used here is userId.
 exports.edit = asyncHandler(async (req, res, next) => {
-  
-  const id = req.userId;
-  const user = await User.findByPk(id);
+  const user = req.user;
+
   let existDocs;
- /*  if (user.user_type === userConstants.USER_TYPE_CHEF)
-    existDocs = await repository.getUserDoc(id); */
+  if (user.user_type === userConstants.USER_TYPE_CHEF)
+    existDocs = await repository.getUserDoc(req.params.id);
   if (user.user_type === userConstants.USER_TYPE_DRIVER)
-    existDocs = await repository.getDriverDoc(id);
-  else
-    existDocs = await repository.getUserDoc(id);
+    existDocs = await repository.getDriverDoc(req.params.id);
 
   if (!existDocs) {
     await Object.keys(req.files).map(async keyObject => {
@@ -202,7 +199,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
     await repository.updateNIDFrontSide(existDocs.id, req.files.front_side.shift());
   if (existDocs.id && req.files['profile_photo']) {
     const photoResponse = await repository.updateProfilePhoto(existDocs.id, req.files.profile_photo.shift());
-    await user.update({'imagePath': photoResponse.url});
+    await user.update({'imgPath': photoResponse.url});
   }
   if (existDocs.id && req.files['driver_license_front_side'])
     await repository.updateDriverLicense(existDocs.id, req.files.driver_license_front_side.shift());
@@ -210,23 +207,17 @@ exports.edit = asyncHandler(async (req, res, next) => {
     await repository.updateDriverVehicleRegistration(existDocs.id, req.files.driver_vehicle_registration.shift());
 
   //TODO this line sends userId to update Docs. but the function accepts documentId
-  const document = await repository.userUpdateDoc(existDocs.id)
-  if (existDocs.id && req.files['profile_photo']) {
-    document.state_type = "validated"; //Profile photo doesn't require validation
-    await document.save();
-  }
+  await repository.userUpdateDoc(req.params.id)
+
   let updatedDocs;
 
-  /* if (user.user_type === userConstants.USER_TYPE_CHEF)
-    updatedDocs = await repository.getUserDoc(user.id); */
+  if (user.user_type === userConstants.USER_TYPE_CHEF)
+    updatedDocs = await repository.getUserDoc(user.id);
   if (user.user_type === userConstants.USER_TYPE_DRIVER)
     updatedDocs = await repository.getDriverDoc(user.id);
-    else
-    updatedDocs = await repository.getUserDoc(user.id);
 
 
-  res.status(HttpStatus.OK).send({ message: 'Docs successfully updated!', data: updatedDocs });
-
+  res.status(200).send({ message: 'Docs successfully updated!', data: updatedDocs });
 });
 
 /**

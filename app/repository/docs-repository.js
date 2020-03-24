@@ -494,21 +494,20 @@ exports.updateProfilePhoto = async (documentId, data) => {
     const { originalname, key, url, fieldname } = data;
     const response = await ProfilePhoto.findOne({ where: { documentId } });
 
-   /*  Commmenting this as delete image has to be done from cloudinary
-   if (response)
+    if (response)
       await uploadService.deleteImage(fieldname, response.getDataValue('url'));
     else {
       await uploadService.deleteImage(fieldname, key);
       return 0;
-    } */
+    }
 
     response.description = originalname;
     response.url = url;
-    response.state_type = "validated";
+    //response.state_type = data.response || null
     await response.save();
     return response;
   } catch (e) {
     console.log("Error: ", e);
-    return { message: "Fail to update Profile docs", error: e };
+    return { message: "Fail to update Chef docs", error: e };
   }
 }
