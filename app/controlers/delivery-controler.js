@@ -450,3 +450,18 @@ exports.getDeliveryDetails = asyncHandler(async (req, res, next) => {
     return 0;
   }
 });
+
+/**
+ * Method: GET
+ * GET tracking details for a given OrderItemId
+ * The response should contain pickup address, drop address, pick up latitude/longitude, drop latitue and longitude */
+exports.getOrderItemTrackingData = asyncHandler(async (req, res, next) => {
+  let orderItemid = req.params.orderItemId;
+  const orderItemDetails = await orderRepository.getOrderItemWithPickupAndDropAddress(orderItemid);
+ 
+
+  return res.status(HttpStatus.ACCEPTED).send({
+    message: 'Success!',
+    data: orderItemDetails,
+}); 
+});
