@@ -1,23 +1,22 @@
 'use strict';
 const path = require('path');
 const moment = require('moment')
-const { CustomPlate, CustomPlateImage, Favourites, sequelize, OrderItem, ShippingAddress, Review, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, Notification } = require('../models/index');
+const {CustomPlate, CustomPlateImage,Favourites, sequelize,OrderItem, ShippingAddress,Review, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, Notification } = require('../models/index');
 const userConstants = require(path.resolve('app/constants/users'));
 const FCM = require(path.resolve('app/services/fcm'))
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op
 const asyncHandler = require('express-async-handler');
-const notificationConstants = require(path.resolve('app/constants/notification'));
 
-exports.listNewUser = asyncHandler(async (req, res) => {
+exports.listNewUser = asyncHandler(async (req,res)=>{
 
-    try {
+    try{
         let todayDate = moment().format('YYYY-MM-DD') + ' 00' + ':00' + ':00';
 
         let endDate = moment(todayDate).subtract("2", "week").format('YYYY-MM-DD') + " 23:59:59"
 
-        // console.log("Date Today", todayDate)
-        // console.log("Week 2", endDate)
+        console.log("Date Today", todayDate)
+        console.log("Week 2", endDate)
 
         let newUsers = await User.findAll({
 
@@ -25,59 +24,47 @@ exports.listNewUser = asyncHandler(async (req, res) => {
                 createdAt: {
                     [Op.between]: [endDate, todayDate]
                 }
-            }, attributes: ['id', 'device_id', 'device_registration_token']
+            },attributes:['device_id']
         })
-
         let device_id = []
-        let device_registration_tokens = [];
-        let notifications = [];
-        if (newUsers.length > 0) {
+
+        if (newUsers.length > 0 ) {
 
             newUsers.forEach(item => {
-                device_id.push(item.dataValues.device_id)
-                device_registration_tokens.push(item.dataValues.device_registration_token)
-                notifications.push({
-                    userId: item.dataValues.id,
-                    timestamp: sequelize.literal('CURRENT_TIMESTAMP'),
-                    state_type: notificationConstants.NOTIFICATION_TYPE_SENT,
-                    orderTitle: req.body.orderTitle,
-                    orderBrief: req.body.orderBrief,
-                    activity: req.body.activity,
-                    device_id: item.dataValues.device_id
-                })
+                device_id.push(item.device_id)
+
             })
+
+
             let groupNewUsers = {
                 orderTitle: req.body.orderTitle,
                 orderBrief: req.body.orderBrief,
                 activity: req.body.activity,
-                device_id: device_id,
-                device_registration_tokens: device_registration_tokens
-            };
+                device_id: device_id
+            }
 
-            await FCM(groupNewUsers).then((response) => {
-                res.json({
+            let responseData = await FCM(groupNewUsers)
+            await Notification.create(groupNewUsers)
 
-                    data: {
-                        response: JSON.parse(response)
-                    }
-                })
-            });
-            await Notification.bulkCreate(notifications)
-
-
-        } else {
             res.json({
-                data: {
-                    message: 'No user Available'
+
+                data:{
+                    response:responseData
+                }
+            })
+        }else{
+            res.json({
+                data:{
+                    message:'No user Available'
                 }
             })
         }
-    } catch (e) {
+    }catch (e) {
         console.log(e)
     }
 })
 
-exports.listNewDrivers = asyncHandler(async (req, res) => {
+exports.listNewDrivers = asyncHandler(async (req,res)=> {
 
 
     try {
@@ -94,61 +81,48 @@ exports.listNewDrivers = asyncHandler(async (req, res) => {
                 },
                 user_type: userConstants.USER_TYPE_DRIVER
 
-            }, attributes: ['id', 'device_id', 'device_registration_token']
+            },attributes:['device_id']
         })
         let device_id = []
-        let device_registration_tokens = [];
-        let notifications = [];
-        if (newDrivers.length > 0) {
+
+        if (newDrivers.length > 0 ) {
 
             newDrivers.forEach(item => {
-                device_id.push(item.dataValues.device_id)
-                device_registration_tokens.push(item.dataValues.device_registration_token)
-                notifications.push({
-                    userId: item.dataValues.id,
-                    timestamp: sequelize.literal('CURRENT_TIMESTAMP'),
-                    state_type: notificationConstants.NOTIFICATION_TYPE_SENT,
-                    orderTitle: req.body.orderTitle,
-                    orderBrief: req.body.orderBrief,
-                    activity: req.body.activity,
-                    device_id: item.dataValues.device_id
-                })
+                device_id.push(item.device_id)
 
             })
-            console.log('Notificatins',notifications);
 
             let groupNewDrivers = {
                 orderTitle: req.body.orderTitle,
                 orderBrief: req.body.orderBrief,
                 activity: req.body.activity,
-                device_id: device_id,
-                device_registration_tokens: device_registration_tokens
+                device_id: device_id
             }
 
-            await FCM(groupNewDrivers).then((response) => {
-                res.json({
+            let responseData = await FCM(groupNewDrivers)
+            await Notification.create(groupNewDrivers)
 
-                    data: {
-                        response: JSON.parse(response)
-                    }
-                })
-            });
-            await Notification.bulkCreate(notifications);
-        } else {
             res.json({
-                data: {
-                    message: 'No deviceId Available'
+
+                data:{
+                    response:responseData
+                }
+            })
+        }else{
+            res.json({
+                data:{
+                    message:'No deviceId Available'
                 }
             })
         }
 
-    } catch (e) {
+    }catch (e) {
         console.log(e)
 
     }
 })
 
-exports.listOldDrivers = asyncHandler(async (req, res) => {
+exports.listOldDrivers = asyncHandler(async (req,res)=>{
 
     try {
         let todayDate = moment().format('YYYY-MM-DD') + ' 00' + ':00' + ':00';
@@ -164,11 +138,11 @@ exports.listOldDrivers = asyncHandler(async (req, res) => {
                 },
                 user_type: userConstants.USER_TYPE_DRIVER
 
-            }, attributes: ['device_id']
+            },attributes:['device_id']
         })
         let device_id = []
 
-        if (oldDrivers.length > 0) {
+        if (oldDrivers.length > 0 ) {
 
             oldDrivers.forEach(item => {
                 device_id.push(item.device_id)
@@ -187,25 +161,25 @@ exports.listOldDrivers = asyncHandler(async (req, res) => {
 
             res.json({
 
-                data: {
-                    response: responseData
+                data:{
+                    response:responseData
                 }
             })
-        } else {
+        }else{
             res.json({
-                data: {
-                    message: 'No deviceId Available'
+                data:{
+                    message:'No deviceId Available'
                 }
             })
         }
 
-    } catch (e) {
+    }catch (e) {
         console.log(e)
 
     }
 })
 
-exports.listNewChef = asyncHandler(async (req, res) => {
+exports.listNewChef = asyncHandler(async (req,res)=>{
 
     try {
         let todayDate = moment().format('YYYY-MM-DD') + ' 00' + ':00' + ':00';
@@ -221,11 +195,11 @@ exports.listNewChef = asyncHandler(async (req, res) => {
                 },
                 user_type: userConstants.USER_TYPE_CHEF
 
-            }, attributes: ['device_id']
+            },attributes:['device_id']
         })
         let device_id = []
 
-        if (newChef.length > 0) {
+        if (newChef.length > 0 ) {
 
             newChef.forEach(item => {
                 device_id.push(item.device_id)
@@ -244,25 +218,25 @@ exports.listNewChef = asyncHandler(async (req, res) => {
 
             res.json({
 
-                data: {
-                    response: responseData
+                data:{
+                    response:responseData
                 }
             })
-        } else {
+        }else{
             res.json({
-                data: {
-                    message: 'No deviceId Available'
+                data:{
+                    message:'No deviceId Available'
                 }
             })
         }
 
-    } catch (e) {
+    }catch (e) {
         console.log(e)
 
     }
 })
 
-exports.listOldChef = asyncHandler(async (req, res) => {
+exports.listOldChef = asyncHandler(async (req,res)=>{
     try {
         let todayDate = moment().format('YYYY-MM-DD') + ' 00' + ':00' + ':00';
         let oneMonth = moment(todayDate).subtract("1", "months").format('YYYY-MM-DD') + " 23:59:59"
@@ -277,11 +251,11 @@ exports.listOldChef = asyncHandler(async (req, res) => {
                 },
                 user_type: userConstants.USER_TYPE_CHEF
 
-            }, attributes: ['device_id']
+            },attributes:['device_id']
         })
         let device_id = []
 
-        if (oldChef.length > 0) {
+        if (oldChef.length > 0 ) {
 
             oldChef.forEach(item => {
                 device_id.push(item.device_id)
@@ -300,39 +274,39 @@ exports.listOldChef = asyncHandler(async (req, res) => {
 
             res.json({
 
-                data: {
-                    response: responseData
+                data:{
+                    response:responseData
                 }
             })
-        } else {
+        }else{
             res.json({
-                data: {
-                    message: 'No deviceId Available'
+                data:{
+                    message:'No deviceId Available'
                 }
             })
         }
 
-    } catch (e) {
+    }catch (e) {
         console.log(e)
 
     }
 })
 
-exports.listFirstOrder = asyncHandler(async (req, res) => {
+exports.listFirstOrder = asyncHandler(async (req,res)=>{
 
-    try {
+    try{
         let firstTimeUser = await User.findAll({
 
             where: {
                 order_flag: {  /* Need to add this boolean field, order_flag: default value will be True. After order is done need to update this to false */
                     [Op.eq]: [true]
                 }
-            }, attributes: ['device_id']
+            },attributes:['device_id']
         })
 
         let device_id = []
 
-        if (firstTimeUser > 0) {
+        if(firstTimeUser > 0){
 
             firstTimeUser.forEach(item => {
                 device_id.push(item.device_id)
@@ -350,20 +324,20 @@ exports.listFirstOrder = asyncHandler(async (req, res) => {
 
             res.json({
 
-                data: {
-                    response: responseData
+                data:{
+                    response:responseData
                 }
             })
 
-        } else {
+        }else{
             res.json({
-                data: {
-                    message: 'No user Available'
+                data:{
+                    message:'No user Available'
                 }
             })
         }
 
-    } catch (e) {
+    }catch (e) {
         console.log(e)
     }
 

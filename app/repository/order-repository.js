@@ -492,11 +492,3 @@ exports.getOrderItemsWithRespectiveDelivery = async({user_id, state_type, pagina
     }]
   });
 }
-
-exports.completeChefOrder = async(orderItemId) => {
-  const orderItem = await OrderItem.findByPk(orderItemId);
-  orderItem.state_type = 'approved';
-  await orderItem.save();
-
-  return [];
-}
