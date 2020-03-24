@@ -1,19 +1,19 @@
 version: "3.7"
 
 services:
-    mysql-development:
+    redesigned-db:
         image: mysql:5.7.27
         container_name: redesigned-db
         volumes:
             - mysql-data:/var/lib/mysql
         environment:
             MYSQL_ROOT_PASSWORD: admin
-            MYSQL_DATABASE: database_development
+            MYSQL_DATABASE: c821iyxdz9lgx1ut
         ports:
             - "3306:3306"
-    admin:
+    redesigned-admin:
         image: adminer
-        container_name: admin-db
+        container_name: redesigned-admin
         ports:
             - "8080:8080"
 volumes:
