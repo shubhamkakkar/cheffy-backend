@@ -22,7 +22,6 @@ router.get('/:orderDeliveryId',authService.authorize, controller.getDeliveryDeta
 
 router.get('/price/calculate', controller.getDeliveryPrice);
 
-router.get('/chef/tracking/:orderItemId', controller.getOrderItemTrackingData);
 
 //router.put('/edit/:id',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOwnerMiddleware, controller.edit);
 router.put('/accept/:orderDeliveryId',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(), controller.accept);
