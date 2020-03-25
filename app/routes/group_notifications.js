@@ -18,19 +18,19 @@ router.post('/newDrivers',controller.listNewDrivers);
 
 /***********************Notification to group of Old Driver/ Registration in greater than 1-Month*******************/
 
-router.get('/oldDrivers',controller.listOldDrivers);
+router.post('/oldDrivers',controller.listOldDrivers);
 
 /***********************Notification to group of New Chef/ Registration in previous 1-Month*******************/
 
-router.get('/newChef',controller.listNewChef);
+router.post('/newChef',controller.listNewChef);
 
 /***********************Notification to group of Old Chef/ Registration in previous than 1-Month*******************/
 
-router.get('/oldChef',controller.listOldChef);
+router.post('/oldChef',controller.listOldChef);
 
 /***********************Notification to group of Users/ Ordered First Time*******************/
 
-router.get('/orderedOnce',controller.listFirstOrder);
+router.post('/orderedOnce',controller.listFirstOrder);
 
 
 
