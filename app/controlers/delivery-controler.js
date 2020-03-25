@@ -1,15 +1,16 @@
 "use strict";
 const path = require('path');
 const HttpStatus = require("http-status-codes");
-const {sequelize, User, OrderDelivery, Order } = require('../models/index');
+const {sequelize, User, OrderDelivery, Order, Notification } = require('../models/index');
 const ValidationContract = require("../services/validator");
 const orderRepository = require("../repository/order-repository");
 const deliveryRepository = require("../repository/delivery-repository");
 const orderDeliveryRepository = require("../repository/orderDelivery-repository");
 const demandService = require('../services/demands');
 const authService = require("../services/auth");
-const NotificationServices = require('../services/notification');
+const FCM = require(path.resolve('app/services/fcm'));
 const userConstants = require(path.resolve('app/constants/users'));
+const notificationConstants = require(path.resolve('app/constants/notification'));
 const asyncHandler = require('express-async-handler');
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const paginator = require(path.resolve('app/services/paginator'));
@@ -258,18 +259,49 @@ exports.editStateType = (message) => asyncHandler(async (req, res, next) => {
 
   await req.orderDelivery.update(updates);
 
-  const orderDelivery = await deliveryRepository.getById(req.orderDelivery.id);
+  const orderDelivery = await deliveryRepository.getById(req.orderDelivery.id);  
+
+  const existUser = await User.findOne({ where: { id: req.orderDelivery.userId } });
+
+  const chefOrderDelivery = await orderDeliveryRepository.getDeliveryChefDetails(req.orderDelivery.id);
+
+  const chef = chefOrderDelivery.order_item.chef;
+  
+  const flag = { order_flag : false }
+
+  await existUser.update(flag);  
 
   res.status(HttpStatus.OK).send({message: message || 'Updated', orderDelivery: orderDelivery.get({plain: true})});
 
+  let device_id = []
+  let device_registration_tokens = [];
+  device_id.push(chef.device_id);
+  device_registration_tokens.push(chef.device_registration_token);
   //Notify the Cheff
-  new NotificationServices()
-  .sendPushNotificationToUser(orderDelivery.driverId,
-    {
-      type: orderDelivery.state_type,
-      orderDeliveryId: orderDelivery.id
-    }
-  );
+  let pushnotification = {
+    orderTitle:  `Order ${chefOrderDelivery.order_item.name} delivered`,
+    orderBrief: `Order ${chefOrderDelivery.order_item.description} delivred in location ${chefOrderDelivery.order_item.chef_location}`,
+    activity: orderDeliveryConstants.STATE_TYPE_DELIVERED,
+    device_id: device_id,
+    device_registration_tokens: device_registration_tokens
+  };
+  
+  await FCM(pushnotification).then((response) => {
+      console.log(response);
+  });
+
+  var noti = {
+    userId: req.orderDelivery.userId,
+    timestamp: sequelize.literal('CURRENT_TIMESTAMP'),
+    state_type: notificationConstants.NOTIFICATION_TYPE_SENT,
+    orderTitle: `Order ${chefOrderDelivery.order_item.name} delivered`,
+    orderBrief: `Order ${chefOrderDelivery.order_item.description} delivred in location ${chefOrderDelivery.order_item.chef_location}`,
+    activity: orderDeliveryConstants.STATE_TYPE_DELIVERED,
+    device_id : chef.device_id,
+    order_id : chefOrderDelivery.order_item.orderId,
+  }
+
+  await Notification.create(noti);
 
 });
 
@@ -300,7 +332,7 @@ exports.completeDelivery = [
     req.body.dropoff_time = sequelize.literal('CURRENT_TIMESTAMP');
     next();
   },
-  exports.addMoneyToWallet,
+  //exports.addMoneyToWallet,
   exports.editStateType('Delivery Completed!')
 ];
 
