@@ -26,11 +26,11 @@ router.get('/newChef',controller.listNewChef);
 
 /***********************Notification to group of Old Chef/ Registration in previous than 1-Month*******************/
 
-router.post('/oldChef',controller.listOldChef);
+router.get('/oldChef',controller.listOldChef);
 
 /***********************Notification to group of Users/ Ordered First Time*******************/
 
-router.post('/orderedOnce',controller.listFirstOrder);
+router.get('/orderedOnce',controller.listFirstOrder);
 
 
 

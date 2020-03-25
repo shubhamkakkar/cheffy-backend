@@ -47,10 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     device_id: DataTypes.STRING,
     device_registration_token : DataTypes.STRING,
-    order_flag : {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    }
+
   });
 
   User.associate = function(models) {
