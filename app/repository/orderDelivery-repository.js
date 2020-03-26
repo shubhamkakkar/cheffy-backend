@@ -118,3 +118,26 @@ exports.getDeliveryDetails = async (data) => {
   return orderDelivery;
 
 }
+
+exports.getDeliveryChefDetails = async (data) => {
+  let orderDelivery = await OrderDelivery.findOne({
+    where: { id: data },
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderItem,
+        as : 'order_item',
+        attributes: ["chef_id","name","description","chef_location","orderId"],
+        include: [{
+          model: User,
+          as: 'chef',
+          attributes: ['device_id','device_registration_token'],         
+        }]     
+      }]
+  });
+
+  orderDelivery = JSON.parse(JSON.stringify(orderDelivery));
+  
+  return orderDelivery;
+
+}
