@@ -142,7 +142,7 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
     images.forEach(elem => {
       elem.customPlateId = customPlate.id;
       elem.name = customPlate.name;
-      elem.url = elem.url;
+      elem.url = elem.key;
       images_data.push(elem);
     });
 
@@ -230,7 +230,7 @@ exports.editCustomPlate = [
       images.forEach(elem => {
         elem.customPlateId = customPlate.id;
         elem.name = customPlate.name;
-        elem.url = elem.url;
+        elem.url = elem.key;
         images_data.push(elem);
       });
 
@@ -278,7 +278,7 @@ exports.addImages = asyncHandler(async(req, res, next) => {
   images.forEach(elem => {
     elem.customPlateId = customPlate.id;
     elem.name = customPlate.name;
-    elem.url = elem.url;
+    elem.url = elem.key;
     images_data.push(elem);
   });
 

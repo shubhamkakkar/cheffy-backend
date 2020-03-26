@@ -7,7 +7,7 @@ const controller = require('../controlers/customPlate-controler');
 const authService = require("../services/auth");
 const userController = require(path.resolve('app/controlers/user-controler'));
 const shippingController = require("../controlers/shipping-controler");
-const multerStart = require(path.resolve("config/multer_cloudinary"));
+const multerStart = require(path.resolve("config/multer"));
 const customPlatePolicies = require(path.resolve('app/policies/custom-plate'));
 
 const addFields = [
