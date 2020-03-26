@@ -1,12 +1,12 @@
 module.exports = {
 	mysql: {
-		username: "root",
-		password: "admin",
-		database: "c821iyxdz9lgx1ut",
-		host: "localhost",
-		dialect: "mysql",
-		port: "3306",
-		logging: console.log
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
+    dialect: process.env.DB_DIALECT,
+    port: process.env.DB_PORT,
+    logging: process.env.DB_LOGGING
 	},
 	redis: {
 		password: process.env.REDIS_PASSWORD,
