@@ -414,6 +414,66 @@ exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
 
 /**
 * Method: POST
+* Reject a custom plate auction by chef user
+*/
+exports.rejectCustomPlateAuction = asyncHandler(async (req, res, next) => {
+  const authUser = req.user;
+
+  if (authUser.user_type !== userConstants.USER_TYPE_CHEF) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: `Only 'chef' user can reject an auction of custom plate.`,
+      error: true
+    });
+  }
+
+  if (!req.body.auction) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "You need to send auction(customPlateId)",
+      status: HttpStatus.CONFLICT
+    });
+  }
+
+  let context = {
+    CustomPlateAuctionID: req.body.auction,
+    chefID: authUser.id,
+    reject_reason: req.body.reject_reason
+  };
+
+  //check if auction is closed;
+  const auction = await repository.getCustomPlateAuction(req.body.auction);
+
+   if(!auction) {
+     return res.status(HttpStatus.NOT_FOUND).send({message: 'Auction Not Found'});
+   }
+   //check auction closing date
+   const customPlate = await repository.getCustomPlate(auction.customPlateId);
+   if(new Date() >= customPlate.close_date) {
+     return res.status(HttpStatus.BAD_REQUEST).send({message: 'Auction Date Expired'});
+   }
+ 
+   if(auction.state_type === customPlateConstants.STATE_TYPE_CLOSED) {
+     return res.status(HttpStatus.BAD_REQUEST).send({message: 'Auction Already Closed'});
+   }
+  
+   let chef_rejection_status = await repository.hasChefRejectedAuction(req.body.auction, authUser.id);
+   if(chef_rejection_status){
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Chef has already rejected this auction'});
+   }
+
+   let bid_status = await repository.hasChefBiddedAuction(req.body.auction, authUser.id);
+   if(bid_status){
+    return res.status(HttpStatus.BAD_REQUEST).send({message: 'Already bidded auction cannot be rejected'});
+   }
+   
+   const data = await repository.rejectAuctionOfACustomPlate(context);
+   res.status(HttpStatus.CREATED).send({
+     message: "Chef has successfully rejected the custom plate auction",
+     data: data
+   });
+});
+
+/**
+* Method: POST
 * User accept auction bid for a chef
 * CustomPlateOrder is created when user accepts auction bid
 */
