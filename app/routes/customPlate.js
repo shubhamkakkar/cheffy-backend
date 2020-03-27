@@ -35,7 +35,10 @@ router.param('customPlateImageId', controller.customPlateImageByIdMiddleware);
 
 
 router.post('/pay', authService.authorize, userController.getAuthUserMiddleware, shippingController.getAuthUserShippingAddress, controller.pay);
+//Chef bid for a custom plate
 router.post('/bid', authService.authorize, userController.getAuthUserMiddleware, controller.bidCustomPlate);
+//Chef rejects a bid
+router.post('/auction/reject', authService.authorize, userController.getAuthUserMiddleware, controller.rejectCustomPlateAuction);
 
 //i think we need to add post since documents are created for this route, although no req.body is sent
 router.post('/accept/bid/:auctionBidId', authService.authorize, userController.getAuthUserMiddleware, controller.acceptCustomPlateBid);

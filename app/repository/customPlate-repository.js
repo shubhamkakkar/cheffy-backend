@@ -1,6 +1,6 @@
 'use strict';
 const path = require('path');
-const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User } = require("../models/index");
+const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User, CustomPlateAuctionReject } = require("../models/index");
 const Sequelize = require("sequelize");
 const debug = require('debug')('customPlate-repository');
 const Op = Sequelize.Op;
@@ -41,7 +41,27 @@ exports.getCustomPlateAuction = async(auctionId) => {
 exports.getCustomPlateAuctionByCustomPlate = async(customPlateId) => {
   return await CustomPlateAuction.findOne({where: {CustomPlateID: customPlateId}});
 }
+exports.hasChefBiddedAuction = async(auctionId, chefId) => {
+  console.log(auctionId);
+  console.log(chefId);
+  return await CustomPlateAuctionBid.findOne({where: 
+    {
+      CustomPlateAuctionID: auctionId,
+      chefID: chefId
+    },
+    attributes:['id']
+  });
+}
 
+exports.hasChefRejectedAuction = async(auctionId, chefId) => {
+  return await CustomPlateAuctionReject.findOne({where: 
+    {
+       CustomPlateAuctionID: auctionId,
+       chefID: chefId
+    },
+  attributes:['id']
+  });
+}
 
 /**
 * Searches for user custom plates by chef with various filters
@@ -234,6 +254,10 @@ exports.bidCustomPlate = async (data) => {
   return plate;
 }
 
+exports.rejectAuctionOfACustomPlate = async (data) => {
+  let plate = await CustomPlateAuctionReject.create({ ...data });
+  return plate;
+}
 exports.updateCustomPlateBidById = async ({id, data}) => {
   return await CustomPlateAuctionBid.update({...data}, {where: {id: id}});
 }
