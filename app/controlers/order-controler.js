@@ -522,7 +522,7 @@ exports.chefAcceptOrderItem = [
 				message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`
 			});
 		}
-		req.body.state_type = orderItemConstants.STATE_TYPE_PENDING;
+		req.body.state_type = orderItemConstants.STATE_TYPE_APPROVED;
 		next();
 	},
 	exports.editOrderItemStateType
