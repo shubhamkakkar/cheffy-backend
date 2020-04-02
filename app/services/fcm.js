@@ -9,17 +9,10 @@ module.exports = (data) => {
     let notificationData = data
     let fcm = new FCM(fcmAPI.serverKey);
     var message = {
-        registration_ids: notificationData.device_registration_tokens, // Multiple tokens in an array
-        collapse_key: 'your_collapse_key',
-
+        registration_ids: notificationData.device_registration_tokens, // Multiple tokens in an array        
         notification: {
             title: notificationData.orderTitle,
             body: notificationData.orderBrief
-        },
-
-        data: {  //you can send only notification or only data(or include both)
-            my_key: 'my value',
-            my_another_key: 'my another value'
         }
     };
 

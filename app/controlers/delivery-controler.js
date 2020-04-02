@@ -48,9 +48,10 @@ exports.list = asyncHandler(async (req, res, next) => {
   }
 
   let payload = {};
-  payload.status = HttpStatus.CREATED;
-  payload.deliveries = deliveries;
-  res.status(payload.status).send(payload);
+
+  payload.message= 'Here are your orders!', 
+  payload.data = deliveries;
+  res.status(HttpStatus.ACCEPTED).send(payload);
 });
 
 exports.calculateDeliveryTime = async(req, res, next) => {
