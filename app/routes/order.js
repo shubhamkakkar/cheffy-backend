@@ -155,7 +155,4 @@ router.put(
 
 router.post("/promo-code/redeem", controller.promotion);
 
-//Use this route to update the delivery type of an order item
-router.put("/order-items/:orderItemId/delivery-type", authService.authorize, userController.getAuthUserMiddleware, orderItemPolicies.isOrderItemChefMiddleware(),controller.editOrderItemDeliveryType);
-
 module.exports = router;
