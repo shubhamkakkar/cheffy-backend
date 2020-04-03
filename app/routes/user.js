@@ -27,6 +27,7 @@ router.post('/complete-registration', multerStart(fieldsFile), controller.comple
 router.put('/edit', authService.authorize, multerStart(fieldsFile), controller.put);
 
 router.get('/', authService.authorize, controller.getAuthUserMiddleware, controller.getUser);
+router.get('/:userId', authService.authorize, controller.getUserById);
 router.put('/location', authService.authorize, controller.getAuthUserMiddleware, controller.updateLocation);
 //auth routes
 router.post('/login', authController.authenticate);
@@ -41,9 +42,6 @@ router.post('/verify-phone', authService.authorize, controller.getAuthUserMiddle
 //email verification routes
 router.post('/resend-email-token', controller.resendEmailToken);
 router.post('/verify-email-token', controller.verifyEmailToken);
-
-// check token expiration
-router.post('/check-token-expiration', controller.checkTokenExpiration);
 
 router.post('/change-password', authService.authorize, controller.getAuthUserMiddleware, controller.changePassword);
 
