@@ -15,11 +15,12 @@ const paymentService = require("../services/payment");
 const controlerHelper = require("./controler-helper");
 const TransactionsService = require("../services/transactions");
 const asyncHandler = require("express-async-handler");
-const customPlateControllers = require(path.resolve("app/controlers/customPlate-controler"));
+const customPlateControllers = require(path.resolve(
+	"app/controlers/customPlate-controler"
+));
 const inputFilters = require(path.resolve("app/inputfilters/order"));
 const paginator = require(path.resolve("app/services/paginator"));
 const orderItemConstants = require(path.resolve("app/constants/order-item"));
-const _ = require("underscore")
 
 function distance(lat1, lon1, lat2, lon2) {
 	var R = 6371;
@@ -495,23 +496,6 @@ exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
 		message: "Updated",
 		orderItem: orderItem.get({ plain: true })
 	});
-});
-/**
- * Update Order Item delivery Type. Delivery type can be  chef/user/driver based on the 
- * delivery type chosen by the chef or user
- */
-exports.editOrderItemDeliveryType = asyncHandler(async (req, res, next) => {
-	if(!_.contains(['chef','user','driver'], req.body.delivery_type)) {
-		return res.status(HttpStatus.NOT_FOUND).send({message: `Invalid delivery type.`});
-	}
-	const updates = { deliveryType: req.body.delivery_type };
-	await req.orderItem.update(updates);
-
-	const orderItem = await repository.getOrderItemByIdDetails(
-		req.params.orderItemId
-	);
-
-	res.status(HttpStatus.OK).send({message: "Delivery type updated",orderItem: orderItem.get({ plain: true })});
 });
 
 /**
