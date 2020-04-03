@@ -489,6 +489,24 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 
 });
 
+//Instead of getting the user data based on access token , 
+//get the user details based on the userID passed as params
+exports.getUserById = asyncHandler(async (req, res, next) => {
+  
+  console.log(req.params.userId);   
+  const user = await User.findByPk(req.params.userId , {
+    attributes: userConstants.privateSelectFields,
+  });
+
+  if(!user) {
+    return res.status(HttpStatus.NOT_FOUND).send({ message: 'User not found', status: HttpStatus.NOT_FOUND });
+  }
+  const shippingAddresses = await user.getAddress();
+  const userResponse = userResponseHelper({user});
+  userResponse.address = shippingAddresses;
+  res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
+
+});
 
 /**
 * Complete user registration
