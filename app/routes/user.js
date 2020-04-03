@@ -27,6 +27,7 @@ router.post('/complete-registration', multerStart(fieldsFile), controller.comple
 router.put('/edit', authService.authorize, multerStart(fieldsFile), controller.put);
 
 router.get('/', authService.authorize, controller.getAuthUserMiddleware, controller.getUser);
+router.get('/:userId', authService.authorize, controller.getUserById);
 router.put('/location', authService.authorize, controller.getAuthUserMiddleware, controller.updateLocation);
 //auth routes
 router.post('/login', authController.authenticate);

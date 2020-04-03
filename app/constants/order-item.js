@@ -12,6 +12,6 @@ exports.DELIVERY_TYPE_DRIVER = 'driver';
 
 exports.selectFields = [
   'id', 'orderId', 'user_id', 'chef_id', 'plate_id', 'customPlateId',
-  'item_type', 'state_type', 'chef_location','name', 'description',
+  'item_type', 'state_type', 'chef_location','name', 'description', 'deliveryType',
   'amount', 'quantity', 'note', 'createdAt', 'updatedAt'
 ];
