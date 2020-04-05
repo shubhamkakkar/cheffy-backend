@@ -378,14 +378,14 @@ exports.searchPlates = async({req, query, pagination}) => {
     0: 'default',
     1: 'popular',
     2: 'rating',
-    3: 'deliveryTime'
+    3: 'delivery_time'
   }
 
   if(query.sortCategory) {
     const sortType = sortCategoryMaps[query.sortCategory];
 
-    if(sortType === 'deliveryTime') {
-      plateOrderByQuery = [['deliveryTime', 'ASC']];
+    if(sortType === 'delivery_time') {
+      plateOrderByQuery = [['delivery_time', 'ASC']];
     }
   }
 
@@ -459,7 +459,7 @@ exports.searchPlates = async({req, query, pagination}) => {
   if(query.dietary) {
     dietWhereQUery.name = query.dietary;
   }
-
+console.log(plateOrderByQuery);
   const queryOptions = {
      where: whereQuery,
      attributes: [
