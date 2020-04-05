@@ -493,7 +493,6 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 //get the user details based on the userID passed as params
 exports.getUserById = asyncHandler(async (req, res, next) => {
   
-  console.log(req.params.userId);   
   const user = await User.findByPk(req.params.userId , {
     attributes: userConstants.privateSelectFields,
   });
@@ -507,7 +506,6 @@ exports.getUserById = asyncHandler(async (req, res, next) => {
   res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
 
 });
-
 /**
 * Complete user registration
 */
@@ -638,6 +636,21 @@ exports.verifyEmailToken = asyncHandler(async (req, res, next) => {
   }
 
   res.status(HttpStatus.UNAUTHORIZED).send({ message: 'Token code not verified!', status: HttpStatus.UNAUTHORIZED});
+});
+
+
+exports.checkTokenExpiration = asyncHandler(async (req,res,next) => {
+  let token  = req.headers["x-access-token"]; 
+  if(!token) {
+    return res.status(HttpStatus.BAD_REQUEST).send({message : 'Access token is not found'});
+  }
+  try {
+      let token_return = await authService.decodeToken(token);
+      res.status(HttpStatus.OK).send(token_return);
+  } catch (error) {
+    res.status(409).send({ message: "Token expired" , error: error });
+    return;
+  }
 });
 
 /**
