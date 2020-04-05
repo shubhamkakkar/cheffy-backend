@@ -15,11 +15,17 @@ const paymentService = require("../services/payment");
 const controlerHelper = require("./controler-helper");
 const TransactionsService = require("../services/transactions");
 const asyncHandler = require("express-async-handler");
-const customPlateControllers = require(path.resolve("app/controlers/customPlate-controler"));
+const customPlateControllers = require(path.resolve(
+	"app/controlers/customPlate-controler"
+));
 const inputFilters = require(path.resolve("app/inputfilters/order"));
 const paginator = require(path.resolve("app/services/paginator"));
 const orderItemConstants = require(path.resolve("app/constants/order-item"));
 const _ = require("underscore")
+const notificationService = require(path.resolve('app/services/notification'));
+const notificationConstant = require(path.resolve('app/constants/notification'));
+const reviewConstant = require(path.resolve('app/constants/reviews'));
+const repositoryUser = require(path.resolve('app/repository/user-repository'));
 
 function distance(lat1, lon1, lat2, lon2) {
 	var R = 6371;
@@ -384,6 +390,10 @@ exports.createOrderReview = async (req, res, next) => {
 		const createdPlateReview = await repository.createOrderReview(
 			full_data
 		);
+
+		if(createdPlateReview){
+			await sendNotification(createdPlateReview, createdPlateReview.chefID);
+		}
 		res.status(200).send({
 			message: "Review created!",
 			data: createdPlateReview
@@ -496,6 +506,7 @@ exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
 		orderItem: orderItem.get({ plain: true })
 	});
 });
+
 /**
  * Update Order Item delivery Type. Delivery type can be  chef/user/driver based on the 
  * delivery type chosen by the chef or user
@@ -643,3 +654,34 @@ exports.promotion = async (req, res) => {
 		});
 	}
 };
+
+async function sendNotification(data ,user_id){
+	try{
+		//Get user data
+		let userData = await repositoryUser.getUserById(user_id);
+		if(userData) {
+			
+			let device_ids = []
+			let device_registration_tokens = [];
+			
+			device_ids.push(userData.device_id);
+			device_registration_tokens.push(userData.device_registration_token);
+
+			let notificationData = {
+				title: notificationConstant.ORDER_ITEM_REVIEW_TITLE,
+				brief: notificationConstant.ORDER_ITEM_REVIEW_BRIEF+data.comment,
+				activity: reviewConstant.ACTIVITY_REVIEW_ORDER,
+				device_ids: device_ids.join(),
+				device_registration_tokens:device_registration_tokens,
+				userId: data.userId,
+				order_id: data.orderId,
+			}
+			await notificationService.sendPushNotification(notificationData);
+		}
+		else{
+			console.log('Unable to find user data');
+		}  
+	}catch (e) {
+		console.log("error sending notification",e);
+	}   
+}

@@ -43,6 +43,9 @@ router.post('/verify-phone', authService.authorize, controller.getAuthUserMiddle
 router.post('/resend-email-token', controller.resendEmailToken);
 router.post('/verify-email-token', controller.verifyEmailToken);
 
+// check token expiration
+router.post('/check-token-expiration', controller.checkTokenExpiration);
+
 router.post('/change-password', authService.authorize, controller.getAuthUserMiddleware, controller.changePassword);
 
 // forgot password routes
