@@ -10,7 +10,7 @@ const middlewares = require(path.resolve('./server/middlewares'));
 Should return boolean value or bool value wrapped in promise
 */
 exports.isOwner = (req, orderItem) => {
-
+  orderItem = orderItem || req.orderItem;
   if (!orderItem || !req.user)
     return false;
   if (orderItem.user_id && utils.equals(req.user.id, orderItem.user_id))
