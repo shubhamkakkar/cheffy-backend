@@ -29,7 +29,7 @@ const _ = require('lodash');
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 const paymentService = require('../services/payment');
-
+const repositoryRating = require(path.resolve('app/repository/rating-repository'));
 
 const { generateHash } = require('../../helpers/password');
 
@@ -502,6 +502,10 @@ exports.getUserById = asyncHandler(async (req, res, next) => {
   }
   const shippingAddresses = await user.getAddress();
   const userResponse = userResponseHelper({user});
+  if(userConstants.USER_TYPE_CHEF === user.user_type) {
+    let rating = await repositoryRating.getRatingofChef(req.params.userId);
+    userResponse.rating = rating;
+  }
   userResponse.address = shippingAddresses;
   res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
 
