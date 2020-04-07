@@ -352,7 +352,7 @@ exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
     });
   }
 
-  if (!req.body.chefDeliveryAvailable) {
+  if (typeof req.body.chefDeliveryAvailable === 'undefined') {
     return res.status(HttpStatus.CONFLICT).send({
       message: "You need to state whether you deliver or not!",
       status: HttpStatus.CONFLICT
