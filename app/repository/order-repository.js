@@ -185,7 +185,7 @@ exports.listTrackingUser  = async (data) => {
       },
       {
         model: ShippingAddress,
-        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode"],
+        attributes: ["id", "addressLine1", "addressLine2", "city", "state", "zipCode", "lat", "lon"],
         as:'shipping'
       },
       {
