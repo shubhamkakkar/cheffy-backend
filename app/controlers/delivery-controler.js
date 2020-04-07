@@ -8,9 +8,8 @@ const deliveryRepository = require("../repository/delivery-repository");
 const orderDeliveryRepository = require("../repository/orderDelivery-repository");
 const demandService = require('../services/demands');
 const authService = require("../services/auth");
-const FCM = require(path.resolve('app/services/fcm'));
+//const FCM = require(path.resolve('app/services/fcm'));
 const userConstants = require(path.resolve('app/constants/users'));
-const notificationConstants = require(path.resolve('app/constants/notification'));
 const asyncHandler = require('express-async-handler');
 const orderDeliveryConstants = require(path.resolve('app/constants/order-delivery'));
 const paginator = require(path.resolve('app/services/paginator'));
@@ -20,6 +19,9 @@ const utils = require(path.resolve('app/utils'));
 const walletRepository = require(path.resolve('app/repository/wallet-repository'))
 const distance_mat = require('google-distance-matrix');
 const matrixKey = require(path.resolve('config/distance')).distance
+const notificationService = require(path.resolve('app/services/notification'));
+const notificationConstant = require(path.resolve('app/constants/notification'));
+const repositoryUser = require(path.resolve('app/repository/user-repository'));
 distance_mat.key (matrixKey.matrixKey) ;
 distance_mat.units('metric');
 
@@ -264,9 +266,9 @@ exports.editStateType = (message) => asyncHandler(async (req, res, next) => {
 
   const existUser = await User.findOne({ where: { id: req.orderDelivery.userId } });
 
-  const chefOrderDelivery = await orderDeliveryRepository.getDeliveryChefDetails(req.orderDelivery.id);
+//  const chefOrderDelivery = await orderDeliveryRepository.getDeliveryChefDetails(req.orderDelivery.id);
 
-  const chef = chefOrderDelivery.order_item.chef;
+  //const chef = chefOrderDelivery.order_item.chef;
   
   const flag = { order_flag : false }
 
@@ -274,7 +276,8 @@ exports.editStateType = (message) => asyncHandler(async (req, res, next) => {
 
   res.status(HttpStatus.OK).send({message: message || 'Updated', orderDelivery: orderDelivery.get({plain: true})});
 
-  let device_id = []
+  next();
+  /* let device_id = []
   let device_registration_tokens = [];
   device_id.push(chef.device_id);
   device_registration_tokens.push(chef.device_registration_token);
@@ -302,7 +305,7 @@ exports.editStateType = (message) => asyncHandler(async (req, res, next) => {
     order_id : chefOrderDelivery.order_item.orderId,
   }
 
-  await Notification.create(noti);
+  await Notification.create(noti); */
 
 });
 
@@ -334,7 +337,9 @@ exports.completeDelivery = [
     next();
   },
   //exports.addMoneyToWallet,
-  exports.editStateType('Delivery Completed!')
+  exports.editStateType('Delivery Completed!') ,(req) => {
+      setupAndSendDeliveryCompleteNotification(req.orderDelivery);
+  }
 ];
 
 exports.pickupDelivery = [
@@ -498,3 +503,52 @@ exports.getOrderItemTrackingData = asyncHandler(async (req, res, next) => {
     data: orderItemDetails,
 }); 
 });
+
+async function sendNotification(data ,user_id){
+	try{
+		//Get user data
+		let userData = await repositoryUser.getUserById(user_id);
+		if(userData) {
+			
+			let device_ids = []
+			let device_registration_tokens = [];
+			
+			device_ids.push(userData.device_id);
+			device_registration_tokens.push(userData.device_registration_token);
+
+			let notificationData = {
+				title: data.title,
+				brief: data.brief,
+				activity: data.activity,
+				device_ids: device_ids.join(),
+				device_registration_tokens:device_registration_tokens,
+				userId: data.userId,
+				order_id: data.orderId,
+			}
+			await notificationService.sendPushNotification(notificationData);
+		}
+		else{
+			console.log('Unable to find user data');
+		}  
+	}catch (e) {
+		console.log("Error sending notification",e);
+	}   
+}
+async function setupAndSendDeliveryCompleteNotification(orderDelivery) {
+  try {
+    let order_item = await orderRepository.getFirstOrderItemByOrderId(orderDelivery.orderId);
+
+    let chef_id = order_item.chef.id;
+    let user_id = order_item.user_id;
+    let notificationData = {
+      title: notificationConstant.ORDER_DELIVERY_COMPLETED_TITLE + order_item.name,
+      brief: notificationConstant.ORDER_DELIVERY_COMPLETED_BRIEF + order_item.name,
+      activity: notificationConstant.ACTIVITY_ORDER_DELIVERY_COMPLETED,
+      userId: user_id,
+      orderId: order_item.orderId,
+    }
+    await sendNotification(notificationData, chef_id);
+  } catch (e) {
+    console.log("Error fetching data for notification", e);
+  }
+}

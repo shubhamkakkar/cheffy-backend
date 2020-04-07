@@ -24,7 +24,6 @@ const orderItemConstants = require(path.resolve("app/constants/order-item"));
 const _ = require("underscore")
 const notificationService = require(path.resolve('app/services/notification'));
 const notificationConstant = require(path.resolve('app/constants/notification'));
-const reviewConstant = require(path.resolve('app/constants/reviews'));
 const repositoryUser = require(path.resolve('app/repository/user-repository'));
 
 function distance(lat1, lon1, lat2, lon2) {
@@ -392,7 +391,14 @@ exports.createOrderReview = async (req, res, next) => {
 		);
 
 		if(createdPlateReview){
-			await sendNotification(createdPlateReview, createdPlateReview.chefID);
+			let notificationData = {
+				title: notificationConstant.ORDER_ITEM_REVIEW_TITLE,
+				brief: notificationConstant.ORDER_ITEM_REVIEW_BRIEF+createdPlateReview.comment,
+				activity: notificationConstant.ACTIVITY_REVIEW_ORDER,
+				userId: createdPlateReview.userId,
+				orderId: createdPlateReview.orderId,
+			}
+			await sendNotification(notificationData, createdPlateReview.chefID);
 		}
 		res.status(200).send({
 			message: "Review created!",
@@ -400,6 +406,7 @@ exports.createOrderReview = async (req, res, next) => {
 		});
 		return;
 	} catch (e) {
+		console.log(e);
 		res.status(500).send({
 			message: "Failed to process your request"
 		});
@@ -494,7 +501,6 @@ exports.getOrderItem = asyncHandler(async (req, res, next) => {
 exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
 	const user = req.user;
 	const updates = { state_type: req.body.state_type };
-	console.log(updates);
 	await req.orderItem.update(updates);
 
 	const orderItem = await repository.getOrderItemByIdDetails(
@@ -505,6 +511,7 @@ exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
 		message: "Updated",
 		orderItem: orderItem.get({ plain: true })
 	});
+	next();
 });
 
 /**
@@ -588,7 +595,19 @@ exports.chefReadyOrderItem = [
 		req.body.state_type = orderItemConstants.STATE_TYPE_READY;
 		next();
 	},
-	exports.editOrderItemStateType
+	exports.editOrderItemStateType,
+	(req)=>{
+		let chef_id = req.orderItem.chef_id;
+		let user_id = req.orderItem.user_id;
+		let notificationData = {
+			title: notificationConstant.ORDER_ITEM_IS_READY_TITLE,
+			brief: req.orderItem.name+ ' '+notificationConstant.ORDER_ITEM_IS_READY_BRIEF,
+			activity: notificationConstant.ACTIVITY_ORDER_ITEM_READY,
+			userId: user_id,
+			orderId: req.orderItem.orderId,
+		}
+		sendNotification(notificationData, user_id);
+	}
 ];
 
 /**
@@ -608,13 +627,26 @@ exports.userCancelOrderItem = [
 			req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED
 		) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
-				message: `Order Item Already Canceled. orderItemId: ${req.orderItem.id}`
+				message: `Order Item Already Cancelled. orderItemId: ${req.orderItem.id}`
 			});
 		}
 		req.body.state_type = orderItemConstants.STATE_TYPE_CANCELED;
 		next();
 	},
-	exports.editOrderItemStateType
+	exports.editOrderItemStateType,
+	(req)=>{
+		let chef_id = req.orderItem.chef_id;
+		let user_id = req.orderItem.user_id;
+		let notificationData = {
+			title: notificationConstant.ORDER_ITEM_IS_CANCELLED_TITLE,
+			brief: req.orderItem.name+ ' '+notificationConstant.ORDER_ITEM_IS_CANCELLED_BRIEF,
+			activity: notificationConstant.ACTIVITY_ORDER_ITEM_CANCELLED,
+			userId: user_id,
+			orderId: req.orderItem.orderId,
+		}
+		sendNotification(notificationData, chef_id);
+		
+	}
 ];
 
 exports.completeChefOrder = async (req, res, next) => {
@@ -668,9 +700,9 @@ async function sendNotification(data ,user_id){
 			device_registration_tokens.push(userData.device_registration_token);
 
 			let notificationData = {
-				title: notificationConstant.ORDER_ITEM_REVIEW_TITLE,
-				brief: notificationConstant.ORDER_ITEM_REVIEW_BRIEF+data.comment,
-				activity: reviewConstant.ACTIVITY_REVIEW_ORDER,
+				title: data.title,
+				brief: data.brief,
+				activity: data.activity,
 				device_ids: device_ids.join(),
 				device_registration_tokens:device_registration_tokens,
 				userId: data.userId,
@@ -682,6 +714,6 @@ async function sendNotification(data ,user_id){
 			console.log('Unable to find user data');
 		}  
 	}catch (e) {
-		console.log("error sending notification",e);
+		console.log("Error sending notification",e);
 	}   
 }
