@@ -36,7 +36,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     }
-  }, {});
+  }, {
+    paranoid: true,
+    timestamps: true,
+  });
   CustomPlateAuctionBid.associate = function(models) {
     CustomPlateAuctionBid.belongsTo(models.CustomPlateAuction, {foreignKey: 'CustomPlateAuctionID', as: 'custom_plates_id'})
     CustomPlateAuctionBid.belongsTo(models.User, {foreignKey: 'chefID', as: 'Chef'})

@@ -474,6 +474,53 @@ exports.rejectCustomPlateAuction = asyncHandler(async (req, res, next) => {
 
 /**
 * Method: POST
+* Customer rejects a custom plate auction bid placed by chef
+*/
+exports.rejectCustomPlateAuctionBid = asyncHandler(async (req, res, next) => {
+  const authUser = req.user;
+  console.log(authUser);
+  const bidId = req.params.bidId
+  if (authUser.user_type !== userConstants.USER_TYPE_USER) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: `Only 'user' can reject a bid for a custom plate.`,
+      error: true
+    });
+  }
+//check if auction is closed;
+const bid_details = await repository.getCustomPlateBid(bidId);
+
+if (bid_details.userId !== authUser.id)  {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Only custom plate owner can reject a bid for that plate",
+      status: HttpStatus.CONFLICT
+    });
+  }
+
+  let context = {
+    CustomPlateAuctionBidId: bidId,
+    userId: authUser.id,
+    reject_reason: req.body.reject_reason
+  };
+
+  
+
+   if(!bid_details) {
+     return res.status(HttpStatus.NOT_FOUND).send({message: 'Bid not Found'});
+   }
+   //Check if this bid is already paid by customer
+   if(bid_details.winner) {
+     return res.status(HttpStatus.BAD_REQUEST).send({message: 'Accepted bid cannot be rejected'});
+   }
+   
+   const data = await repository.rejectAuctionBidOfACustomPlate(context);
+   res.status(HttpStatus.CREATED).send({
+     message: "Customer has successfully rejected the custom plate auction bid",
+     data: data
+   });
+});
+
+/**
+* Method: POST
 * User accept auction bid for a chef
 * CustomPlateOrder is created when user accepts auction bid
 */
@@ -1048,4 +1095,31 @@ exports.customPlate = asyncHandler(async (req, res, next) => {
       scope: appConstants.SCOPE_ALL,
       type: 'customPlate'
   }, req);
+});
+
+/**
+ * Soft delete a custom plate bid.
+ * req.params.bidId : id from CustomPlateAuctionBids
+ */
+exports.deleteCustomPlateBid = asyncHandler(async (req, res, next) => {
+  try {
+    let customPlateAuctionBid = await repository.getCustomPlateBid(req.params.bidId);
+
+    if(!customPlateAuctionBid)  {
+      return res.status(HttpStatus.NOT_FOUND).send({message: 'Bid Not Found'});
+    }  
+
+    if(customPlateAuctionBid.winner){
+      return res.status(HttpStatus.NOT_FOUND).send({message: 'Bid accepted by customer cannot be deleted'});
+    }
+    let response = await repository.deleteCustomAuctionBid(req.params.bidId);
+      res.status(200).send({ message: 'Deleted the custom plate bid!', data: response });
+  }catch(e) {
+    console.log(e);
+    return res.status(HttpStatus.CONFLICT).send({
+      message: 'Failed to delete the custom plate bid',
+      data: e,
+      error: true
+    });
+  }
 });

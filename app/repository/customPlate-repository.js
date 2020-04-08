@@ -1,6 +1,6 @@
 'use strict';
 const path = require('path');
-const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User, CustomPlateAuctionReject } = require("../models/index");
+const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User, CustomPlateAuctionReject, CustomPlateBidReject } = require("../models/index");
 const Sequelize = require("sequelize");
 const debug = require('debug')('customPlate-repository');
 const Op = Sequelize.Op;
@@ -109,6 +109,12 @@ exports.chefGetPlates = async ({req, query, pagination}) => {
 
     customPlateOrderByQuery = [[sequelize.col('distance'), 'ASC']];
   }
+  const CustomPlateAuctionRejects =  await CustomPlateBidReject.findAll({
+    attributes: ["CustomPlateAuctionBidId"],
+    group: ["CustomPlateAuctionBidId"]
+  });
+   const CustomPlateAuctionRejectedBidIds = CustomPlateAuctionRejects.map(CustomPlateAuctionReject => CustomPlateAuctionReject.CustomPlateAuctionBidId);
+
 
   if(query.state_type) {
     auctionWhereQuery.state_type = query.state_type;
@@ -150,7 +156,13 @@ exports.chefGetPlates = async ({req, query, pagination}) => {
          include: [
            {
              model: CustomPlateAuctionBid,
-             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'delivery_time', 'chefDeliveryAvailable', 'winner', 'createdAt' ]
+             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'delivery_time', 'chefDeliveryAvailable', 'winner', 'createdAt' ],
+              where: {
+               id: {
+                [Op.notIn]:CustomPlateAuctionRejectedBidIds
+             }
+            },
+            required:false 
            }
          ],
        },
@@ -190,7 +202,7 @@ exports.myCustomPlates = async ({userId, pagination}) => {
          model: CustomPlateAuction,
          attributes: [
            'id', 'state_type', 'winner', 'createdAt',
-         [Sequelize.literal('(SELECT COUNT(*) FROM CustomPlateAuctionBids WHERE CustomPlateAuctionBids.CustomPlateAuctionID = CustomPlateAuction.id)'), 'bidCount'] ],
+         [Sequelize.literal('(SELECT COUNT(*) FROM CustomPlateAuctionBids WHERE CustomPlateAuctionBids.CustomPlateAuctionID = CustomPlateAuction.id AND id NOT IN (SELECT CustomPlateAuctionBidId FROM CustomPlateBidRejects))'), 'bidCount'] ],
          where: {
            state_type: 'open',
          },
@@ -211,6 +223,12 @@ exports.myCustomPlates = async ({userId, pagination}) => {
 * Get bid list with detail information of chef
 */
 exports.getPlate = async (data) => {
+  const CustomPlateAuctionRejects =  await CustomPlateBidReject.findAll({
+    attributes: ["CustomPlateAuctionBidId"],
+    group: ["CustomPlateAuctionBidId"]
+  });
+   const CustomPlateAuctionRejectedBidIds = CustomPlateAuctionRejects.map(CustomPlateAuctionReject => CustomPlateAuctionReject.CustomPlateAuctionBidId);
+
   const plate = await CustomPlate.findByPk(data ,{
      include : [
        {
@@ -219,14 +237,21 @@ exports.getPlate = async (data) => {
          include: [
            {
              model: CustomPlateAuctionBid,
-             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'createdAt', 'chefDeliveryAvailable', 'delivery_time', 'winner' ],
+             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'createdAt', 'chefDeliveryAvailable', 'delivery_time', 'winner', 'deletedAt' ],
              include: [
                {
                  model: User,
                  as: 'Chef',
                  attributes: userConstants.userSelectFields
                }
-             ]
+             ],
+             where: {
+              id: {
+               [Op.notIn]:CustomPlateAuctionRejectedBidIds
+            }
+          },
+            required: false,
+             paranoid: false
            }
          ],
        },
@@ -257,6 +282,11 @@ exports.bidCustomPlate = async (data) => {
 exports.rejectAuctionOfACustomPlate = async (data) => {
   let plate = await CustomPlateAuctionReject.create({ ...data });
   return plate;
+}
+
+exports.rejectAuctionBidOfACustomPlate = async (data) => {
+  let auctionBid = await CustomPlateBidReject.create({ ...data });
+  return auctionBid;
 }
 exports.updateCustomPlateBidById = async ({id, data}) => {
   return await CustomPlateAuctionBid.update({...data}, {where: {id: id}});
@@ -304,12 +334,12 @@ exports.acceptCustomPlateBid = async (data) => {
 
 exports.getCustomPlateBid = async (data) => {
   let bid = await CustomPlateAuctionBid.findByPk(data, {
-    attributes: [ 'id', 'CustomPlateAuctionID', 'chefID', 'price', 'preparation_time', 'chefDeliveryAvailable' ],
+    attributes: [ 'id', 'CustomPlateAuctionID', 'chefID', 'price', 'preparation_time', 'chefDeliveryAvailable', 'winner', 'deletedAt'],
     include : [
       {
         model: CustomPlateAuction,
         as: 'custom_plates_id',
-        attributes: [ 'id', 'state_type', 'winner', 'createdAt' ],
+        attributes: [ 'id', 'state_type', 'winner', 'userId','createdAt' ],
         include: [
           {
             model: CustomPlate,
@@ -341,8 +371,23 @@ exports.getCustomPlateBid = async (data) => {
     chefID: bid.chefID,
     preparation_time: bid.preparation_time,
     chefDeliveryAvailable: bid.chefDeliveryAvailable,
-    custom_plate: bid.custom_plates_id.custom_plates
+    custom_plate: bid.custom_plates_id.custom_plates,
+    winner: bid.winner,
+    userId: bid.custom_plates_id.userId
   };
 
   return plate_data;
+}
+
+exports.deleteCustomAuctionBid = async (data) => {
+  try{
+  return await CustomPlateAuctionBid.destroy({
+    where: {
+      id: data,
+      winner:false
+    }
+  });
+}catch(e){
+  console.log(e);
+}
 }
