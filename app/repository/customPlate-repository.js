@@ -1,6 +1,6 @@
 'use strict';
 const path = require('path');
-const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User, CustomPlateAuctionReject, CustomPlateBidReject } = require("../models/index");
+const { sequelize, CustomPlate, CustomPlateAuction, CustomPlateAuctionBid, CustomPlateOrder, CustomPlateImage, User, CustomPlateAuctionReject, CustomPlateBidReject, AggregateReview } = require("../models/index");
 const Sequelize = require("sequelize");
 const debug = require('debug')('customPlate-repository');
 const Op = Sequelize.Op;
@@ -242,7 +242,13 @@ exports.getPlate = async (data) => {
                {
                  model: User,
                  as: 'Chef',
-                 attributes: userConstants.userSelectFields
+                 attributes: userConstants.userSelectFields,
+                 include:[
+                   {
+                     model: AggregateReview,
+                     required: false
+                   }
+                 ]
                }
              ],
              where: {
