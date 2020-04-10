@@ -156,7 +156,7 @@ exports.chefGetPlates = async ({req, query, pagination}) => {
          include: [
            {
              model: CustomPlateAuctionBid,
-             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'delivery_time', 'chefDeliveryAvailable', 'winner', 'createdAt' ],
+             attributes: [ 'id', 'chefID', 'price', 'preparation_time', 'delivery_time', 'chefDeliveryAvailable', 'winner', 'createdAt', 'deletedAt' ],
               where: {
                id: {
                 [Op.notIn]:CustomPlateAuctionRejectedBidIds
