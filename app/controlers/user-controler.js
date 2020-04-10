@@ -504,7 +504,9 @@ exports.getUserById = asyncHandler(async (req, res, next) => {
   const userResponse = userResponseHelper({user});
   if(userConstants.USER_TYPE_CHEF === user.user_type) {
     let rating = await repositoryRating.getRatingofChef(req.params.userId);
+    let aggregate_rating = rating.rating+'('+rating.userCount+')'
     userResponse.rating = rating;
+    userResponse.aggregate_rating = aggregate_rating;
   }
   userResponse.address = shippingAddresses;
   res.status(HttpStatus.ACCEPTED).send({ message: 'SUCCESS', data: userResponse});
