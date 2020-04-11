@@ -4,7 +4,7 @@
 const path = require('path');
 const Sequelize = require('sequelize');
 const debug = require('debug')('plate-repository');
-const {sequelize, OrderFrequency,OrderItem, ShippingAddress, Review, PlateReview, AggregateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, DietCategory, BasketItem } = require('../models/index');
+const {sequelize, OrderFrequency,OrderItem, ShippingAddress, Review, PlateReview, AggregateReview, Plates, User, Ingredient, PlateImage, KitchenImage, ReceiptImage, PlateCategory, DietCategory, BasketItem, Favourites } = require('../models/index');
 const Op = Sequelize.Op;
 const regexpService = require(path.resolve('app/services/regexp'));
 const plateConstants = require(path.resolve('app/constants/plates'));
@@ -149,8 +149,17 @@ exports.getPlate = async ({req, plateId}) => {
       {
         model: User,
         as: 'chef',
-        attributes: userConstants.userSelectFields
-      }
+        attributes: userConstants.userSelectFields,
+        include:[
+          {
+            model: AggregateReview,
+            required: false
+          }
+        ]
+      },
+      {
+        model: Favourites
+      },
 
     ],
     //nested: true
@@ -471,7 +480,13 @@ console.log(plateOrderByQuery);
        {
          model: User,
          as: 'chef',
-         attributes: userConstants.userSelectFields
+         attributes: userConstants.userSelectFields,
+         include:[
+          {
+            model: AggregateReview,
+            required: false
+          }
+        ]
        },
        {
          model: PlateCategory,
@@ -515,6 +530,9 @@ console.log(plateOrderByQuery);
           as:'user'
         }]
       },
+      {
+        model: Favourites
+      },
        //todo include aggregate reviews for search not review list
      ],
      ...pagination,
@@ -550,12 +568,18 @@ exports.popularPlates = async (data) => {
       {
         model: Plates,
         as: 'plate_1',
-        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId']
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId'],
+        include:{
+          model: PlateImage
+        }
       },
       {
         model: Plates,
         as: 'plate_2',
-        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId']
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId'],
+        include:{
+          model: PlateImage
+        }
       }],
       order: [
       ['frequency', 'DESC']

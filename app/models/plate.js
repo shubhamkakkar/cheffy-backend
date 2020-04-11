@@ -47,6 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     Plate.hasMany(models.KitchenImage)
     Plate.hasMany(models.ReceiptImage)
     Plate.hasMany(models.Review, {as: 'reviews'})
+    Plate.hasMany(models.Favourites)
   }
   return Plate;
 }
