@@ -1,8 +1,9 @@
 'use strict';
 const path = require('path');
-const {OrderFrequency, Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder, User, ShippingAddress } = require('../models/index');
+const {OrderFrequency, Basket, BasketItem, Plates, CustomPlate, CustomPlateOrder, User, ShippingAddress, PlateImage } = require('../models/index');
 const userConstants = require(path.resolve('app/constants/users'));
 const Sequelize = require("sequelize");
+const repositoryShip = require(path.resolve("app/repository/shipping-repository"));
 const Op = Sequelize.Op;
 
 exports.getOrCreateUserBasket = async (userId) => {
@@ -188,7 +189,10 @@ exports.getBasketItemsDetail = async (basketId) => {
       {
         model: Plates,
         as: 'plate',
-        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId']
+        attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId'],
+        include: {
+            model: PlateImage
+        }
       },
       //added custom plate in listBasket as well
       //TODO may be we should name as custom_plate_order. it would be confused with the actual custom_plate table
@@ -244,4 +248,12 @@ exports.peopleAlsoAddedList = async(plateId) => {
 
   return list;
 
+}
+
+exports.getShippingAddressOfUser = async (userId) => {
+  let shippingAddress = await repositoryShip.getUserDefaultAddress(userId);
+  if(!shippingAddress){
+    shippingAddress = await repositoryShip.getUserAddress(userId);
+  }
+  return shippingAddress;
 }

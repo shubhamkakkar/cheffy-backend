@@ -92,7 +92,9 @@ exports.list = asyncHandler(async (req, res, next) => {
   let basket = await repository.getOrCreateUserBasket(req.userId)
   let basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id);
 
+  let shippingAddress = await repository.getShippingAddressOfUser(req.userId);
   const result = prepareCartResponse({basketItems: basketItemsListDetail, basket: basket[0]});
+  result.shippingAddress = shippingAddress;
 
   res.status(HttpStatus.ACCEPTED).send(result);
 
