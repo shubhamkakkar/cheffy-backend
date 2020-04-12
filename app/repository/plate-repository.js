@@ -569,17 +569,52 @@ exports.popularPlates = async (data) => {
         model: Plates,
         as: 'plate_1',
         attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId'],
-        include:{
+        include:[{
           model: PlateImage
-        }
+        },
+        {
+          model: AggregateReview,
+        },
+        {
+          model: Review,
+          attributes: [ 'id','comment','rating', 'createdAt' ],
+          as:'reviews',
+          include: [{
+            model: User,
+            attributes: ['id', 'name','email','imagePath'],
+            as:'user'
+          }]
+        },
+        {
+          model: Favourites
+        },
+      ]
+
       },
       {
         model: Plates,
         as: 'plate_2',
         attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId'],
-        include:{
+        include:[{
           model: PlateImage
-        }
+        },
+        {
+          model: AggregateReview,
+        },
+        {
+          model: Review,
+          attributes: [ 'id','comment','rating', 'createdAt' ],
+          as:'reviews',
+          include: [{
+            model: User,
+            attributes: ['id', 'name','email','imagePath'],
+            as:'user'
+          }]
+        },
+        {
+          model: Favourites
+        },
+      ]
       }],
       order: [
       ['frequency', 'DESC']
