@@ -190,9 +190,22 @@ exports.getBasketItemsDetail = async (basketId) => {
         model: Plates,
         as: 'plate',
         attributes: [ 'id', 'name', 'description', 'price', 'delivery_time', 'chefDeliveryAvailable', 'userId'],
-        include: {
+        include: [
+        {
             model: PlateImage
+        },
+        {
+          model: User,
+          as: 'chef',
+          attributes: userConstants.userSelectFields,
+          include: [
+            {
+              model: ShippingAddress,
+              as: 'address'
+            }
+          ]
         }
+      ]
       },
       //added custom plate in listBasket as well
       //TODO may be we should name as custom_plate_order. it would be confused with the actual custom_plate table
