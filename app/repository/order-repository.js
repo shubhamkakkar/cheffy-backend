@@ -197,7 +197,17 @@ exports.listTrackingUser  = async (data) => {
           include: [
           {
             model: PlateImage
-        }]
+        },
+         {
+           model: User,
+           as: "chef",
+           include:[{
+            model: ShippingAddress,
+            as:'address',
+            attributes:["id", "addressLine1", "addressLine2", "city", "state", "zipCode", "lat", "lon", "userId"]
+           }]
+         }
+      ]
         },{
           model: CustomPlateOrder,
           as:'custom_plate_order',
