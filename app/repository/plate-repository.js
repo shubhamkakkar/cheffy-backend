@@ -554,7 +554,25 @@ console.log(plateOrderByQuery);
   debug('queryOptions',queryOptions)
 
   const response = await Plates.findAll(queryOptions);
-  return response;
+  const plates = JSON.parse(JSON.stringify(response));
+//Sreejith : Added IsFavourite boolean based on whether each plate is added as favourite or not 
+//Also removed Favourites collection from each plate as this is not required
+  try {
+    plates.forEach(function (value, key) {
+      if (value.Favourites != null && value.Favourites.length>0) {
+        plates[key].IsFavourite = true;
+      }
+      else {
+        plates[key].IsFavourite = false;
+      }
+      delete plates[key].Favourites;
+    });
+  }
+  catch (e) {
+    console.log(e);
+  }
+
+  return plates;
 
 };
 

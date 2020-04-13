@@ -106,7 +106,13 @@ exports.getDeliveryDetails = async (data) => {
       model: User,
       attributes:userConstants.userSelectFields,
       include:[{model:ShippingAddress, as: 'address'}]
-    }]
+    },
+    {
+      model: User,
+      as: "Driver",
+      attributes:userConstants.userSelectFields
+    }
+  ]
   });
 
   orderDelivery = JSON.parse(JSON.stringify(orderDelivery));
