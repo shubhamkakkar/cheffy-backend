@@ -162,7 +162,21 @@ exports.chefGetPlates = async ({req, query, pagination}) => {
                 [Op.notIn]:CustomPlateAuctionRejectedBidIds
              }
             },
-            required:false 
+            required:false,
+            include: [
+              {
+                  model: User,
+                  as: "Chef",
+                  attributes: ['id'],
+                  include:[
+                    {
+                      model: AggregateReview,
+                      required: false,
+                      attributes: ['id', 'userCount', 'rating']
+                    }
+                  ]
+              }
+            ] 
            }
          ],
        },
