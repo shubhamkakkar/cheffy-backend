@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     //set if delivery_type is order_item
-    orderItemId: {
+    orderItemID: {
       allowNull: true,
       type: DataTypes.INTEGER,
       references: {
@@ -73,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
 
   OrderDelivery.associate = function(models) {
     OrderDelivery.belongsTo(models.Order, {foreignKey: 'orderId', as: 'order'});
-    OrderDelivery.belongsTo(models.OrderItem, {foreignKey: 'orderItemId', as: 'order_item'});
+    OrderDelivery.belongsTo(models.OrderItem, {foreignKey: 'orderItemID', as: 'order_item'});
     OrderDelivery.belongsTo(models.User, {foreignKey: 'driverId', as: 'Driver' });
     OrderDelivery.belongsTo(models.User, {foreignKey: 'userId'});
   };

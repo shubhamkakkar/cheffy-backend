@@ -38,4 +38,6 @@ router.get('/driver/approved', authService.authorize, userController.getAuthUser
 router.get('/driver/complete', authService.authorize, userController.getAuthUserMiddleware, controller.listCompleteDeliveriesByDriver);
 router.post('/driver/cancel/:orderId',authService.authorize, userController.getAuthUserMiddleware, driverController.cancelOrder);
 
+router.post('/chef/createdelivery/:orderItemId',authService.authorize, userController.getAuthUserMiddleware, middlewares.chefRoleRequired, controller.createChefOrderDelivery);
+
 module.exports = router;
