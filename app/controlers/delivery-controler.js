@@ -1,7 +1,7 @@
 "use strict";
 const path = require('path');
 const HttpStatus = require("http-status-codes");
-const {sequelize, User, OrderDelivery, Order, Notification } = require('../models/index');
+const {sequelize, User, OrderDelivery, Order, Notification, OrderItem } = require('../models/index');
 const ValidationContract = require("../services/validator");
 const orderRepository = require("../repository/order-repository");
 const deliveryRepository = require("../repository/delivery-repository");
@@ -230,8 +230,7 @@ exports.createDelivery = asyncHandler(async (req, res, next) => {
         userId: user_order.userId,
         driverId: req.userId,
         state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
-        delieryType: orderDeliveryConstants.USER_TYPE_DRIVER
-
+        delivery_type: orderDeliveryConstants.DELIVERY_TYPE_DRIVER
       };
 
       if(req.body.pickup_time) {
@@ -552,3 +551,49 @@ async function setupAndSendDeliveryCompleteNotification(orderDelivery) {
     console.log("Error fetching data for notification", e);
   }
 }
+
+exports.createChefOrderDelivery = asyncHandler(async (req, res, next) => {
+
+  let contract = new ValidationContract();
+  contract.isRequired(req.params.orderItemId, 'The order item ID is required!');
+
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+  }
+  let createdOrderDelivery;
+  createdOrderDelivery = await OrderDelivery.findOne({where:{orderItemID:req.params.orderItemId}})
+  
+  if(!createdOrderDelivery) {
+    
+    const existUser = req.user;
+    const user_order_item = await OrderItem.findOne({where:{id:req.params.orderItemId}})
+    const payload = {
+      orderId: user_order_item.orderId, 
+      orderItemID: user_order_item.id,
+      order_delivery_type: orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM,
+      userId: user_order_item.user_id,
+      driverId: req.userId,
+      state_type: orderDeliveryConstants.STATE_TYPE_PICKED_UP,
+      delivery_type: orderDeliveryConstants.DELIVERY_TYPE_CHEF
+
+    };
+
+    if(req.body.pickup_time) {
+        payload.pickup_time = req.body.pickup_time;
+    }
+
+    if(req.body.dropoff_time) {
+        payload.dropoff_time = req.body.dropoff_time;
+    }
+
+    createdOrderDelivery = await deliveryRepository.createOrderDelivery(payload);
+  }
+
+  //demandService.sendToDelivery(orderId,loc,shipping)
+
+  let response = {};
+  response.status = HttpStatus.CREATED;
+  response.orderDelivery = createdOrderDelivery;
+  res.status(response.status).send(response);
+
+});
