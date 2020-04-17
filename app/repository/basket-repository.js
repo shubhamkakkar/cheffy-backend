@@ -270,3 +270,59 @@ exports.getShippingAddressOfUser = async (userId) => {
   }
   return shippingAddress;
 }
+
+exports.checkAllPlatesBelongsToASingleChef = async(data) => {
+  let j = JSON.stringify(data);
+  let k =JSON.parse(j);
+  let p = [];
+  for(var key in k){
+    p.push(k[key].plateId);
+  }
+
+  const distinctChefCount = await Plates.count({
+   distinct:true,
+   col:'Plates.userId',
+     where : {
+      id: {
+        [Op.in]: p }
+     }
+    //,logging: console.log 
+  });
+  if(distinctChefCount>1){
+    return false;
+  }
+    else {
+      return true;
+    }
+}
+
+exports.checkPlateChefSameAsBasketItemChef = async( basketId , plates) => {
+  let j = JSON.stringify(plates);
+  let k =JSON.parse(j);
+  //Get the first plateId and then the chef's Id of that plate as all the plates in basket will have same chef
+  let plateId = k[0].plateId;
+  const plateChefId = await Plates.findOne({
+    attributes:['userId'],
+      where : {
+       id: plateId
+      }
+ //    ,logging: console.log 
+   });
+
+   //Need to validate against one basket item's chef as all basket items of a basket will have same chef
+  let basketItems = await this.getBasketItems(basketId);
+  let basketItemPlateId = basketItems[0].plateId;
+  const basketItemChefId = await Plates.findOne({
+    attributes:['userId'],
+      where : {
+       id: basketItemPlateId
+      }
+     //,logging: console.log 
+   });
+   if( basketItemChefId.userId !== plateChefId.userId ){
+    return false;
+  }
+    else {
+      return true;
+    }
+}

@@ -112,9 +112,11 @@ exports.getOrderDeliveriesPendingByUserId = async (data,driver) => {
   return order;
 }
 
-exports.getCompletedDeliveriesByUser = async (data) => {
+exports.getCompletedDeliveriesByUser = async ({user_id, pagination}) => {
   let order = await Order.findAll({
-    where: {userId:data},
+    where: {userId:user_id},
+    ...pagination,
+    attributes:["id","basketId","userId","shippingId","state_type","promoCode","total_items","shipping_fee","order_total","createdAt","updatedAt"],
     order: [["id", "DESC"]],
     include: [
     {

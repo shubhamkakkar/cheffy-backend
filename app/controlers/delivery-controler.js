@@ -138,10 +138,13 @@ exports.pendingList = asyncHandler(async (req, res, next) => {
 exports.listCompleteDeliveries = async (req, res, next) => {
 
   try {
-    const user_orders = await deliveryRepository.getCompletedDeliveriesByUser(req.userId)
+    const pagination = paginator.paginateQuery(req);
+    const query = { user_id: req.userId, pagination };
+    const user_orders = await deliveryRepository.getCompletedDeliveriesByUser(query)
     res.status(HttpStatus.ACCEPTED).send({
       message: 'Here are your orders!',
-      data: user_orders
+      data: user_orders,
+      ...paginator.paginateInfo(pagination)
     });
     return 0;
   } catch (e) {
