@@ -33,6 +33,24 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 
   //get user basket. create on if it doesn't exists yet.
   let basket = await repository.getOrCreateUserBasket(req.userId);
+  
+
+  //check all plates in the request belongs to one chef else return error
+  let allPlatesBelongsToASingleChef =  await repository.checkAllPlatesBelongsToASingleChef(req.body.plates);
+  if(!allPlatesBelongsToASingleChef){
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Add to basket failed. Cannot add plates belonging to different chefs",
+      error: true
+    });
+  }
+ let platesChefSameAsBasketItemChef  = await repository.checkPlateChefSameAsBasketItemChef(basket[0].id, req.body.plates);
+ if(!platesChefSameAsBasketItemChef){
+  return res.status(HttpStatus.CONFLICT).send({
+    message: "Add to basket failed. Cannot add plates belonging to different chefs as basket items belongs to different chef",
+    error: true
+  });
+}
+  //Check if chef of the plates in the request matches with chef of the plates in the basketItem
 
   let item_list = req.body.plates;
 
