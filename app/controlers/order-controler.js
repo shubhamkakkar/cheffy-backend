@@ -1,30 +1,34 @@
-"use strict";
-const path = require("path");
-const HttpStatus = require("http-status-codes");
-const ValidationContract = require("../services/validator");
-const repository = require("../repository/order-repository");
-const repositoryOrderDelivery = require("../repository/orderDelivery-repository");
-const repositoryOrderPayment = require("../repository/orderPayment-repository");
-const repositoryWallet = require("../repository/wallet-repository");
-const plateRepository = require("../repository/orderPayment-repository");
-const repositoryShip = require("../repository/shipping-repository");
-const repositoryCart = require("../repository/basket-repository");
-const md5 = require("md5");
-const authService = require("../services/auth");
-const paymentService = require("../services/payment");
-const controlerHelper = require("./controler-helper");
-const TransactionsService = require("../services/transactions");
-const asyncHandler = require("express-async-handler");
+'use strict';
+const path = require('path');
+const HttpStatus = require('http-status-codes');
+/*const ValidationContract = require('../services/validator');*/
+const repository = require('../repository/order-repository');
+const repositoryOrderDelivery = require('../repository/orderDelivery-repository');
+/*const repositoryOrderPayment = require('../repository/orderPayment-repository');*/
+const repositoryWallet = require('../repository/wallet-repository');
+const plateRepository = require('../repository/orderPayment-repository');
+/*const repositoryShip = require('../repository/shipping-repository');
+const repositoryCart = require('../repository/basket-repository');
+const md5 = require('md5');*/
+const authService = require('../services/auth');
+/*const paymentService = require('../services/payment');*/
+const controlerHelper = require('./controler-helper');
+/*const TransactionsService = require('../services/transactions');*/
+const asyncHandler = require('express-async-handler');
 const customPlateControllers = require(path.resolve(
-	"app/controlers/customPlate-controler"
+	'app/controlers/customPlate-controler'
 ));
-const inputFilters = require(path.resolve("app/inputfilters/order"));
-const paginator = require(path.resolve("app/services/paginator"));
-const orderItemConstants = require(path.resolve("app/constants/order-item"));
-const _ = require("underscore")
-const notificationService = require(path.resolve('app/services/notification'));
-const notificationConstant = require(path.resolve('app/constants/notification'));
-const repositoryUser = require(path.resolve('app/repository/user-repository'));
+const inputFilters = require(path.resolve('app/inputfilters/order'));
+const paginator = require(path.resolve('app/services/paginator'));
+const orderItemConstants = require(path.resolve('app/constants/order-item'));
+const _ = require('underscore');
+/*const notificationService = require(path.resolve('app/services/notification'));*/
+const notificationConstant = require(path.resolve(
+	'app/constants/notification'
+));
+/*const repositoryUser = require(path.resolve('app/repository/user-repository'));*/
+const FCM = require('../services/fcm');
+const customPlateRepo = require('../repository/customPlate-repository');
 
 function distance(lat1, lon1, lat2, lon2) {
 	var R = 6371;
@@ -38,8 +42,8 @@ function distance(lat1, lon1, lat2, lon2) {
 			Math.sin(dLon / 2);
 	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 	var d = R * c;
-	if (d > 1) return Math.round(d) + "km";
-	else if (d <= 1) return Math.round(d * 1000) + "m";
+	if (d > 1) return Math.round(d) + 'km';
+	else if (d <= 1) return Math.round(d * 1000) + 'm';
 	return d;
 }
 
@@ -67,7 +71,7 @@ const change_data = async (id, data) => {
 		risk_score: data.charges.data[0].outcome.risk_score,
 		seller_message: data.charges.data[0].outcome.seller_message,
 		type: data.charges.data[0].outcome.type,
-		paid: data.charges.data[0].paid
+		paid: data.charges.data[0].paid,
 	};
 	return base;
 };
@@ -80,7 +84,7 @@ const post_process = async (
 	confirmation,
 	order_id
 ) => {
-	let cart_items = basket_content.BasketItems.map(async elem => {
+	let cart_items = basket_content.BasketItems.map(async (elem) => {
 		let loc = await repository.userLocation(elem.plate.userId);
 		let wallet = await repositoryWallet.getWallet(elem.plate.userId);
 		let element = {
@@ -92,13 +96,13 @@ const post_process = async (
 			name: elem.plate.name,
 			description: elem.plate.description,
 			amount: elem.plate.price,
-			quantity: elem.quantity
+			quantity: elem.quantity,
 		};
 		return element;
 	});
 	let basket_info = {
 		id: user_basket.id,
-		items: await Promise.all(cart_items)
+		items: await Promise.all(cart_items),
 	};
 	await controlerHelper.createOrderItens(basket_info.items);
 	let user_info = {
@@ -114,10 +118,10 @@ const post_process = async (
 			state: shipping.state,
 			zip_code: shipping.zipCode,
 			lat: shipping.lat,
-			lon: shipping.lon
+			lon: shipping.lon,
 		},
 		basket: basket_info,
-		payment_confirmation: confirmation
+		payment_confirmation: confirmation,
 	};
 
 	return user_info;
@@ -127,7 +131,7 @@ exports.orderByIdMiddleware = asyncHandler(async (req, res, next, orderId) => {
 	const order = repository.getById(orderId);
 	if (!order)
 		return res.status(HttpStatus.NOT_FOUND).send({
-			message: `Order Not Found by orderId ${req.params.orderId}`
+			message: `Order Not Found by orderId ${req.params.orderId}`,
 		});
 	req.order = order;
 	next();
@@ -139,26 +143,26 @@ exports.orderByIdMiddleware = asyncHandler(async (req, res, next, orderId) => {
  */
 exports.list = async (req, res, next) => {
 	const token_return = await authService.decodeToken(
-		req.headers["x-access-token"]
+		req.headers['x-access-token']
 	);
 	if (!token_return) {
 		res.status(HttpStatus.CONFLICT).send({
-			message: "You must be logged in to check your orders",
-			error: true
+			message: 'You must be logged in to check your orders',
+			error: true,
 		});
 	}
 	try {
 		const user_orders = await repository.getUserOrders(token_return.id);
 		res.status(HttpStatus.ACCEPTED).send({
-			message: "Here are your orders!",
-			data: user_orders
+			message: 'Here are your orders!',
+			data: user_orders,
 		});
 		return 0;
 	} catch (e) {
 		console.log(e);
 		res.status(HttpStatus.CONFLICT).send({
-			message: "Fail to get your orders!",
-			error: true
+			message: 'Fail to get your orders!',
+			error: true,
 		});
 		return 0;
 	}
@@ -171,9 +175,11 @@ exports.list = async (req, res, next) => {
  */
 exports.chefOrderList = asyncHandler(async (req, res, next) => {
 	const userId = req.userId;
+	const page = req.query.page || 0;
+	const pageSize = req.query.pageSize || 0;
 	const pagination = paginator.paginateQuery(req);
 
-	const query = { chef_id: userId, pagination };
+	const query = { chef_id: userId, pagination, page, pageSize };
 	const state_type = req.query.state_type;
 
 	if (state_type) {
@@ -184,24 +190,22 @@ exports.chefOrderList = asyncHandler(async (req, res, next) => {
 
 	let orderItems = await repository.getChefOrders(query);
 
-	if (item_type == "plate") {
-		orderItems = orderItems.filter(item => item.item_type == "plate");
-		console.log("plate invoked");
-	} else if (item_type == "custom_plate") {
+	if (item_type == 'plate') {
+		orderItems = orderItems.filter((item) => item.item_type == 'plate');
+	} else if (item_type == 'custom_plate') {
 		orderItems = orderItems.filter(
-			item => item.item_type == "custom_plate"
+			(item) => item.item_type == 'custom_plate'
 		);
-		console.log("cus_plate invoked");
 	}
 
 	const message = `Here are your${
-		state_type ? ` ${state_type} ` : " "
+		state_type ? ` ${state_type} ` : ' '
 	}orders!`;
 
 	res.status(HttpStatus.ACCEPTED).send({
 		message,
 		data: orderItems,
-		...paginator.paginateInfo(pagination)
+		...(page && pageSize && { ...paginator.paginateInfo(pagination) }),
 	});
 });
 
@@ -222,13 +226,13 @@ exports.userOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 	);
 
 	const message = `Here are your${
-		state_type ? ` ${state_type} ` : " "
+		state_type ? ` ${state_type} ` : ' '
 	}order deliveries!`;
 
 	res.status(HttpStatus.ACCEPTED).send({
 		message,
 		data: orderDeliveries,
-		...paginator.paginateInfo(pagination)
+		...paginator.paginateInfo(pagination),
 	});
 });
 
@@ -249,33 +253,35 @@ exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 	);
 
 	const message = `Here are your${
-		state_type ? ` ${state_type} ` : " "
+		state_type ? ` ${state_type} ` : ' '
 	}orders deliveries!`;
 
 	res.status(HttpStatus.ACCEPTED).send({
 		message,
 		data: orderDeliveries,
-		...paginator.paginateInfo(pagination)
+		...paginator.paginateInfo(pagination),
 	});
 });
 
 exports.listTrackingUser = async (req, res, next) => {
 	try {
 		const pagination = paginator.paginateQuery(req);
-		const query = { userId: req.userId, pagination };
+		const page = req.query.page || 0;
+		const pageSize = req.query.pageSize || 0;
+		const query = { userId: req.userId, pagination, page, pageSize };
 		const user_orders = await repository.listTrackingUser(query);
-		
+
 		res.status(HttpStatus.ACCEPTED).send({
-			message: "Here are your orders!",
+			message: 'Here are your orders!',
 			data: user_orders,
-			...paginator.paginateInfo(pagination)
+			...(page && pageSize && { ...paginator.paginateInfo(pagination) }),
 		});
 		return 0;
 	} catch (e) {
 		console.log(e);
 		res.status(HttpStatus.CONFLICT).send({
-			message: "Fail to get your orders!",
-			error: true
+			message: 'Fail to get your orders!',
+			error: true,
 		});
 		return 0;
 	}
@@ -285,15 +291,15 @@ exports.listTrackingDriver = async (req, res, next) => {
 	try {
 		const user_orders = await repository.listTrackingDriver(req.userId);
 		res.status(HttpStatus.ACCEPTED).send({
-			message: "Here are your orders!",
-			data: user_orders
+			message: 'Here are your orders!',
+			data: user_orders,
 		});
 		return 0;
 	} catch (e) {
 		console.log(e);
 		res.status(HttpStatus.CONFLICT).send({
-			message: "Fail to get your orders!",
-			error: true
+			message: 'Fail to get your orders!',
+			error: true,
 		});
 		return 0;
 	}
@@ -301,12 +307,12 @@ exports.listTrackingDriver = async (req, res, next) => {
 
 exports.getOneOrder = async (req, res, next) => {
 	const token_return = await authService.decodeToken(
-		req.headers["x-access-token"]
+		req.headers['x-access-token']
 	);
 	if (!token_return) {
 		res.status(HttpStatus.CONFLICT).send({
-			message: "You must be logged in to check your orders",
-			error: true
+			message: 'You must be logged in to check your orders',
+			error: true,
 		});
 	}
 	try {
@@ -315,15 +321,15 @@ exports.getOneOrder = async (req, res, next) => {
 			req.params.orderId
 		);
 		res.status(HttpStatus.ACCEPTED).send({
-			message: "Here are your order!",
-			data: user_orders
+			message: 'Here are your order!',
+			data: user_orders,
 		});
 		return 0;
 	} catch (e) {
 		console.log(e);
 		res.status(HttpStatus.CONFLICT).send({
-			message: "Fail to get your orders!",
-			error: true
+			message: 'Fail to get your orders!',
+			error: true,
 		});
 		return 0;
 	}
@@ -344,7 +350,7 @@ exports.editOrderStateType = asyncHandler(async (req, res, next) => {
 
 	await req.order.update(updates);
 
-	res.status(HttpStatus.OK).send({ message: "Updated" });
+	res.status(HttpStatus.OK).send({ message: 'Updated' });
 });
 
 exports.createOrderReview = async (req, res, next) => {
@@ -356,89 +362,99 @@ exports.createOrderReview = async (req, res, next) => {
 			orderItem = await repository.getOrderItemById(req.body.orderItemId);
 
 			if (!order) {
-				res.status(409).send({ message: "Order not find!" });
+				res.status(409).send({ message: 'Order not find!' });
 				return;
 			}
 
 			if (!orderItem) {
-				res.status(409).send({ message: "OrderItem not find!" });
+				res.status(409).send({ message: 'OrderItem not find!' });
 				return;
 			}
 
 			if (orderItem.orderId !== order.id) {
 				res.status(409).send({
-					message: "OrderItem does not belongs to this order!"
+					message: 'OrderItem does not belongs to this order!',
 				});
 				return;
 			}
 		} catch (error) {
-			res.status(409).send({ message: "Error retrieving the order" });
+			res.status(409).send({ message: 'Error retrieving the order' });
 			return;
 		}
 
 		try {
 			token_return = await authService.decodeToken(
-				req.headers["x-access-token"]
+				req.headers['x-access-token']
 			);
 		} catch (error) {
-			res.status(409).send({ message: "Token expired" });
+			res.status(409).send({ message: 'Token expired' });
 			return;
 		}
 
 		let full_data = req.body;
 		full_data.userId = token_return.id;
 		full_data.orderId = req.params.orderId;
-		full_data.review_type = "plate";
+		full_data.review_type = 'plate';
 
 		const createdPlateReview = await repository.createOrderReview(
 			full_data
 		);
 
-		if(createdPlateReview){
-			let notificationData = {
-				title: notificationConstant.ORDER_ITEM_REVIEW_TITLE,
-				brief: notificationConstant.ORDER_ITEM_REVIEW_BRIEF+createdPlateReview.comment,
-				activity: notificationConstant.ACTIVITY_REVIEW_ORDER,
-				userId: createdPlateReview.userId,
-				orderId: createdPlateReview.orderId,
+		if (createdPlateReview) {
+			// send notificaton to chef when a user gave feedback
+			const users = await customPlateRepo.getDeviceTokens(
+				createdPlateReview.chefID
+			);
+			const deviceTokens = users
+				.filter((user) => user.deviceToken)
+				.map((user) => user.deviceToken);
+			if (deviceTokens.length > 0) {
+				const title = notificationConstant.ORDER_ITEM_REVIEW_TITLE;
+				const body = notificationConstant.ORDER_ITEM_REVIEW_BODY;
+				let pushnotification = {
+					orderTitle: title,
+					orderBrief: body,
+					device_registration_tokens: deviceTokens,
+					detail: users,
+				};
+				FCM(pushnotification);
 			}
-			await sendNotification(notificationData, createdPlateReview.chefID);
 		}
 		res.status(200).send({
-			message: "Review created!",
-			data: createdPlateReview
+			message: 'Review created!',
+			data: createdPlateReview,
 		});
 		return;
 	} catch (e) {
 		console.log(e);
 		res.status(500).send({
-			message: "Failed to process your request"
+			message: 'Failed to process your request',
 		});
 	}
 };
 
 exports.ordersReadyForDelivery = async (req, res, next) => {
 	const token_return = await authService.decodeToken(
-		req.headers["x-access-token"]
+		req.headers['x-access-token']
 	);
 	if (!token_return) {
 		res.status(HttpStatus.CONFLICT).send({
-			message: "You must be logged in to check your orders",
-			error: true
+			message: 'You must be logged in to check your orders',
+			error: true,
 		});
 	}
 	try {
 		const orders_ready = await repository.getOrdersReadyDelivery();
 		res.status(HttpStatus.ACCEPTED).send({
-			message: "Orders ready for delivery!",
-			data: orders_ready
+			message: 'Orders ready for delivery!',
+			data: orders_ready,
 		});
 		return 0;
 	} catch (e) {
 		console.log(e);
 		res.status(HttpStatus.CONFLICT).send({
-			message: "Fail to get your orders!",
-			error: true
+			message: 'Fail to get your orders!',
+			error: true,
 		});
 		return 0;
 	}
@@ -462,13 +478,13 @@ exports.orderItemsDelivery = asyncHandler(async (req, res, next) => {
 	const result = await repository.getOrderItemsWithRespectiveDelivery(query);
 
 	const message = `Here are your${
-		state_type ? ` ${state_type} ` : " "
+		state_type ? ` ${state_type} ` : ' '
 	}order items with respective delieveries!`;
 
 	res.status(HttpStatus.ACCEPTED).send({
 		message,
 		data: result,
-		...paginator.paginateInfo(pagination)
+		...paginator.paginateInfo(pagination),
 	});
 });
 
@@ -480,7 +496,7 @@ exports.orderItemByIdMiddleware = asyncHandler(async (req, res, next, id) => {
 	const orderItem = await repository.getOrderItemByIdDetails(id);
 	if (!orderItem)
 		return res.status(HttpStatus.NOT_FOUND).send({
-			message: `OrderItem Not Found by orderItemId ${req.params.orderItemId}`
+			message: `OrderItem Not Found by orderItemId ${req.params.orderItemId}`,
 		});
 	req.orderItem = orderItem;
 	next();
@@ -495,7 +511,7 @@ exports.getOrderItem = asyncHandler(async (req, res, next) => {
 	const orderItem = req.orderItem;
 
 	res.status(HttpStatus.OK).send({
-		orderItem: orderItem.get({ plain: true })
+		orderItem: orderItem.get({ plain: true }),
 	});
 });
 
@@ -503,28 +519,64 @@ exports.getOrderItem = asyncHandler(async (req, res, next) => {
  * Update Order Item State Type
  */
 exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
-	const user = req.user;
-	const updates = { state_type: req.body.state_type };
+	const { state_type } = req.body;
+	const updates = { state_type };
 	await req.orderItem.update(updates);
-
 	const orderItem = await repository.getOrderItemByIdDetails(
 		req.params.orderItemId
 	);
+	const { chef_id, user_id } = orderItem;
+	const userId = state_type === 'canceled' ? chef_id : user_id;
+	const users = await customPlateRepo.getDeviceTokens(userId);
+	const deviceTokens = users
+		.filter((user) => user.deviceToken)
+		.map((user) => user.deviceToken);
+	if (deviceTokens.length > 0) {
+		let title = null;
+		let body = null;
+		switch (state_type) {
+			case 'canceled':
+				title = notificationConstant.ORDER_ITEM_IS_CANCELLED_TITLE;
+				body = notificationConstant.ORDER_ITEM_IS_CANCELLED_BODY;
+				break;
+			case 'rejected':
+				title = notificationConstant.ORDER_ITEM_IS_REJECT_TITLE;
+				body = notificationConstant.ORDER_ITEM_IS_REJECT_BODY;
+				break;
+			case 'approved':
+				title = notificationConstant.ORDER_ITEM_IS_ACCEPT_TITLE;
+				body = notificationConstant.ORDER_ITEM_IS_ACCEPT_BODY;
+				break;
+			case 'ready':
+				title = notificationConstant.ORDER_ITEM_IS_READY_TITLE;
+				body = notificationConstant.ORDER_ITEM_IS_READY_BODY;
+				break;
+		}
+		let pushnotification = {
+			orderTitle: title,
+			orderBrief: body,
+			device_registration_tokens: deviceTokens,
+			detail: users,
+		};
+		FCM(pushnotification);
+	}
 
 	res.status(HttpStatus.OK).send({
-		message: "Updated",
-		orderItem: orderItem.get({ plain: true })
+		message: 'Updated',
+		orderItem: orderItem.get({ plain: true }),
 	});
 	next();
 });
 
 /**
- * Update Order Item delivery Type. Delivery type can be  chef/user/driver based on the 
+ * Update Order Item delivery Type. Delivery type can be  chef/user/driver based on the
  * delivery type chosen by the chef or user
  */
 exports.editOrderItemDeliveryType = asyncHandler(async (req, res, next) => {
-	if(!_.contains(['chef','user','driver'], req.body.delivery_type)) {
-		return res.status(HttpStatus.NOT_FOUND).send({message: `Invalid delivery type.`});
+	if (!_.contains(['chef', 'user', 'driver'], req.body.delivery_type)) {
+		return res
+			.status(HttpStatus.NOT_FOUND)
+			.send({ message: `Invalid delivery type.` });
 	}
 	const updates = { deliveryType: req.body.delivery_type };
 	await req.orderItem.update(updates);
@@ -533,7 +585,10 @@ exports.editOrderItemDeliveryType = asyncHandler(async (req, res, next) => {
 		req.params.orderItemId
 	);
 
-	res.status(HttpStatus.OK).send({message: "Delivery type updated",orderItem: orderItem.get({ plain: true })});
+	res.status(HttpStatus.OK).send({
+		message: 'Delivery type updated',
+		orderItem: orderItem.get({ plain: true }),
+	});
 });
 
 /**
@@ -542,7 +597,7 @@ exports.editOrderItemDeliveryType = asyncHandler(async (req, res, next) => {
 exports.checkOrderItemCanceled = (req, res, next) => {
 	if (req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED) {
 		return res.status(HttpStatus.BAD_REQUEST).send({
-			message: `Order Item Already Canceled by user. orderItemId: ${req.orderItem.id}`
+			message: `Order Item Already Canceled by user. orderItemId: ${req.orderItem.id}`,
 		});
 	}
 	next();
@@ -557,13 +612,13 @@ exports.chefAcceptOrderItem = [
 			req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED
 		) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
-				message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`
+				message: `Order Item Already Accepted/Approved. orderItemId: ${req.orderItem.id}`,
 			});
 		}
 		req.body.state_type = orderItemConstants.STATE_TYPE_APPROVED;
 		next();
 	},
-	exports.editOrderItemStateType
+	exports.editOrderItemStateType,
 ];
 
 /**
@@ -576,13 +631,13 @@ exports.chefRejectOrderItem = [
 			req.orderItem.state_type === orderItemConstants.STATE_TYPE_REJECTED
 		) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
-				message: `Order Item Already Rejected. orderItemId: ${req.orderItem.id}`
+				message: `Order Item Already Rejected. orderItemId: ${req.orderItem.id}`,
 			});
 		}
 		req.body.state_type = orderItemConstants.STATE_TYPE_REJECTED;
 		next();
 	},
-	exports.editOrderItemStateType
+	exports.editOrderItemStateType,
 ];
 
 /**
@@ -593,25 +648,39 @@ exports.chefReadyOrderItem = [
 	(req, res, next) => {
 		if (req.orderItem.state_type === orderItemConstants.STATE_TYPE_READY) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
-				message: `Order Item Already Ready. orderItemId: ${req.orderItem.id}`
+				message: `Order Item Already Ready. orderItemId: ${req.orderItem.id}`,
 			});
 		}
 		req.body.state_type = orderItemConstants.STATE_TYPE_READY;
 		next();
 	},
 	exports.editOrderItemStateType,
-	(req)=>{
-		let chef_id = req.orderItem.chef_id;
-		let user_id = req.orderItem.user_id;
-		let notificationData = {
-			title: notificationConstant.ORDER_ITEM_IS_READY_TITLE,
-			brief: req.orderItem.name+ ' '+notificationConstant.ORDER_ITEM_IS_READY_BRIEF,
-			activity: notificationConstant.ACTIVITY_ORDER_ITEM_READY,
-			userId: user_id,
-			orderId: req.orderItem.orderId,
+	async (req) => {
+		// send notification to nearBy drivers
+		const { location_lat, location_lon } = req.user;
+		const drivers = await customPlateRepo.getNearByUser(
+			location_lat,
+			location_lon,
+			20,
+			'driver'
+		);
+		//console.log(drivers);
+		const deviceTokens = chefs
+			.filter((chef) => chef.deviceToken)
+			.map((chef) => chef.deviceToken);
+		//console.log(deviceTokens);
+		if (deviceTokens.length > 0) {
+			const title = notificationConstant.DRIVER_ORDER_READY_TITLE;
+			const body = notificationConstant.DRIVER_ORDER_READY_BODY;
+			let pushnotification = {
+				orderTitle: title,
+				orderBrief: body,
+				device_registration_tokens: deviceTokens,
+				detail: drivers,
+			};
+			FCM(pushnotification);
 		}
-		sendNotification(notificationData, user_id);
-	}
+	},
 ];
 
 /**
@@ -623,7 +692,7 @@ exports.userCancelOrderItem = [
 			req.orderItem.state_type === orderItemConstants.STATE_TYPE_APPROVED
 		) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
-				message: `Order Item Already Approved by Chef. Cannot cancel order. orderItemId: ${req.orderItem.id}`
+				message: `Order Item Already Approved by Chef. Cannot cancel order. orderItemId: ${req.orderItem.id}`,
 			});
 		}
 
@@ -631,26 +700,28 @@ exports.userCancelOrderItem = [
 			req.orderItem.state_type === orderItemConstants.STATE_TYPE_CANCELED
 		) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
-				message: `Order Item Already Cancelled. orderItemId: ${req.orderItem.id}`
+				message: `Order Item Already Cancelled. orderItemId: ${req.orderItem.id}`,
 			});
 		}
 		req.body.state_type = orderItemConstants.STATE_TYPE_CANCELED;
 		next();
 	},
 	exports.editOrderItemStateType,
-	(req)=>{
+	/*(req) => {
 		let chef_id = req.orderItem.chef_id;
 		let user_id = req.orderItem.user_id;
 		let notificationData = {
 			title: notificationConstant.ORDER_ITEM_IS_CANCELLED_TITLE,
-			brief: req.orderItem.name+ ' '+notificationConstant.ORDER_ITEM_IS_CANCELLED_BRIEF,
+			brief:
+				req.orderItem.name +
+				' ' +
+				notificationConstant.ORDER_ITEM_IS_CANCELLED_BRIEF,
 			activity: notificationConstant.ACTIVITY_ORDER_ITEM_CANCELLED,
 			userId: user_id,
 			orderId: req.orderItem.orderId,
-		}
+		};
 		sendNotification(notificationData, chef_id);
-		
-	}
+	},*/
 ];
 
 exports.completeChefOrder = async (req, res, next) => {
@@ -659,15 +730,15 @@ exports.completeChefOrder = async (req, res, next) => {
 			req.params.orderItemId
 		);
 		res.status(HttpStatus.ACCEPTED).send({
-			message: "Completed Order!",
-			data: completed
+			message: 'Completed Order!',
+			data: completed,
 		});
 		return 0;
 	} catch (e) {
 		console.log(e);
 		res.status(HttpStatus.CONFLICT).send({
-			message: "Fail to complete your orders!",
-			error: true
+			message: 'Fail to complete your orders!',
+			error: true,
 		});
 		return 0;
 	}
@@ -680,44 +751,13 @@ exports.promotion = async (req, res) => {
 		const discount = (amount * response.discount) / 100;
 		const finalAmount = amount - discount;
 		res.status(HttpStatus.OK).json({
-			message: "Valid PromoCode",
-			data: { amount, finalAmount }
+			message: 'Valid PromoCode',
+			data: { amount, finalAmount },
 		});
 	} else {
 		res.status(HttpStatus.BAD_REQUEST).json({
-			message: "InValid PromoCode",
-			data: { amount, finalAmount: amount }
+			message: 'InValid PromoCode',
+			data: { amount, finalAmount: amount },
 		});
 	}
 };
-
-async function sendNotification(data ,user_id){
-	try{
-		//Get user data
-		let userData = await repositoryUser.getUserById(user_id);
-		if(userData) {
-			
-			let device_ids = []
-			let device_registration_tokens = [];
-			
-			device_ids.push(userData.device_id);
-			device_registration_tokens.push(userData.device_registration_token);
-
-			let notificationData = {
-				title: data.title,
-				brief: data.brief,
-				activity: data.activity,
-				device_ids: device_ids.join(),
-				device_registration_tokens:device_registration_tokens,
-				userId: data.userId,
-				order_id: data.orderId,
-			}
-			await notificationService.sendPushNotification(notificationData);
-		}
-		else{
-			console.log('Unable to find user data');
-		}  
-	}catch (e) {
-		console.log("Error sending notification",e);
-	}   
-}
