@@ -433,78 +433,67 @@ exports.uploadImages = async (req, res, next) => {
 		});
 		return 0;
 	}
-	try {
-		if ((req.files.plate_image && req.files.plate_image.length > 0) || (req.files.kitchen_image && req.files.kitchen_image.length > 0) || (req.files.receipt_image && req.files.receipt_image.length > 0)) {
-			let plateImages = [];
-			let kitchenImages = [];
-			let receiptImages = [];
-			await Object.keys(req.files).map(async (keyObject) => {
-				switch (keyObject) {
-					case 'plate_image':
-						req.files[keyObject].map((plateImage) =>
-							plateImages.push({
-								name: plateImage.originalname,
-								url: plateImage.url,
-								plateId: actualPlate.id,
-							})
-						);
-						break;
-					case 'kitchen_image':
-						req.files[keyObject].map((plateImage) =>
-							kitchenImages.push({
-								name: plateImage.originalname,
-								url: plateImage.url,
-								plateId: actualPlate.id,
-							})
-						);
-						break;
-					case 'receipt_image':
-						req.files[keyObject].map((plateImage) =>
-							receiptImages.push({
-								name: plateImage.originalname,
-								url: plateImage.url,
-								plateId: actualPlate.id,
-							})
-						);
-						break;
-					default:
-						break;
-				}
-			});
-			let returnPlateImages,
-				returnKitchenImages,
-				returnReceiptImages = [];
 
-			if (plateImages.length > 0)
-				returnPlateImages = await repository.createPlateImage(plateImages);
-			if (kitchenImages.length > 0)
-				returnKitchenImages = await repository.createKitchenImage(
-					kitchenImages
-				);
-			if (receiptImages.length > 0)
-				returnReceiptImages = await repository.createReceiptImage(
-					receiptImages
-				);
+	if (req.files.plate_image.length > 0) {
+		let plateImages = [];
+		let kitchenImages = [];
+		let receiptImages = [];
+		await Object.keys(req.files).map(async (keyObject) => {
+			switch (keyObject) {
+				case 'plate_image':
+					req.files[keyObject].map((plateImage) =>
+						plateImages.push({
+							name: plateImage.originalname,
+							url: plateImage.url,
+							plateId: actualPlate.id,
+						})
+					);
+					break;
+				case 'kitchen_image':
+					req.files[keyObject].map((plateImage) =>
+						kitchenImages.push({
+							name: plateImage.originalname,
+							url: plateImage.url,
+							plateId: actualPlate.id,
+						})
+					);
+					break;
+				case 'receipt_image':
+					req.files[keyObject].map((plateImage) =>
+						receiptImages.push({
+							name: plateImage.originalname,
+							url: plateImage.url,
+							plateId: actualPlate.id,
+						})
+					);
+					break;
+				default:
+					break;
+			}
+		});
+		let returnPlateImages,
+			returnKitchenImages,
+			returnReceiptImages = [];
 
-			res.status(200).send({
-				message: 'Plates images created!',
-				data: {
-					plate_image: returnPlateImages,
-					kitchen_image: returnKitchenImages,
-					receipt_image: returnReceiptImages,
-				},
-			});
-		}
-		else {
-			res.status(HttpStatus.CONFLICT).send({
-				message: "There are no valid image files",
-				status: HttpStatus.CONFLICT,
-			});
-			return 0;
-		}
-	}
-	catch (e) {
-		console.log(e);
+		if (plateImages.length > 0)
+			returnPlateImages = await repository.createPlateImage(plateImages);
+		if (kitchenImages.length > 0)
+			returnKitchenImages = await repository.createKitchenImage(
+				kitchenImages
+			);
+		if (receiptImages.length > 0)
+			returnReceiptImages = await repository.createReceiptImage(
+				receiptImages
+			);
+
+		res.status(200).send({
+			message: 'Plates images created!',
+			data: {
+				plate_image: returnPlateImages,
+				kitchen_image: returnKitchenImages,
+				receipt_image: returnReceiptImages,
+			},
+		});
 	}
 };
 
