@@ -525,9 +525,6 @@ exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
 	const orderItem = await repository.getOrderItemByIdDetails(
 		req.params.orderItemId
 	);
-
-	let orderItemText= ` for the order item ${orderItem.name} and the order item id is ${orderItem.id}`;
-
 	const { chef_id, user_id } = orderItem;
 	const userId = state_type === 'canceled' ? chef_id : user_id;
 	const users = await customPlateRepo.getDeviceTokens(userId);
@@ -540,19 +537,19 @@ exports.editOrderItemStateType = asyncHandler(async (req, res, next) => {
 		switch (state_type) {
 			case 'canceled':
 				title = notificationConstant.ORDER_ITEM_IS_CANCELLED_TITLE;
-				body = notificationConstant.ORDER_ITEM_IS_CANCELLED_BODY + orderItemText;
+				body = notificationConstant.ORDER_ITEM_IS_CANCELLED_BODY;
 				break;
 			case 'rejected':
 				title = notificationConstant.ORDER_ITEM_IS_REJECT_TITLE;
-				body = notificationConstant.ORDER_ITEM_IS_REJECT_BODY + orderItemText;
+				body = notificationConstant.ORDER_ITEM_IS_REJECT_BODY;
 				break;
 			case 'approved':
 				title = notificationConstant.ORDER_ITEM_IS_ACCEPT_TITLE;
-				body = notificationConstant.ORDER_ITEM_IS_ACCEPT_BODY + orderItemText;
+				body = notificationConstant.ORDER_ITEM_IS_ACCEPT_BODY;
 				break;
 			case 'ready':
 				title = notificationConstant.ORDER_ITEM_IS_READY_TITLE;
-				body = notificationConstant.ORDER_ITEM_IS_READY_BODY + orderItemText;
+				body = notificationConstant.ORDER_ITEM_IS_READY_BODY;
 				break;
 		}
 		let pushnotification = {
@@ -667,9 +664,11 @@ exports.chefReadyOrderItem = [
 			20,
 			'driver'
 		);
-		const deviceTokens = drivers
-			.filter((driver) => driver.deviceToken)
-			.map((driver) => driver.deviceToken);
+		//console.log(drivers);
+		const deviceTokens = chefs
+			.filter((chef) => chef.deviceToken)
+			.map((chef) => chef.deviceToken);
+		//console.log(deviceTokens);
 		if (deviceTokens.length > 0) {
 			const title = notificationConstant.DRIVER_ORDER_READY_TITLE;
 			const body = notificationConstant.DRIVER_ORDER_READY_BODY;
