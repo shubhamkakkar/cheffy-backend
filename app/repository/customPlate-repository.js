@@ -258,9 +258,7 @@ exports.myCustomPlates = async ({ userId, pagination }) => {
 				{ close_date: { [Op.gte]: new Date() } },
 			],
 		},
-		order: [
-			['createdAt', 'DESC']
-		],
+		order: [['createdAt', 'DESC']],
 		include: [
 			{
 				model: CustomPlateAuction,
