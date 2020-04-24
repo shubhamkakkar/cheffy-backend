@@ -15,12 +15,12 @@ exports.ORDER_RECEIVED_TITLE = 'New order received';
 exports.ORDER_RECEIVED_BODY = 'New order received';
 
 /**  Order item rejected by chef  */
-exports.ORDER_ITEM_IS_REJECT_TITLE = 'Order was cancelled';
-exports.ORDER_ITEM_IS_REJECT_BODY = 'User has cancelled the order';
+exports.ORDER_ITEM_IS_REJECT_TITLE = 'Order rejected';
+exports.ORDER_ITEM_IS_REJECT_BODY = 'Chef has rejected the order';
 
 /**  Order item accepted by chef  */
-exports.ORDER_ITEM_IS_ACCEPT_TITLE = 'Order was cancelled';
-exports.ORDER_ITEM_IS_ACCEPT_BODY = 'User has cancelled the order';
+exports.ORDER_ITEM_IS_ACCEPT_TITLE = 'Order accepted';
+exports.ORDER_ITEM_IS_ACCEPT_BODY = 'Chef has accepted the order';
 
 /**  Order item cancelled by user  */
 exports.ORDER_ITEM_IS_CANCELLED_TITLE = 'Order was cancelled';

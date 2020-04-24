@@ -449,12 +449,12 @@ exports.bidCustomPlate = asyncHandler(async (req, res, next) => {
 		});
 	}
 
-	/*if (!req.body.chefDeliveryAvailable) {
+	if (!req.body.chefDeliveryAvailable) {
 		return res.status(HttpStatus.CONFLICT).send({
 			message: 'You need to state whether you deliver or not!',
 			status: HttpStatus.CONFLICT,
 		});
-	}*/
+	}
 
 	if (req.body.chefDeliveryAvailable && !req.body.delivery_time) {
 		return res.status(HttpStatus.CONFLICT).send({
@@ -862,9 +862,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 		};
 		return element;
 	});
-	const userIds = basketItems
-		.filter((items) => items.plate)
-		.map((items) => items.plate.userId);
+	const userIds = basketItems.map((items) => items.plate.userId);
 
 	cart_items = await Promise.all(cart_items);
 	let total_cart = cart_items.reduce(
