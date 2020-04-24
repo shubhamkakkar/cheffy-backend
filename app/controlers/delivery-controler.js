@@ -128,14 +128,20 @@ exports.calculateDeliveryTime = async (req, res, next) => {
 								data: resp,
 							});
 						}
+						else if(distances.rows[0].elements[j].status == 'ZERO_RESULTS'){
+							return res.status(HttpStatus.CONFLICT).send({
+								message: 'Error! Wrong coordinates specified',
+								data: null,
+							});
+						}
 					}
 				}
 			}
 		});
 	} catch (e) {
-		return res.status(HttpStatus.ACCEPTED).send({
+		return res.status(HttpStatus.CONFLICT).send({
 			message: 'Error!',
-			data: null,
+			data: e,
 		});
 	}
 };
