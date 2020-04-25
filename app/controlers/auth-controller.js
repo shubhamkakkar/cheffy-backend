@@ -148,7 +148,7 @@ let {device_id} = req.body;
 
   res.status(200).send({
     "message": "Congratulations, successfully created user type "+ user.user_type+" !",
-    "status": HttpStatus.CREATED,
+    "status": "201",
     result: existUserNew
   });
 

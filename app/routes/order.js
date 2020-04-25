@@ -1,70 +1,66 @@
-'use strict';
+"use strict";
 
-const path = require('path');
-const express = require('express');
+const path = require("path");
+const express = require("express");
 const router = express.Router();
-const controller = require('../controlers/order-controler');
-const authService = require('../services/auth');
-const userController = require(path.resolve('app/controlers/user-controler'));
-const shippingController = require('../controlers/shipping-controler');
-const orderPolicies = require(path.resolve('app/policies/order'));
-const orderItemPolicies = require(path.resolve('app/policies/order-item'));
-const middlewares = require(path.resolve('server/middlewares'));
+const controller = require("../controlers/order-controler");
+const authService = require("../services/auth");
+const userController = require(path.resolve("app/controlers/user-controler"));
+const shippingController = require("../controlers/shipping-controler");
+const orderPolicies = require(path.resolve("app/policies/order"));
+const orderItemPolicies = require(path.resolve("app/policies/order-item"));
+const middlewares = require(path.resolve("server/middlewares"));
 
 router.post(
-	'/',
+	"/",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	shippingController.getAuthUserShippingAddress,
 	controller.create
 );
-
 router.get(
-	'/ready-delivery',
+	"/ready-delivery",
 	authService.authorize,
 	controller.ordersReadyForDelivery
 );
-
 //list user order history
-router.get('/list', authService.authorize, controller.list);
-
+router.get("/list", authService.authorize, controller.list);
 //this route not used fro not
 router.get(
-	'/list/userTracking',
+	"/list/userTracking",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	controller.listTrackingUser
 );
 
 router.get(
-	'/list/driverTracking',
+	"/list/driverTracking",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	controller.listTrackingDriver
 );
 
-router.get('/get/:orderId', authService.authorize, controller.getOneOrder);
+router.get("/get/:orderId", authService.authorize, controller.getOneOrder);
 //alias of above method
-router.get('/:orderId', authService.authorize, controller.getOneOrder);
-router.post('/:orderId/review', controller.createOrderReview);
+router.get("/:orderId", authService.authorize, controller.getOneOrder);
+
+router.post("/:orderId/review", controller.createOrderReview);
 
 router.put(
-	'/:orderId/state-type',
+	"/:orderId/state-type",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderPolicies.isAdminMiddleware(),
 	controller.editOrderStateType
 );
-
-router.param('orderId', controller.orderByIdMiddleware);
-
+router.param("orderId", controller.orderByIdMiddleware);
 /**
  * Order Items
  */
 
 //get user orderItems with and without delivery information
 router.get(
-	'/order-items/delivery/list',
+	"/order-items/delivery/list",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	middlewares.userRoleRequired,
@@ -73,32 +69,29 @@ router.get(
 
 //this route allows status edit
 router.put(
-	'/order-items/:orderItemId/state-type',
+	"/order-items/:orderItemId/state-type",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderItemPolicies.isOrderItemChefMiddleware(),
 	controller.editOrderItemStateType
 );
-
 //alias for above state-type update
 router.put(
-	'/order-items/:orderItemId/accept',
+	"/order-items/:orderItemId/accept",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderItemPolicies.isOrderItemChefMiddleware(),
 	controller.chefAcceptOrderItem
 );
-
 router.put(
-	'/order-items/:orderItemId/reject',
+	"/order-items/:orderItemId/reject",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderItemPolicies.isOrderItemChefMiddleware(),
 	controller.chefRejectOrderItem
 );
-
 router.put(
-	'/order-items/:orderItemId/ready',
+	"/order-items/:orderItemId/ready",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderItemPolicies.isOrderItemChefMiddleware(),
@@ -107,7 +100,7 @@ router.put(
 
 //user cancel orderItem before chef approves
 router.put(
-	'/order-items/:orderItemId/cancel',
+	"/order-items/:orderItemId/cancel",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderItemPolicies.isOwnerMiddleware(),
@@ -115,19 +108,19 @@ router.put(
 );
 
 router.get(
-	'/order-items/:orderItemId',
+	"/order-items/:orderItemId",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	orderItemPolicies.orderItemViewPolicyMiddleware(),
 	controller.getOrderItem
 );
+router.param("orderItemById", controller.orderItemByIdMiddleware);
 
-router.param('orderItemById', controller.orderItemByIdMiddleware);
-router.param('orderItemId', controller.orderItemByIdMiddleware);
+router.param("orderItemId", controller.orderItemByIdMiddleware);
 //chef related routes
 
 router.get(
-	'/list/chef',
+	"/list/chef",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	middlewares.chefRoleRequired,
@@ -136,7 +129,7 @@ router.get(
 
 //user deliveries pending from chef
 router.get(
-	'/user/deliveries',
+	"/user/deliveries",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	middlewares.userRoleRequired,
@@ -145,7 +138,7 @@ router.get(
 
 //plates to be delivered to user
 router.get(
-	'/chef/deliveries',
+	"/chef/deliveries",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	middlewares.chefRoleRequired,
@@ -153,22 +146,16 @@ router.get(
 );
 
 router.put(
-	'/chef/complete/:orderItemId',
+	"/chef/complete/:orderItemId",
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	middlewares.chefRoleRequired,
 	controller.completeChefOrder
 );
 
-router.post('/promo-code/redeem', controller.promotion);
+router.post("/promo-code/redeem", controller.promotion);
 
 //Use this route to update the delivery type of an order item
-router.put(
-	'/order-items/:orderItemId/delivery-type',
-	authService.authorize,
-	userController.getAuthUserMiddleware,
-	orderItemPolicies.isOrderItemChefMiddleware(),
-	controller.editOrderItemDeliveryType
-);
+router.put("/order-items/:orderItemId/delivery-type", authService.authorize, userController.getAuthUserMiddleware, orderItemPolicies.isOrderItemChefMiddleware(),controller.editOrderItemDeliveryType);
 
 module.exports = router;
