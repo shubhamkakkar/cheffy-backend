@@ -61,7 +61,6 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.CustomPlateAuctionBid);
     User.hasMany(models.Review);
     User.hasOne(models.AggregateReview, {foreignKey: 'driverId'});
-    User.hasOne(models.AggregateReview, {foreignKey: 'chefID'});
     User.hasOne(models.Documents);
     User.hasOne(models.Basket);
     User.hasOne(models.Wallet);
