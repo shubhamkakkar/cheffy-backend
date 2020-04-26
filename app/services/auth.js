@@ -85,7 +85,7 @@ exports.checkUserLoggedOut = asyncHandler(async(req, res, next) => {
 
     if(!existUser) {
       return res.status(401).json({
-          message: 'No userfound with the associated with the token!'
+          message: 'No user found with this token'
       });
     }
 

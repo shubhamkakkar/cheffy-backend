@@ -50,7 +50,11 @@ module.exports = (sequelize, DataTypes) => {
     order_flag : {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-    }
+    },
+  },
+  {
+    paranoid: true,
+    timestamps: true,
   });
 
   User.associate = function(models) {

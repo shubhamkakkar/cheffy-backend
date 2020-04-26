@@ -100,3 +100,11 @@ exports.addDevice = async (data) => {
 	});
 	return result;
 };
+
+exports.deleteUserAccount = async( data ) => {
+	return await User.destroy({
+		where: {
+			id: data
+		},
+	});
+}
