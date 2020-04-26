@@ -1422,7 +1422,7 @@ exports.deleteCustomPlateBid = asyncHandler(async (req, res, next) => {
 		let response = await repository.deleteCustomAuctionBid(
 			req.params.bidId
 		);
-		res.status(200).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Deleted the custom plate bid!',
 			data: response,
 		});

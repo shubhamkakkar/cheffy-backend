@@ -192,5 +192,11 @@ router.post(
 	controller.getAuthUserMiddleware,
 	controller.addDevice
 );
-
+//User deletes his account
+router.delete(
+	'/delete/:userId',
+	authService.authorize,
+	controller.getAuthUserMiddleware,
+	controller.deleteUserAccount
+);
 module.exports = router;

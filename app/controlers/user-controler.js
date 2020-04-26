@@ -1423,3 +1423,26 @@ exports.addDevice = async (req, res) => {
 			message: 'Unable to add device',
 		});
 };
+
+/**
+ * Soft delete a User account
+ */
+exports.deleteUserAccount = asyncHandler(async (req, res, next) => {
+	try {
+		
+		let response = await userRepository.deleteUserAccount(
+			req.params.userId
+		);
+		res.status(HttpStatus.OK).send({
+			message: 'User account deleted successfully',
+			data: response,
+		});
+	} catch (e) {
+		console.log(e);
+		return res.status(HttpStatus.CONFLICT).send({
+			message: 'Failed to delete the user account',
+			data: e,
+			error: true,
+		});
+	}
+});
