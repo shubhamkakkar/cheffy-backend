@@ -546,7 +546,7 @@ exports.createDriverLicense = asyncHandler(async (req, res, next) => {
       attributes: ['id', 'state_type', 'userId', 'social_security_number'],
       include: [{
         model: DriverLicenseFrontSide,
-        attributes: ['id', 'description', 'url', 'state_type']
+        attributes: ['id', 'url', 'state_type']
       }]
     });
 
