@@ -166,27 +166,34 @@ exports.getPlate = asyncHandler(async (req, res, next) => {
 exports.edit = asyncHandler(async (req, res, next) => {
 	let existPlate = req.plate;
 	let ingred;
+	try {
+		const updates = plateInputFilter.createFilters.filter(req.body);
+		if (updates.ingredients) {
+			ingred = updates.ingredients;
+			delete updates.ingredients;
+		}
+		let ingred_modified;
 
-	const updates = plateInputFilter.createFilters.filter(req.body);
-	if (updates.ingredients) {
-		ingred = updates.ingredients;
-		delete updates.ingredients;
-	}
-	let ingred_modified;
-
-	existPlate = await existPlate.update(updates);
-	if (ingred) {
-		let ingred_data = [];
-		ingred.forEach((elem) => {
-			elem.plateId = existPlate.id;
-			ingred_data.push(elem);
+		existPlate = await existPlate.update(updates);
+		if (ingred) {
+			let ingred_data = [];
+			ingred.forEach((elem) => {
+				elem.plateId = existPlate.id;
+				ingred_data.push(elem);
+			});
+			ingred_modified = await repository.updateIngredient(ingred_data);
+		}
+		res.status(HttpStatus.OK).send({
+			message: 'Plate successfully updated!',
+			data: existPlate,
 		});
-		ingred_modified = await repository.updateIngredient(ingred_data);
 	}
-	res.status(200).send({
-		message: 'Plate successfully updated!',
-		data: existPlate,
-	});
+	catch (e) {
+		res.status(HttpStatus.CONFLICT)
+			.send({ message: e, error: true })
+			.end();
+		return 0;
+	}
 });
 
 exports.delete = asyncHandler(async (req, res, next) => {
