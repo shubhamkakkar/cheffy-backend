@@ -4,7 +4,7 @@ const sequelize = require('sequelize').Op;
 const { Notification } = require('../models/index');
 exports.getNotifications = async (userId, page, perPage) => {
 	const notifications = await Notification.findAll({
-		attributes: ['id', ['orderTitle', 'title'], ['orderBrief', 'desc']],
+		attributes: ['id', ['orderTitle', 'title'], ['orderBrief', 'desc'], 'timestamp'],
 		where: {
 			userId: userId,
 			state_type: {
