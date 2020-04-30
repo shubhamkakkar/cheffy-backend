@@ -378,7 +378,7 @@ exports.addMoneyToWallet = async (req, res, next) => {
 
 	const orderAmount = order.order_total;
 
-	await walletRepository.addMoneyToWallet(driverId, orderAmount);
+	await walletRepository.addDriversMoneyToWallet(driverId, orderAmount);
 	next();
 };
 

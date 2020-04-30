@@ -351,6 +351,11 @@ exports.getPlate = async (data) => {
 				model: CustomPlateImage,
 				attributes: ['id', 'name', 'url', 'createdAt'],
 			},
+			{
+				model: User,
+				attributes:['id', 'name', 'email', 'imagePath', 'location_lat', 'location_lon'],
+				as: 'user',
+			},
 		],
 	});
 	return plate;

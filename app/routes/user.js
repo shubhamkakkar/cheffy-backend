@@ -185,6 +185,12 @@ router.post(
 	controller.getAuthUserMiddleware,
 	controller.addMoneyToWallet
 );
+router.post(
+	'/wallet/addTips/:userId',
+	authService.authorize,
+	controller.getAuthUserMiddleware,
+	controller.addTipsToWallet
+);
 
 router.post(
 	'/addDevice',

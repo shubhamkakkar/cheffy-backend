@@ -343,30 +343,9 @@ exports.getChefBalance = asyncHandler(async (req, res, next) => {
 		],
 	});
 
-	let data = {};
-
-	if (!wallet) {
-		const order_items = await OrderItem.findAll({
-			where: { chef_id: req.userId },
-		});
-
-		let total = 0;
-
-		if (order_items !== null && order_items.length > 0) {
-			total = order_items.reduce(function (prevVal, elem) {
-				return (
-					parseFloat(prevVal) +
-					parseFloat(elem.amount * elem.quantity)
-				);
-			}, 0);
-		}
-
-		data.userId = req.userId;
-		data.state_type = 'open';
-		data.balance = total;
-		wallet = await Wallet.create(data);
+	if(!wallet) {
+		res.status(HttpStatus.NOT_FOUND).send({"message": "Unable to find wallet for this user"});
 	}
-
 	res.status(HttpStatus.ACCEPTED).send(wallet);
 });
 
@@ -381,7 +360,9 @@ exports.getDriverBalance = asyncHandler(async (req, res, next) => {
 			},
 		],
 	});
-
+	if(!wallet) {
+		res.status(HttpStatus.NOT_FOUND).send({"message": "Unable to find wallet for this user"});
+	}
 	res.status(HttpStatus.ACCEPTED).send(wallet);
 });
 
@@ -1355,28 +1336,27 @@ exports.verifyBankAccount = asyncHandler(async (req, res, next) => {
 
 exports.getPayments = asyncHandler(async (req, res, next) => {
 	try {
-		if (req.user.user_type !== userConstants.USER_TYPE_DRIVER) {
+		if (req.user.user_type !== userConstants.USER_TYPE_DRIVER &&
+			req.user.user_type !== userConstants.USER_TYPE_CHEF) {
 			return res.status(HttpStatus.FORBIDDEN).send({
 				message:
-					'Only a Driver type user can get payments to their linked Bank Account',
+					'Only a Driver or Chef type user can get payments to their linked Bank Account',
 			});
 		}
-		const wallet = await walletRepository.getWallet(req.user.id);
-		if (
-			!wallet ||
-			!wallet[0].dataValues.balance ||
-			wallet[0].dataValues.balance <= 0
-		) {
+		const wallet = await walletRepository.getWalletData(req.user.id);
+		let total = (wallet) ? wallet[0].dataValues.balance + wallet[0].dataValues.tip : 0;
+		if ( total <= 0 ) {
 			return res.status(HttpStatus.BAD_REQUEST).send({
 				message:
 					'Cannot transfer zero or negative wallet balance to your bank account',
 			});
 		}
 		const payout = await paymentService.createPayout(
-			wallet[0].dataValues.balance,
+			total,
 			req.body.bankAccount
 		);
 		wallet.balance = 0;
+		wallet.tip = 0;
 		await wallet.save();
 		res.status(HttpStatus.OK).send({
 			message:
@@ -1391,8 +1371,40 @@ exports.getPayments = asyncHandler(async (req, res, next) => {
 });
 
 exports.addMoneyToWallet = asyncHandler(async (req, res, next) => {
-	await walletRepository.addMoneyToWallet(req.userId, req.body.amount);
-	res.status(HttpStatus.OK).send({ message: 'Wallet balance updated' });
+	try {
+		const user = req.user;
+
+		if (user && user.user_type === userConstants.USER_TYPE_DRIVER) {
+			const order_total = req.body.order_total;
+			
+			if(	typeof order_total === 'undefined' || order_total<=0	){
+				return res.status(HttpStatus.FORBIDDEN).send({
+					message:
+						'order_total is mandatory and has to be a non zero value',
+				});
+			}	
+			let wallet = await walletRepository.addDriversMoneyToWallet(user.id, order_total);
+			res.status(HttpStatus.OK).send({ message: 'Wallet balance of driver updated'});
+		}
+
+		else if( user && user.user_type === userConstants.USER_TYPE_CHEF ) {
+			let wallet = await walletRepository.addChefsMoneyToWallet(user.id);
+			res.status(HttpStatus.OK).send({ message: 'Wallet balance of the chef updated'});
+		}
+		else {
+			return res.status(HttpStatus.FORBIDDEN).send({
+				message:
+					'Amount can be added to wallet only for users with user type Chef or Driver.',
+			});
+		}
+	}
+	catch (e) {
+		res.status(HttpStatus.CONFLICT).send({
+			message: 'Failed to add money to wallet',
+			data: e
+		})
+		return 0;
+	}
 });
 
 // addDevice enables user to add device
@@ -1444,5 +1456,44 @@ exports.deleteUserAccount = asyncHandler(async (req, res, next) => {
 			data: e,
 			error: true,
 		});
+	}
+});
+exports.addTipsToWallet = asyncHandler(async (req, res, next) => {
+	try {
+
+		const user = await User.findByPk(req.params.userId, {
+			attributes: userConstants.privateSelectFields,
+		});
+		const amount = req.body.amount;
+		if( typeof amount === 'undefined' || amount <=0 ) {
+			return res.status(HttpStatus.FORBIDDEN).send({
+				message:
+					'amount is mandatory and has to be a non zero value',
+			});
+		}
+		if (!user) {
+			return res
+				.status(HttpStatus.NOT_FOUND)
+				.send({ message: 'User not found', status: HttpStatus.NOT_FOUND });
+		}
+		if (user && (user.user_type === userConstants.USER_TYPE_DRIVER ||
+				user.user_type === userConstants.USER_TYPE_CHEF))
+			{
+			await walletRepository.addTipToWallet(user.id, amount);
+			res.status(HttpStatus.OK).send({ message: 'Wallet updated with tip amount' });
+		}
+		else {
+			return res.status(HttpStatus.FORBIDDEN).send({
+				message:
+					'Tips can be added to wallet only for users with user type Chef or Driver.',
+			});
+		}
+	}
+	catch (e) {
+		res.status(HttpStatus.CONFLICT).send({
+			message: 'Failed to add tip to wallet',
+			data: e
+		})
+		return 0;
 	}
 });
