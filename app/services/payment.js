@@ -159,6 +159,23 @@ exports.createBankAccount = async (stripeCustomerId, accountDetails) => {
 }
 
 /**
+ * Update a bank account
+ */
+exports.updateBankAccount = async (stripeCustomerId, bankAccountId, accountDetails) => {
+  try{
+    const bank_account = await stripe.customers.updateSource(stripeCustomerId, bankAccountId,
+      {
+        source:{
+        account_holder_type: 'individual',
+        account_holder_name: accountDetails.account_holder_name
+      }
+    });
+    return bank_account;
+  } catch (err) {
+    throw err.raw;
+  }
+}
+/**
 * Gets a Bank Account object for a customer via Bank Account ID
 */
 exports.retrieveBankAccountById = async (stripeCustomerId, bankAccountId) => {
@@ -216,7 +233,7 @@ exports.confirmPayment = async (ammount, card, customer) => {
 
 exports.createPayout = async (amount, bankAccount) => {
   let payload = {
-    amount: amount,
+    amount: Math.round(amount),
     currency: 'usd'
   }
   if (bankAccount) {

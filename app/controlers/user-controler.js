@@ -1253,6 +1253,32 @@ exports.createBankAccount = asyncHandler(async (req, res, next) => {
 	}
 });
 
+//Method to update a bank account for a user
+exports.updateBankAccount = asyncHandler(async (req, res, next) => {
+	try {
+		const existUser = req.user;
+		if (!existUser.stripe_id) {
+			return res.status(HttpStatus.BAD_REQUEST).send({
+				message:
+					'User must have a stripe account before updating a bank account',
+			});
+		}
+		const bank_account = await paymentService.updateBankAccount(
+			existUser.stripe_id,
+			req.params.bankAccountId,
+			req.body
+		);
+		res.status(HttpStatus.CREATED).send({
+			message: 'Updated Bank Account',
+			data: bank_account,
+		});
+	} catch (err) {
+		return res
+			.status(HttpStatus.BAD_REQUEST)
+			.send({ message: err.message });
+	}
+});
+
 //Method to retrieve a bank account details for a user via bank account ID
 
 exports.retrieveBankAccountById = asyncHandler(async (req, res, next) => {

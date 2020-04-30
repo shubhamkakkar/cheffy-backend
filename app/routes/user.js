@@ -148,6 +148,12 @@ router.post(
 	controller.getAuthUserMiddleware,
 	controller.createBankAccount
 );
+router.put(
+	'/bankAccount',
+	authService.authorize,
+	controller.getAuthUserMiddleware,
+	controller.updateBankAccount
+);
 router.get(
 	'/bankAccount',
 	authService.authorize,
