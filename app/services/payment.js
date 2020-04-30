@@ -161,13 +161,13 @@ exports.createBankAccount = async (stripeCustomerId, accountDetails) => {
 /**
  * Update a bank account
  */
-exports.updateBankAccount = async (stripeCustomerId, bankAccountId, accountDetails) => {
+exports.updateBankAccount = async (stripeCustomerId, bankAccountId, account_holder_name) => {
   try{
     const bank_account = await stripe.customers.updateSource(stripeCustomerId, bankAccountId,
       {
         source:{
         account_holder_type: 'individual',
-        account_holder_name: accountDetails.account_holder_name
+        account_holder_name: account_holder_name
       }
     });
     return bank_account;

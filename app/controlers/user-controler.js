@@ -1265,8 +1265,8 @@ exports.updateBankAccount = asyncHandler(async (req, res, next) => {
 		}
 		const bank_account = await paymentService.updateBankAccount(
 			existUser.stripe_id,
-			req.params.bankAccountId,
-			req.body
+			req.body.bankAccountId,
+			req.body.account_holder_name
 		);
 		res.status(HttpStatus.CREATED).send({
 			message: 'Updated Bank Account',
