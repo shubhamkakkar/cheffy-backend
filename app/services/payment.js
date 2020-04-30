@@ -233,7 +233,7 @@ exports.confirmPayment = async (ammount, card, customer) => {
 
 exports.createPayout = async (amount, bankAccount) => {
   let payload = {
-    amount: amount,
+    amount: Math.round(amount),
     currency: 'usd'
   }
   if (bankAccount) {
