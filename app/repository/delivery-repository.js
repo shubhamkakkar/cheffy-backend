@@ -371,74 +371,83 @@ exports.getApprovedDeliveriesByUser = async (data) => {
 };
 
 exports.getPendingDeliveriesByDriver = async (driverId, data, limit) => {
-	let cancelledOrders = await DriverCancellation.findAll({
-		where: { driverId: driverId, isDelivered: 0 },
-	});
-
-	cancelledOrders = JSON.parse(JSON.stringify(cancelledOrders));
-
-	const orderIds = cancelledOrders.map(
-		(cancelledOrder) => cancelledOrder.orderId
-	);
-
-	// Don't include the cancelled order
-	let orders = await Order.findAll({
-		where: {
-			'$order_delivery.orderId$': null,
-			id: { [Op.notIn]: orderIds },
-		},
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: ShippingAddress,
-				as: 'shipping',
-			},
-			{
-				model: OrderItem,
-				where: { deliveryType: data.deliveryType },
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-								attributes: userConstants.userSelectFields,
-								include: [
-									{ model: ShippingAddress, as: 'address' },
-								],
-							},
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				as: 'order_delivery',
-			},
-		],
-	});
-
-	orders = JSON.parse(JSON.stringify(orders));
-
-	for (var i = 0; i < orders.length; i++) {
-		const order = orders[i];
-		const chef = order.OrderItems[0].plate.chef;
-		order.OrderItems.forEach((orderItem) => {
-			delete orderItem.plate.chef;
+	try {
+		let cancelledOrders = await DriverCancellation.findAll({
+			where: { driverId: driverId, isDelivered: 0 },
 		});
-		order.chef = chef;
-	}
 
-	if (!limit) {
-		limit = 1;
-	}
+		cancelledOrders = JSON.parse(JSON.stringify(cancelledOrders));
 
-	return orders.slice(0, limit);
+		const orderIds = cancelledOrders.map(
+			(cancelledOrder) => cancelledOrder.orderId
+		);
+
+		// Don't include the cancelled order
+		let orders = await Order.findAll({
+			where: {
+				'$order_delivery.orderId$': null,
+				id: { [Op.notIn]: orderIds },
+			},
+			order: [['id', 'DESC']],
+			include: [
+				{
+					model: ShippingAddress,
+					as: 'shipping',
+				},
+				{
+					model: OrderItem,
+					where: { deliveryType: data.deliveryType },
+					include: [
+						{
+							model: Plates,
+							as: 'plate',
+							include: [
+								{
+									model: User,
+									as: 'chef',
+									attributes: userConstants.userSelectFields,
+									include: [
+										{ model: ShippingAddress, as: 'address' },
+									],
+								},
+								{
+									model: PlateImage,
+								},
+							],
+						},
+					],
+				},
+				{
+					model: OrderDelivery,
+					as: 'order_delivery',
+				},
+			],
+		});
+
+		orders = JSON.parse(JSON.stringify(orders));
+
+
+		for (var i = 0; i < orders.length; i++) {
+			const order = orders[i];
+			if (order.OrderItems[0].plate !== null) {
+				const chef = order.OrderItems[0].plate.chef;
+				order.OrderItems.forEach((orderItem) => {
+					delete orderItem.plate.chef;
+				});
+				order.chef = chef;
+			}
+		}
+
+		if (!limit) {
+			limit = 1;
+		}
+
+		return orders.slice(0, limit);
+	}
+	catch (error) {
+		console.log(error);
+		throw error;
+	}
 };
 
 //TODO waiting OrderDelivey to be implemented
@@ -631,11 +640,13 @@ exports.getApprovedDeliveriesByDriver = async (data) => {
 
 	for (var i = 0; i < orders.length; i++) {
 		const order = orders[i];
-		const chef = order.OrderItems[0].plate.chef;
-		order.OrderItems.forEach((orderItem) => {
-			delete orderItem.plate.chef;
-		});
-		order.chef = chef;
+		if (order.OrderItems[0].plate !== null) {
+			const chef = order.OrderItems[0].plate.chef;
+			order.OrderItems.forEach((orderItem) => {
+				delete orderItem.plate.chef;
+			});
+			order.chef = chef;
+		}
 	}
 
 	return orders;
@@ -712,11 +723,13 @@ exports.getCompleteDeliveriesByDriver = async (data) => {
 
 	for (var i = 0; i < orders.length; i++) {
 		const order = orders[i];
-		const chef = order.OrderItems[0].plate.chef;
-		order.OrderItems.forEach((orderItem) => {
-			delete orderItem.plate.chef;
-		});
-		order.chef = chef;
+		if (order.OrderItems[0].plate !== null) {
+			const chef = order.OrderItems[0].plate.chef;
+			order.OrderItems.forEach((orderItem) => {
+				delete orderItem.plate.chef;
+			});
+			order.chef = chef;
+		}
 	}
 
 	return orders;
