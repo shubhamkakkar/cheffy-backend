@@ -231,19 +231,28 @@ exports.listApprovedDeliveries = asyncHandler(async (req, res, next) => {
 });
 
 exports.listPendingDeliveriesDriver = asyncHandler(async (req, res, next) => {
-	const pagination = paginator.paginateQuery(req);
-	const query = { deliveryType: userConstants.USER_TYPE_DRIVER, pagination };
-
-	const driver_pending_orders = await deliveryRepository.getPendingDeliveriesByDriver(
-		req.userId,
-		query,
-		req.body.limit
-	);
-	res.status(HttpStatus.ACCEPTED).send({
-		message: 'Here are your orders!',
-		data: driver_pending_orders,
-		...paginator.paginateInfo(query),
-	});
+	try {
+		const pagination = paginator.paginateQuery(req);
+		const query = { deliveryType: userConstants.USER_TYPE_DRIVER, pagination };
+	 	const driver_pending_orders = await deliveryRepository.getPendingDeliveriesByDriver(
+			req.userId,
+			query,
+			req.body.limit
+		);
+		res.status(HttpStatus.ACCEPTED).send({
+			message: 'Here are your orders!',
+			data: driver_pending_orders,
+			...paginator.paginateInfo(query),
+		});
+	}
+	catch (e) {
+		 console.log(e);
+		res.status(HttpStatus.CONFLICT).send({
+			message: 'Fail to get your orders!',
+			error: e,
+		});
+		return 0;
+	}
 });
 
 exports.createDelivery = asyncHandler(async (req, res, next) => {
