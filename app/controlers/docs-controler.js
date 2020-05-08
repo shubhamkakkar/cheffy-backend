@@ -65,7 +65,9 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   let contract = new ValidationContract();
   if (actualUser.user_type === userConstants.USER_TYPE_CHEF) {
-    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect! field: social_security_number');
+
+    /*Code updated on 8th May 2020 Removing valiation of SSN Numbers*/
+    //contract.isRequired(req.body.social_security_number, 'The social security number is incorrect! field: social_security_number');
     contract.isRequired(req.files['chef_license'], "Chef's license is missing! field: chef_license ");
     contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing! field: chef_certificate");
     contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing! field: kitchen_photo");
@@ -75,7 +77,8 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   if (actualUser.user_type === userConstants.USER_TYPE_DRIVER) {
     contract.isRequired(req.files['profile_photo'], "User photo is missing");
-    contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
+    /*Code updated on 8th May 2020 Removing valiation of SSN Numbers*/
+    //contract.isRequired(req.body.social_security_number, 'The social security number is incorrect!');
     contract.isRequired(req.files['driver_license_front_side'], "Driver license is missing!");
     contract.isRequired(req.files['driver_vehicle_registration'], "Driver vehicle registration is missing!");
   }
