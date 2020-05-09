@@ -603,13 +603,20 @@ exports.popularPlates = async (req, res, next) => {
 		}
 
 		const unique = popular_plates
-			.map((e) => e['id'])
+			.map((e) =>	{
+				if(e) {
+					return e['id'];
+				}
+			} )
 
 			.map((e, i, final) => final.indexOf(e) === i && i)
 
 			.filter((e) => popular_plates[e])
 			.map((e) => popular_plates[e]);
 
+		if (unique.length == 0) {
+			res.status(200).send({ message: 'key is less or more then one' });
+		}	
 		res.status(200).send({ message: 'Popular Plates!', data: unique });
 	} catch (e) {
 		console.log(e);
