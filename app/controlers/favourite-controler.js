@@ -191,7 +191,7 @@ exports.list = async (req, res, next) => {
   }
   try {
     const user_favourites = await repoFav.getUserFavourites(token_return.id)
-    res.status(HttpStatus.ACCEPTED).send({
+    res.status(HttpStatus.OK).send({
       message: 'Here are your favourites!',
       data: user_favourites
     });

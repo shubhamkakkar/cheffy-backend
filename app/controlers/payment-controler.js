@@ -103,7 +103,7 @@ exports.confirm = async (req, res, next) => {
         const current = await repositoryOrder.getById(payment.transactions[0].description);
         current.state_type = 5;
         await current.save();
-        res.status(HttpStatus.ACCEPTED).send({ message: { current, payment }, status: HttpStatus.CONFLICT});
+        res.status(HttpStatus.OK).send({ message: { current, payment }, status: HttpStatus.CONFLICT});
       }
     }
   )

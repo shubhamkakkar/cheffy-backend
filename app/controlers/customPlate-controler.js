@@ -839,10 +839,20 @@ exports.pay = asyncHandler(async (req, res, next) => {
 	}
 
 	//get user basket items
+
 	let user_basket = await basketRepository.getOneUserBasket(req.userId);
+	
+	if(!user_basket) {
+		return res.status(HttpStatus.BAD_REQUEST).send({
+			message: `No basket`,
+			error: true,
+		});
+	}
+	
 	let basket_content = await basketRepository.getBasketItemsDetail(
 		user_basket.id
 	);
+	
 	if (basket_content.length === 0) {
 		return res
 			.status(HttpStatus.CONFLICT)
@@ -862,6 +872,34 @@ exports.pay = asyncHandler(async (req, res, next) => {
 		};
 		return element;
 	});
+
+	//check chef address available 
+
+	for(let elem of basketItems) {
+		const basketType = elem.basket_type;
+		
+		let loc; 
+
+		if (basketType === basketConstants.BASKET_TYPE_PLATE) {
+			loc = await repositoryOrder.userLocation(
+				elem.plate.userId
+			);
+		}
+
+		if (basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
+			loc = await repositoryOrder.userLocation(
+				elem.custom_plate.chefID
+			);
+		} 
+
+		if(!loc) {
+			return res.status(HttpStatus.CONFLICT).send({
+				message: 'Chef location missing!',
+				error: true,
+			});
+		}
+	}
+
 	const userIds = basketItems.map((items) => items.plate.userId);
 
 	cart_items = await Promise.all(cart_items);
@@ -947,8 +985,8 @@ exports.pay = asyncHandler(async (req, res, next) => {
 		} else {
 			card_return = await paymentService.createCard(
 				existUser,
-				user_address,
-				req.body.card
+				req.body.card,
+				user_address
 			);
 		}
 	} catch (e) {
@@ -1198,7 +1236,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 			};
 			FCM(pushnotification);
 		}
-		return res.status(HttpStatus.ACCEPTED).send({
+		return res.status(HttpStatus.OK).send({
 			message: 'Your order was successfully paid!',
 			payment_return: create_orderPayment,
 			//orderDeliveries: orderDeliveries
@@ -1241,7 +1279,7 @@ exports.listUserCustomOrders = asyncHandler(async (req, res, next) => {
 	const { userId } = req.params;
 	const query = { where: { userId }, ...paginator.paginateQuery(req) };
 	const customPlateOrders = await CustomPlateOrder.findAll(query);
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: "Your custom order's",
 		...paginator.paginateInfo(query),
 		data: customPlateOrders,
@@ -1269,7 +1307,7 @@ exports.listUserCustomPlates = asyncHandler(async (req, res, next) => {
 	const { userId } = req.params;
 	const query = { where: { userId }, ...paginator.paginateQuery(req) };
 	const customPlates = await CustomPlate.findAll(query);
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: `Custom Plates of: ${req.paramUser.name}`,
 		...paginator.paginateInfo(query),
 		data: customPlates,
@@ -1297,7 +1335,7 @@ exports.listMyCustomPlates = asyncHandler(async (req, res, next) => {
 
 	//const customPlates = await CustomPlate.findAll(query);
 	const myCustomPlates = await repository.myCustomPlates(query);
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'Your Custom Plates',
 		...paginator.paginateInfo(query),
 		data: myCustomPlates,
@@ -1323,7 +1361,7 @@ exports.listAllCustomPlates = asyncHandler(async (req, res, next) => {
 	const query = { ...paginator.paginateQuery(req) };
 	const customPlates = await CustomPlate.findAll(query);
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'All custom plates from users.',
 		...paginator.paginateInfo(query),
 		data: customPlates,
@@ -1355,7 +1393,7 @@ exports.chefSearchCustomPlates = asyncHandler(async (req, res, next) => {
 
 	const result = await repository.chefGetPlates(options);
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		data: result,
 		...paginator.paginateInfo(options.pagination),
 	});
@@ -1384,7 +1422,7 @@ exports.customPlate = asyncHandler(async (req, res, next) => {
 			.send({ message: 'Custom Plate Not Found' });
 	}
 
-	res.status(HttpStatus.ACCEPTED).send(result);
+	res.status(HttpStatus.OK).send(result);
 
 	events.publish(
 		{

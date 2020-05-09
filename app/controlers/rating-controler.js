@@ -17,7 +17,7 @@ exports.getRating = async (req, res, next) => {
 		try {
 			let rating = await repository.getRatingofPlate(req.params.id);
 			let aggregate_rating = rating.rating+'('+rating.userCount+')'
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'aggregate rating of plate!',
 				aggregate_rating:aggregate_rating,
 				data: rating
@@ -37,7 +37,7 @@ exports.getRating = async (req, res, next) => {
 		try {
 			let rating = await repository.getRatingofChef(req.params.id);
 			let aggregate_rating = rating.rating+'('+rating.userCount+')'
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'aggregate rating of chef!',
 				aggregate_rating:aggregate_rating,
 				data: rating
@@ -57,7 +57,7 @@ exports.getRating = async (req, res, next) => {
 		try {
 			let rating = await repository.getRatingofDriver(req.params.id);
 			let aggregate_rating = rating.rating+'('+rating.userCount+')'
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'aggregate rating of driver!',
 				aggregate_rating:aggregate_rating,
 				data: rating
@@ -117,7 +117,7 @@ exports.postRating = async (req, res, next) => {
 			}
 			else await AggregateReview.update(aggr_item, {where:{chefID:chefID}});
 
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'review created for chef!',
 				data: review
 			});
@@ -170,7 +170,7 @@ exports.postRating = async (req, res, next) => {
 			}
 			else await AggregateReview.update(aggr_item, {where:{driverID:driverID}});
 
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'review created for driver!',
 				data: review
 			});

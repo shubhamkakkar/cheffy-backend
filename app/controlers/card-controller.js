@@ -79,7 +79,7 @@ exports.addNewCard = asyncHandler(async (req, res) => {
         user = await userRepository.saveStripeinfo(user.id, stripeNewUser);
     }
 
-    const stripeNewCard = await paymentService.createCard(user, userShippingAddress, card);
+    const stripeNewCard = await paymentService.createCard(user, card, userShippingAddress);
     const attachedCard = await paymentService.attachPaymentMethod(stripeNewCard.id, user.stripe_id);
 
     res.status(HttpStatus.CREATED).send(attachedCard);

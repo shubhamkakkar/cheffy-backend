@@ -142,7 +142,7 @@ exports.list = asyncHandler(async (req, res, next) => {
     });
   }
 
-  return res.status(HttpStatus.ACCEPTED).send(user_docs);
+  return res.status(HttpStatus.OK).send(user_docs);
 
 });
 

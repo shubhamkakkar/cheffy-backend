@@ -55,7 +55,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 	const category = await repository.createCategory(createPayload);
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: "Successfully created category!",
 		data: category
 	});
@@ -72,7 +72,7 @@ exports.list = asyncHandler(async (req, res, next) => {
 
 	const categories = await repository.listCategories(query);
 	console.log(query);
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: "Categories!",
 		data: categories,
 		...paginator.paginateInfo(pagination)
@@ -83,7 +83,7 @@ exports.listPlates = async (req, res, next) => {
 	const categories = await repository.categoriesListPlates(
 		req.params.categoryId
 	);
-	res.status(HttpStatus.ACCEPTED).send(categories);
+	res.status(HttpStatus.OK).send(categories);
 };
 
 exports.edit = asyncHandler(async (req, res, next) => {
@@ -110,5 +110,5 @@ exports.edit = asyncHandler(async (req, res, next) => {
 		req.params.categoryId,
 		updatedPayload
 	);
-	res.status(HttpStatus.ACCEPTED).send(category);
+	res.status(HttpStatus.OK).send(category);
 });

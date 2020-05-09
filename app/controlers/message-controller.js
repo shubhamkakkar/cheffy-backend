@@ -12,7 +12,7 @@ exports.list = async (req, res, next) => {
     const token_return = await authService.decodeToken(token);
     const messages = await repository.getMessagesByUserId(token_return.id);
     res.set('data', (messages != null) ? JSON.stringify(messages) : null);
-    return res.status(HttpStatus.ACCEPTED).send();
+    return res.status(HttpStatus.OK).send();
 }
 
 exports.new = async (req, res, next) => {
@@ -28,7 +28,7 @@ exports.new = async (req, res, next) => {
         userId: token_return.id
     })
     res.set('data', JSON.stringify(newMessage));
-    return res.status(HttpStatus.ACCEPTED).send();
+    return res.status(HttpStatus.OK).send();
 }
 
 exports.messages = async (req, res, next) => {
@@ -41,5 +41,5 @@ exports.messages = async (req, res, next) => {
     let messages = await repository.getMessagesFromUser(token_return.id, req.params.to_userID);
 
     res.set('data', JSON.stringify(messages));
-    return res.status(HttpStatus.ACCEPTED).send();
+    return res.status(HttpStatus.OK).send();
 }

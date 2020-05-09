@@ -1,5 +1,9 @@
 'use strict'
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const appleSignin = require("apple-signin");
+const NodeRSA = require('node-rsa');
+const request = require('request-promise-native');
 const HttpStatus = require('http-status-codes');
 const ValidationContract = require('../services/validator');
 const { User, Wallet, OrderItem, ShippingAddress, Plates, Documents,PlateCategory } = require('../models/index');
@@ -33,16 +37,55 @@ const { generateHash } = require('../../helpers/password');
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
     const contract = new ValidationContract();
-    let {device_id} = req.body;
+    let { email, device_id } = req.body;
     contract.isRequired(req.body.provider, 'provider is Required');
-    contract.isRequired(req.body.provider_user_id, 'provider id is Required');
-    contract.isRequired(req.body.email, 'email is Required');
+
+    if(req.body.provider != 'apple') {
+      contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+      contract.isRequired(req.body.email, 'email is Required');
+    } else {
+      contract.isRequired(req.body.jwt, 'jwt is Required');
+    }
 
     if (!contract.isValid()) {
         return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
     }
+
+    if(req.body.provider == 'apple') {
+      const getApplePublicKey = async () => {
+        const ENDPOINT_URL = 'https://appleid.apple.com';
+        const url = new URL(ENDPOINT_URL);
+        url.pathname = '/auth/keys';
+      
+        const data = await request({ url: url.toString(), method: 'GET' });
+        const key = JSON.parse(data).keys[0];
+      
+        const pubKey = new NodeRSA();
+        pubKey.importKey({ n: Buffer.from(key.n, 'base64'), e: Buffer.from(key.e, 'base64') }, 'components-public');
+        return pubKey.exportKey(['public']);
+      };
+
+      const applePublicKey = await getApplePublicKey();
+      
+      jwt.verify(req.body.jwt, applePublicKey, function (error, decoded) {
+        debug('accessToken', error);
+        debug('verifyAccessToken', decoded);
+        //if (jwtClaims.exp < (Date.now() / 1000)) throw new Error('id token has expired');
+
+        if(error) {
+          return res.status(HttpStatus.CONFLICT).send({
+            message: "Invalid token",
+            error: error,
+            payload: decoded
+          }); 
+        }
+
+        email = decoded.email;
+      });
+    }
+
     const existUser = await User.findOne({
-     where: { email: req.body.email },
+     where: { email: email },
      attributes: userConstants.privateSelectFields,
      include: [{
         model: ShippingAddress,
@@ -51,6 +94,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
       }]
 
    });
+
     if (!existUser) {
       res.status(HttpStatus.CONFLICT).send({ message: 'user not found', status: HttpStatus.CONFLICT});
       return 0;
@@ -246,6 +290,4 @@ exports.logout = asyncHandler(async(req, res, next) =>{
     res.status(200).send({
       message: 'successfully logged out!'
     });
-
-
 })
