@@ -595,12 +595,12 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 	);
 	existUser.promotionalContent = req.body.promotionalContent;
 
-	/*if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
+	if (existUser.user_type === userConstants.USER_TYPE_DRIVER && existUser.isNewRecord) {
 		await driverAPI.createDriver({
 			name: existUser.name,
 			email: existUser.email,
 		});
-	}*/
+	}
 
 	if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
 		existUser.restaurant_name = req.body.restaurant_name;
