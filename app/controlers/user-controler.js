@@ -593,6 +593,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 		req.body.password,
 		bcrypt.genSaltSync(10)
 	);
+	
 	existUser.promotionalContent = req.body.promotionalContent;
 
 	if (existUser.user_type === userConstants.USER_TYPE_DRIVER && existUser.isNewRecord) {
