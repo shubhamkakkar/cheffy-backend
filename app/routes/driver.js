@@ -11,5 +11,4 @@ router.put('/position', authService.authorize, controller.updateDriverPosition);
 router.post('/get-position', authService.authorize, controller.getDriverPosition);
 router.post('/bank-account', authService.authorize, controller.createBankAccount);
 
-
 module.exports = router;

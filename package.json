@@ -1,14 +1,15 @@
 {
   "name": "cheffyapi",
   "version": "1.0.3",
-  "description": "",
+  "description": "This repository hosts the Cheffy App Api.",
   "main": "./bin/index.js",
   "scripts": {
     "test": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000",
     "watch": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000 -w",
     "start": "NODE_ENV=production node ./bin/server.js",
     "dev": "NODE_ENV=development nodemon ./bin/server.js",
-    "migrate": "sequelize db:migrate"
+    "krushn": "NODE_ENV=krushn nodemon ./bin/server.js",
+    "migrate": "sequelize db:migrate --migrations-path ./database/migrations"
   },
   "keywords": [
     "nodejs",
@@ -36,6 +37,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "md5": "^2.2.1",
+    "migrate": "^1.6.2",
     "moment": "^2.24.0",
     "morgan": "^1.9.1",
     "multer": "^1.4.2",
@@ -75,5 +77,21 @@
     "sinon-chai": "^3.3.0",
     "supertest": "^4.0.2",
     "yargs": "^15.0.2"
-  }
+  },
+  "bin": {
+    "cheffyapi": "server.js"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SihyunC/animated-rotary-phone.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SihyunC/animated-rotary-phone/issues"
+  },
+  "homepage": "https://github.com/SihyunC/animated-rotary-phone#readme"
 }

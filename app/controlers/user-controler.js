@@ -533,6 +533,7 @@ exports.getUserById = asyncHandler(async (req, res, next) => {
  * Complete user registration
  */
 exports.completeRegistration = asyncHandler(async (req, res, next) => {
+	
 	let { device_id } = req.body;
 
 	let contract = new ValidationContract();
@@ -594,12 +595,12 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 	);
 	existUser.promotionalContent = req.body.promotionalContent;
 
-	if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
+	/*if (existUser.user_type === userConstants.USER_TYPE_DRIVER) {
 		await driverAPI.createDriver({
 			name: existUser.name,
 			email: existUser.email,
 		});
-	}
+	}*/
 
 	if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
 		existUser.restaurant_name = req.body.restaurant_name;

@@ -1,4 +1,12 @@
 {
+	"krushn": {
+		"username": "root",
+		"password": "root",
+		"database": "database_test",
+		"host": "localhost",
+		"port": "8889",
+		"dialect": "mysql"
+	},
 	"development": {
 		"username": "root",
 		"password": "root",
