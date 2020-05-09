@@ -22,7 +22,9 @@ const debug = require('debug')('basket');
  * update quantity of BasketItems if plate exists in basket
  */
 exports.addItem = asyncHandler(async (req, res, next) => {
+	
 	let contract = new ValidationContract();
+
 	contract.isRequired(
 		req.body.plates,
 		'The plates identifier code is required!'
@@ -34,12 +36,12 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 
 	//get user basket. create on if it doesn't exists yet.
 	let basket = await repository.getOrCreateUserBasket(req.userId);
-	console.log(basket);
-
+	 
 	//check all plates in the request belongs to one chef else return error
 	let allPlatesBelongsToASingleChef = await repository.checkAllPlatesBelongsToASingleChef(
 		req.body.plates
 	);
+
 	if (!allPlatesBelongsToASingleChef) {
 		return res.status(HttpStatus.CONFLICT).send({
 			message:
@@ -47,6 +49,7 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 			error: true,
 		});
 	}
+
 	let platesChefSameAsBasketItemChef = await repository.checkPlateChefSameAsBasketItemChef(
 		basket[0].id,
 		req.body.plates

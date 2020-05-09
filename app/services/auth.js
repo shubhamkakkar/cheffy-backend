@@ -18,6 +18,7 @@ exports.decodeToken = async (token) => {
 * Sends 401 response when no token found
 */
 exports.checkTokenExists = asyncHandler(async(req, res, next) => {
+
   let token = req.query.token || req.headers['x-access-token'];
 
   if (!token) {
@@ -26,7 +27,9 @@ exports.checkTokenExists = asyncHandler(async(req, res, next) => {
     });
   }
   req.accessToken = token;
+
   debug('checkTokenExists', req.accessToken);
+
   next();
 });
 

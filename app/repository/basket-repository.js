@@ -374,6 +374,7 @@ exports.checkPlateChefSameAsBasketItemChef = async (basketId, plates) => {
 	let k = JSON.parse(j);
 	//Get the first plateId and then the chef's Id of that plate as all the plates in basket will have same chef
 	let plateId = k[0].plateId;
+
 	const plateChefId = await Plates.findOne({
 		attributes: ['userId'],
 		where: {
@@ -382,16 +383,22 @@ exports.checkPlateChefSameAsBasketItemChef = async (basketId, plates) => {
 		//    ,logging: console.log
 	});
 
+	if(!plateChefId) {
+		return false;
+	}
+
 	//Need to validate against one basket item's chef as all basket items of a basket will have same chef
 	let basketItems = await this.getBasketItems(basketId);
+	
 	if (!_.isEmpty(basketItems)) {
-		const basketItemChefId = await Plates.findOne({
+		const plate = await Plates.findOne({
 			attributes: ['userId'],
 			where: {
 				id: basketItems[0].plateId,
 			},
 		});
-		if (basketItemChefId.userId !== plateChefId.userId) {
+
+		if (plate && plate.userId !== plateChefId.userId) {
 			return false;
 		}
 	}
