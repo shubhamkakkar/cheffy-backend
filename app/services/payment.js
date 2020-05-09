@@ -36,29 +36,38 @@ exports.createSession = async (userID, list_items, address) => {
 * Create Stripe Customer for future recurring payments and saving cards
 * customer_id will be sent by stripe which will be saved in user.stripe_id
 */
-exports.createUser = async (user, address) => {
+exports.createUser = async (user, address = null) => {
   debug("STRIPE Create user: ", user.email);
-  const user_req = await stripe.customers.create({
+
+  let params = {
     email: user.email,
-    name: user.name,
-    address: {
-      line1: address.addressLine1,
-      line2: address.addressLine2,
-      city: address.city,
-      state: address.state,
-      postal_code: address.zipCode,
-    },
-    shipping: {
-      name: 'home',
+    name: user.name
+  };
+
+  if(address) {
+    params = {
+      ...params,
       address: {
         line1: address.addressLine1,
         line2: address.addressLine2,
         city: address.city,
         state: address.state,
         postal_code: address.zipCode,
+      },
+      shipping: {
+        name: 'home',
+        address: {
+          line1: address.addressLine1,
+          line2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          postal_code: address.zipCode,
+        }
       }
-    }
-  });
+    }  
+  };
+
+  const user_req = await stripe.customers.create(params);
   return user_req;
 }
 
@@ -114,29 +123,38 @@ exports.getUserCardsList = async (stripeCustomerId, queryOptions = {}) => {
 /**
 * Creates payment Method of type card for a customer
 */
-exports.createCard = async (user, address, card) => {
+exports.createCard = async (user, card, address = null) => {
   debug("STRIPE Create card: ", card.cvc)
-  const card_req = await stripe.paymentMethods.create({
+
+  let params = {
     type: "card",
     card: {
       number: card.number,
       exp_month: card.exp_month,
       exp_year: card.exp_year,
       cvc: card.cvc,
-    },
-    billing_details: {
-      name: user.name,
-      email: user.email,
-      phone: user.country_code + user.phone_no,
-      address: {
-        line1: address.addressLine1,
-        line2: address.addressLine2,
-        city: address.city,
-        state: address.state,
-        postal_code: address.zipCode,
+    }
+  }
+
+  if(address) {
+    params = {
+      ...params,
+      billing_details: {
+        name: user.name,
+        email: user.email,
+        phone: user.country_code + user.phone_no,
+        address: {
+          line1: address.addressLine1,
+          line2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          postal_code: address.zipCode,
+        }
       }
     }
-  });
+  };
+
+  const card_req = await stripe.paymentMethods.create(params);
   return card_req;
 }
 
@@ -326,7 +344,7 @@ exports.createPayout = async (amount, bankAccount) => {
    let transactionsService = new TransactionsService();
    transactionsService.recordBulkCreditTransaction(bulkTransactions)
 
-   res.status(HttpStatus.ACCEPTED).send({
+   res.status(HttpStatus.OK).send({
      message: 'Your order was successfully paid!',
      payment_return: create_orderPayment
    });

@@ -250,7 +250,7 @@ exports.list = asyncHandler(async (req, res, next) => {
 	};
 	const plates = await repository.searchPlates(query);
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'Plates',
 		...paginator.paginateInfo(query),
 		data: plates,
@@ -402,7 +402,7 @@ exports.categoryPlates = [
 exports.imagePlateKitchen = async (req, res, next) => {
 	const { id } = req.params;
 	const retorno = await PlateImage.findAll({ where: { plateId: id } });
-	res.status(HttpStatus.ACCEPTED).send(retorno);
+	res.status(HttpStatus.OK).send(retorno);
 };
 
 exports.listReceipt = async (req, res, next) => {

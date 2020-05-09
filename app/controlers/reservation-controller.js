@@ -16,7 +16,7 @@ exports.list = asyncHandler(async(req, res, next) => {
 
     const response = await repository.getUserReservation(req.userId)
     res
-        .status(HttpStatus.ACCEPTED)
+        .status(HttpStatus.OK)
         .send({ data: response });
   });
 
@@ -51,7 +51,7 @@ exports.list = asyncHandler(async(req, res, next) => {
     newData.userId = req.userId;
     await repository.createReservation(newData)
     res
-        .status(HttpStatus.ACCEPTED)
+        .status(HttpStatus.OK)
         .send({ message: "Successfully created New Reservation!" });
 
     }

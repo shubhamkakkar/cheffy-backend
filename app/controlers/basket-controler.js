@@ -98,7 +98,7 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 			basketItems: basketItemsListDetail,
 			basket: basket,
 		});
-		res.status(HttpStatus.ACCEPTED).send(result);
+		res.status(HttpStatus.OK).send(result);
 
 		//publish create action
 		events.publish(
@@ -135,7 +135,7 @@ exports.list = asyncHandler(async (req, res, next) => {
 	});
 	result.shippingAddress = shippingAddress;
 
-	res.status(HttpStatus.ACCEPTED).send(result);
+	res.status(HttpStatus.OK).send(result);
 
 	//publish create action
 	events.publish(
@@ -188,7 +188,7 @@ exports.subtractItem = asyncHandler(async (req, res, next) => {
 		basketItems: basketItemsListDetail,
 		basket: basket,
 	});
-	res.status(HttpStatus.ACCEPTED).send(result);
+	res.status(HttpStatus.OK).send(result);
 });
 
 /**
@@ -223,7 +223,7 @@ exports.deleteItem = asyncHandler(async (req, res, next) => {
 		basketItems: basketItemsListDetail,
 		basket: basket,
 	});
-	res.status(HttpStatus.ACCEPTED).send(result);
+	res.status(HttpStatus.OK).send(result);
 });
 
 /**
@@ -260,7 +260,7 @@ exports.sumItem = asyncHandler(async (req, res, next) => {
 		basket: basket,
 	});
 
-	res.status(HttpStatus.ACCEPTED).send(result);
+	res.status(HttpStatus.OK).send(result);
 });
 
 /**
@@ -350,7 +350,7 @@ exports.delItem = async (req, res, next) => {
 	basket = await repository.getUserBasket(token_return.id);
 	let basket_list = await repository.listBasket(basket[0].id);
 
-	res.status(HttpStatus.ACCEPTED).send(basket_list);
+	res.status(HttpStatus.OK).send(basket_list);
 };
 
 exports.peopleAlsoAddedList = async (req, res, next) => {
@@ -363,5 +363,5 @@ exports.peopleAlsoAddedList = async (req, res, next) => {
 		} else filteredList.push(elem.plate_1);
 	});
 
-	res.status(HttpStatus.ACCEPTED).send(filteredList);
+	res.status(HttpStatus.OK).send(filteredList);
 };

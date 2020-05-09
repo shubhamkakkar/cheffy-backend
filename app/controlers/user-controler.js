@@ -217,9 +217,9 @@ exports.dummy = async (req, res, next) => {
 		}
 	}
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'Plates are being created',
-		status: HttpStatus.ACCEPTED,
+		status: HttpStatus.OK,
 	});
 };
 
@@ -283,7 +283,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 		const doc = await Documents.findOne({
 			where: { userId: existUser.id },
 		});
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Already registered user',
 			result: {
 				user_type: existUser.user_type,
@@ -291,7 +291,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 				password_generated: !!existUser.password,
 				user_doc: !!doc,
 			},
-			status: HttpStatus.ACCEPTED,
+			status: HttpStatus.OK,
 		});
 		return 0;
 	}
@@ -346,7 +346,7 @@ exports.getChefBalance = asyncHandler(async (req, res, next) => {
 	if(!wallet) {
 		res.status(HttpStatus.NOT_FOUND).send({"message": "Unable to find wallet for this user"});
 	}
-	res.status(HttpStatus.ACCEPTED).send(wallet);
+	res.status(HttpStatus.OK).send(wallet);
 });
 
 exports.getDriverBalance = asyncHandler(async (req, res, next) => {
@@ -363,7 +363,7 @@ exports.getDriverBalance = asyncHandler(async (req, res, next) => {
 	if(!wallet) {
 		res.status(HttpStatus.NOT_FOUND).send({"message": "Unable to find wallet for this user"});
 	}
-	res.status(HttpStatus.ACCEPTED).send(wallet);
+	res.status(HttpStatus.OK).send(wallet);
 });
 
 exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
@@ -405,7 +405,7 @@ exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
 		}, 0);
 	}
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		user: userResponse,
 		balance_history: balance_history,
 		total: total,
@@ -442,7 +442,7 @@ exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
   //   return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
   // }, 0 );
   // datar.Wallet.total = total;
-  // res.status(HttpStatus.ACCEPTED).send(datar);
+  // res.status(HttpStatus.OK).send(datar);
   let historyMock = `{
     "id": 4,
     "name": "Demo user",
@@ -489,7 +489,7 @@ exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
       "total": 40
     }
   }`;
-  res.status(HttpStatus.ACCEPTED).send(JSON.parse(historyMock));
+  res.status(HttpStatus.OK).send(JSON.parse(historyMock));
 }*/
 
 exports.getUser = asyncHandler(async (req, res, next) => {
@@ -497,7 +497,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 	const shippingAddresses = await user.getAddress();
 	const userResponse = userResponseHelper({ user });
 	userResponse.address = shippingAddresses;
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'SUCCESS',
 		data: userResponse,
 	});
@@ -524,7 +524,7 @@ exports.getUserById = asyncHandler(async (req, res, next) => {
 		userResponse.aggregate_rating = aggregate_rating;
 	}
 	userResponse.address = shippingAddresses;
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'SUCCESS',
 		data: userResponse,
 	});
@@ -596,12 +596,12 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 
 	existUser.promotionalContent = req.body.promotionalContent;
 
-	if (existUser.user_type === userConstants.USER_TYPE_DRIVER && existUser.isNewRecord) {
+	/*if (existUser.user_type === userConstants.USER_TYPE_DRIVER && existUser.isNewRecord) {
 		await driverAPI.createDriver({
 			name: existUser.name,
 			email: existUser.email,
 		});
-	}
+	}*/
 
 	if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
 		existUser.restaurant_name = req.body.restaurant_name;
@@ -781,7 +781,7 @@ exports.changePassword = asyncHandler(async (req, res, next) => {
 	);
 	await existUser.save();
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message: 'Password Changed Successfully',
 	});
 });
@@ -849,10 +849,9 @@ exports.verifyUserPhone = asyncHandler(async (req, res, next) => {
 		});
 	}
 
-	if (req.body.sms_token == existUser.verification_phone_token) {
-		existUser.verification_phone_token = '';
-		existUser.verification_phone_status = userConstants.STATUS_VERIFIED;
-		await existUser.save();
+	const isVerified = await userRepository.validatePhone(existUser.id, req.body.sms_token);
+	
+	if (isVerified) {
 		res.status(HttpStatus.OK).send({
 			message: 'Congratulations, phone successfully verified!',
 			status: HttpStatus.OK,
@@ -1152,9 +1151,9 @@ exports.veryifyTokenforgotPassword = asyncHandler(async (req, res, next) => {
 		// existUser.password = bcrypt.hashSync(req.body.newPassword, bcrypt.genSaltSync(10));
 		// await existUser.save();
 
-		return res.status(HttpStatus.ACCEPTED).send({
+		return res.status(HttpStatus.OK).send({
 			message: 'Your email token has been verified!',
-			status: HttpStatus.ACCEPTED,
+			status: HttpStatus.OK,
 		});
 	}
 
@@ -1199,9 +1198,9 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 		);
 		await existUser.save();
 
-		return res.status(HttpStatus.ACCEPTED).send({
+		return res.status(HttpStatus.OK).send({
 			message: 'Congratulations, password successfully reset!',
-			status: HttpStatus.ACCEPTED,
+			status: HttpStatus.OK,
 		});
 	}
 

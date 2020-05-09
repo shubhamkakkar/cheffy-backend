@@ -22,7 +22,7 @@ exports.authenticate = async (req, res, next) => {
       name: customer.name,
       type: customer.user_type
     });
-    res.status(HttpStatus.ACCEPTED).send({
+    res.status(HttpStatus.OK).send({
       token: token,
       data: customer
     });
@@ -36,7 +36,7 @@ exports.authenticate = async (req, res, next) => {
 exports.listAllDocs = async (req, res, next) => {
   try {
     const docs = await repository.listAllDocs();
-    res.status(HttpStatus.ACCEPTED).send( docs );
+    res.status(HttpStatus.OK).send( docs );
     return 0;
   } catch (e) {
     res.status(HttpStatus.CONFLICT).send({
@@ -56,7 +56,7 @@ exports.checkDocs = async (req, res, next) => {
     await repositoryDocs.updateProfilePhoto(req.body.profile_photo)
     await repositoryDocs.updateDoc(req.body.docs_base)
 
-    res.status(HttpStatus.ACCEPTED).send({
+    res.status(HttpStatus.OK).send({
       message: "Successfully updated!"
     });
     return 0;

@@ -26,7 +26,7 @@ exports.getMyNearDrivers = asyncHandler( async( req, res, next) => {
 
   const drivers = await driverRepository.getMyNearDrivers(query)
 
-  res.status(HttpStatus.ACCEPTED).send({
+  res.status(HttpStatus.OK).send({
     message: "Near Drivers",
     ...paginator.paginateInfo(query),
     data: drivers
@@ -77,7 +77,7 @@ exports.updateDriverPosition = async (req, res, next) => {
       return 0;
    }
 
-   res.status(HttpStatus.ACCEPTED).send({ ...response.data });
+   res.status(HttpStatus.OK).send({ ...response.data });
 }
 
 exports.getDriverPosition = async (req, res, next) => {
@@ -107,7 +107,7 @@ exports.getDriverPosition = async (req, res, next) => {
       return 0;
    }
 
-   res.status(HttpStatus.ACCEPTED).send({ ...response.data });
+   res.status(HttpStatus.OK).send({ ...response.data });
 }
 
 exports.createBankAccount = async (req, res, next) => {
@@ -141,7 +141,7 @@ exports.createBankAccount = async (req, res, next) => {
       return 0;
    }
 
-   res.status(HttpStatus.ACCEPTED).send({ ...response.data });
+   res.status(HttpStatus.OK).send({ ...response.data });
 }
 
 /**
@@ -151,7 +151,7 @@ exports.createBankAccount = async (req, res, next) => {
 exports.cancelOrder = asyncHandler( async( req, res, next) => {
    try {
       const orders = await driverCancellationRepository.cancelOrder(req.userId, req.params.orderId)
-      res.status(HttpStatus.ACCEPTED).send({
+      res.status(HttpStatus.OK).send({
         message: 'Cancelled order',
         data: orders
       });

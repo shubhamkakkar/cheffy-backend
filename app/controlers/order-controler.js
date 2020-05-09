@@ -153,7 +153,7 @@ exports.list = async (req, res, next) => {
 	}
 	try {
 		const user_orders = await repository.getUserOrders(token_return.id);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: user_orders,
 		});
@@ -202,7 +202,7 @@ exports.chefOrderList = asyncHandler(async (req, res, next) => {
 		state_type ? ` ${state_type} ` : ' '
 	}orders!`;
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message,
 		data: orderItems,
 		...(page && pageSize && { ...paginator.paginateInfo(pagination) }),
@@ -229,7 +229,7 @@ exports.userOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 		state_type ? ` ${state_type} ` : ' '
 	}order deliveries!`;
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message,
 		data: orderDeliveries,
 		...paginator.paginateInfo(pagination),
@@ -256,7 +256,7 @@ exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 		state_type ? ` ${state_type} ` : ' '
 	}orders deliveries!`;
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message,
 		data: orderDeliveries,
 		...paginator.paginateInfo(pagination),
@@ -271,7 +271,7 @@ exports.listTrackingUser = async (req, res, next) => {
 		const query = { userId: req.userId, pagination, page, pageSize };
 		const user_orders = await repository.listTrackingUser(query);
 
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: user_orders,
 			...(page && pageSize && { ...paginator.paginateInfo(pagination) }),
@@ -290,7 +290,7 @@ exports.listTrackingUser = async (req, res, next) => {
 exports.listTrackingDriver = async (req, res, next) => {
 	try {
 		const user_orders = await repository.listTrackingDriver(req.userId);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: user_orders,
 		});
@@ -320,7 +320,7 @@ exports.getOneOrder = async (req, res, next) => {
 			token_return.id,
 			req.params.orderId
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your order!',
 			data: user_orders,
 		});
@@ -445,7 +445,7 @@ exports.ordersReadyForDelivery = async (req, res, next) => {
 	}
 	try {
 		const orders_ready = await repository.getOrdersReadyDelivery();
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Orders ready for delivery!',
 			data: orders_ready,
 		});
@@ -481,7 +481,7 @@ exports.orderItemsDelivery = asyncHandler(async (req, res, next) => {
 		state_type ? ` ${state_type} ` : ' '
 	}order items with respective delieveries!`;
 
-	res.status(HttpStatus.ACCEPTED).send({
+	res.status(HttpStatus.OK).send({
 		message,
 		data: result,
 		...paginator.paginateInfo(pagination),
@@ -730,7 +730,7 @@ exports.completeChefOrder = async (req, res, next) => {
 		const completed = await repository.completeChefOrder(
 			req.params.orderItemId
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Completed Order!',
 			data: completed,
 		});

@@ -4,6 +4,8 @@ const {
 	ShippingAddress,
 	sequelize,
 } = require('../models/index');
+const path = require('path');
+const userConstants = require(path.resolve('app/constants/users'));
 const Sequelize = require('sequelize');
 
 exports.findDriversInsideArea = async (latitude, longitude, radiusMiles) => {
@@ -87,6 +89,22 @@ exports.getRestaurantSearch = async (data) => {
 		/*console.log("Error: ", e);*/
 		return { message: 'Fail the plates', error: e };
 	}
+};
+
+exports.validatePhone = async(userId, smsToken) => {
+	
+	let user = await User.findOne({
+		where: { id: userId, verification_phone_token :smsToken }
+	});
+
+	if(user) {
+		user.verification_phone_token = '';
+		user.verification_phone_status = userConstants.STATUS_VERIFIED;
+		await user.save();
+		return true;
+	}
+
+	return false;
 };
 
 exports.addDevice = async (data) => {

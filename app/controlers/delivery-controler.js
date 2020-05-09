@@ -86,7 +86,7 @@ exports.list = asyncHandler(async (req, res, next) => {
 	let payload = {};
 
 	(payload.message = 'Here are your orders!'), (payload.data = deliveries);
-	res.status(HttpStatus.ACCEPTED).send(payload);
+	res.status(HttpStatus.OK).send(payload);
 });
 
 exports.calculateDeliveryTime = async (req, res, next) => {
@@ -123,7 +123,7 @@ exports.calculateDeliveryTime = async (req, res, next) => {
 							resp.time = time;
 							resp.Pickup_address = origin;
 							resp.Delivery_address = destination;
-							return res.status(HttpStatus.ACCEPTED).send({
+							return res.status(HttpStatus.OK).send({
 								message: 'Success!',
 								data: resp,
 							});
@@ -174,7 +174,7 @@ exports.listCompleteDeliveries = async (req, res, next) => {
 		const user_orders = await deliveryRepository.getCompletedDeliveriesByUser(
 			query
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: user_orders,
 			...paginator.paginateInfo(pagination),
@@ -195,7 +195,7 @@ exports.listPendingDeliveries = asyncHandler(async (req, res, next) => {
 		const user_orders = await deliveryRepository.getPendingDeliveriesByUser(
 			req.userId
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: user_orders,
 		});
@@ -215,7 +215,7 @@ exports.listApprovedDeliveries = asyncHandler(async (req, res, next) => {
 		const user_orders = await deliveryRepository.getApprovedDeliveriesByUser(
 			req.userId
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: user_orders,
 		});
@@ -239,7 +239,7 @@ exports.listPendingDeliveriesDriver = asyncHandler(async (req, res, next) => {
 			query,
 			req.body.limit
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: driver_pending_orders,
 			...paginator.paginateInfo(query),
@@ -498,7 +498,7 @@ exports.listApprovedDeliveriesByDriver = asyncHandler(
 			const deliveries = await deliveryRepository.getApprovedDeliveriesByDriver(
 				req.userId
 			);
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'Here are your orders!',
 				data: deliveries,
 			});
@@ -524,7 +524,7 @@ exports.listCompleteDeliveriesByDriver = asyncHandler(
 			const deliveries = await deliveryRepository.getCompleteDeliveriesByDriver(
 				req.userId
 			);
-			res.status(HttpStatus.ACCEPTED).send({
+			res.status(HttpStatus.OK).send({
 				message: 'Here are your orders!',
 				data: deliveries,
 			});
@@ -549,7 +549,7 @@ exports.getDeliveryDetails = asyncHandler(async (req, res, next) => {
 		const orderDelivery = await orderDeliveryRepository.getDeliveryDetails(
 			req.params.orderDeliveryId
 		);
-		res.status(HttpStatus.ACCEPTED).send({
+		res.status(HttpStatus.OK).send({
 			message: 'Here are your orders!',
 			data: orderDelivery,
 		});
@@ -574,7 +574,7 @@ exports.getOrderItemTrackingData = asyncHandler(async (req, res, next) => {
 		orderItemid
 	);
 
-	return res.status(HttpStatus.ACCEPTED).send({
+	return res.status(HttpStatus.OK).send({
 		message: 'Success!',
 		data: orderItemDetails,
 	});
