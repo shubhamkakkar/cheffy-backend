@@ -616,7 +616,7 @@ exports.rejectCustomPlateAuction = asyncHandler(async (req, res, next) => {
  */
 exports.rejectCustomPlateAuctionBid = asyncHandler(async (req, res, next) => {
 	const authUser = req.user;
-	console.log(authUser);
+	 
 	const bidId = req.params.bidId;
 	if (authUser.user_type !== userConstants.USER_TYPE_USER) {
 		return res.status(HttpStatus.CONFLICT).send({
@@ -820,6 +820,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 	//user shipping address. if req.body.shipping_id || req.query.shipping_id is sent, it is that shipping address,
 	//otherwise it is set to default user shipping address
 	const user_address = req.userShippingAddress;
+
 	const deliveryTypes = [
 		orderItemConstants.DELIVERY_TYPE_USER,
 		orderItemConstants.DELIVERY_TYPE_CHEF,
@@ -860,33 +861,32 @@ exports.pay = asyncHandler(async (req, res, next) => {
 	}
 
 	let basketItems = basket_content;
-	let cart_items = basketItems.map(async (elem) => {
-		const basketType = elem.basket_type;
-		let element = {
-			name: elem[basketType].name,
-			description: elem[basketType].description,
-			//amount to stripe should be sent in cents. also orderpayment table has amount in cents
-			amount: dollarToCents(elem[basketType].price),
-			currency: 'usd',
-			quantity: elem.quantity,
-		};
-		return element;
-	});
 
 	//check chef address available 
 
 	for(let elem of basketItems) {
+ 
 		const basketType = elem.basket_type;
-		
+		 
 		let loc; 
-
+ 
 		if (basketType === basketConstants.BASKET_TYPE_PLATE) {
+
+			if(!elem.plate) {
+				continue;
+			}
+
 			loc = await repositoryOrder.userLocation(
 				elem.plate.userId
 			);
 		}
 
 		if (basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
+
+			if(!elem.custom_plate) {
+				continue;
+			}
+ 
 			loc = await repositoryOrder.userLocation(
 				elem.custom_plate.chefID
 			);
@@ -900,13 +900,45 @@ exports.pay = asyncHandler(async (req, res, next) => {
 		}
 	}
 
-	const userIds = basketItems.map((items) => items.plate.userId);
+	let cart_items = []; 
+	
+	for(let elem of basketItems) {
+
+		const basketType = elem.basket_type;
+
+		if(!elem[basketType])
+			continue;
+
+		let element = {
+			name: elem[basketType].name,
+			description: elem[basketType].description, 
+			//amount to stripe should be sent in cents. also orderpayment table has amount in cents
+			amount: dollarToCents(elem[basketType].price),
+			currency: 'usd',
+			quantity: elem.quantity,
+		};
+
+		cart_items.push(element);
+	}
+  
+	let userIds = [];
+	
+	for(let item of basketItems) {
+	
+		//some basket itme may custome_plate
+		
+		if(item.plate) {
+			userIds.push(item.plate.userId);
+		}
+	}
 
 	cart_items = await Promise.all(cart_items);
+
 	let total_cart = cart_items.reduce(
 		(prevVal, elem) => prevVal + parseFloat(elem.quantity * elem.amount),
 		0
 	);
+
 	let payload = {
 		shippingId: user_address.id,
 		basketId: user_basket.id,
@@ -1222,6 +1254,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 		});
 
 		const users = await repository.getDeviceTokens(userIds.join());
+
 		const deviceTokens = users
 			.filter((user) => user.deviceToken)
 			.map((user) => user.deviceToken);
