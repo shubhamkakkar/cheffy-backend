@@ -593,7 +593,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 		req.body.password,
 		bcrypt.genSaltSync(10)
 	);
-	
+
 	existUser.promotionalContent = req.body.promotionalContent;
 
 	if (existUser.user_type === userConstants.USER_TYPE_DRIVER && existUser.isNewRecord) {
@@ -806,8 +806,10 @@ exports.setUserPhone = asyncHandler(async (req, res, next) => {
 	existUser.verification_phone_token = code;
 	existUser.country_code = req.body.country_code;
 	existUser.phone_no = req.body.phone_no;
-	await existUser.save();
-
+	try {
+		await existUser.save();
+	  } catch (err) { }
+	
 	let phone = req.body.country_code + req.body.phone_no;
 
 	if (phone === null && phone === '' && phone === undefined) {
