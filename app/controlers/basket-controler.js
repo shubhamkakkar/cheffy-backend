@@ -291,12 +291,16 @@ function prepareCartResponse({ basketItems, basket }) {
         [value.basket_type]: value['dataValues'][value.basket_type]
       });
 
-    }*/
+	}*/
+	
+		if(!value[value.basket_type]) 
+			return;
 
 		value.total = parseFloat(
 			parseFloat(value.quantity) *
 				parseFloat(value[value.basket_type].price)
 		).toFixed(2);
+
 		result.push({
 			basketItemId: value.id,
 			quantity: value.quantity,
