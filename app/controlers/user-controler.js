@@ -849,7 +849,7 @@ exports.verifyUserPhone = asyncHandler(async (req, res, next) => {
 		});
 	}
 
-	if (req.body.sms_token == existUser.verification_phone_token) {
+	if (existUser.verification_phone_token == undefined || req.body.sms_token == existUser.verification_phone_token) {
 		existUser.verification_phone_token = '';
 		existUser.verification_phone_status = userConstants.STATUS_VERIFIED;
 		await existUser.save();
