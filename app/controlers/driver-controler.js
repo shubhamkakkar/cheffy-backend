@@ -16,6 +16,7 @@ const utils = require(path.resolve('app/utils'));
 const events = require(path.resolve('app/services/events'));
 const appConstants = require(path.resolve('app/constants/app'));
 
+
 /**
 * Method: GET
 * Get my near drivers

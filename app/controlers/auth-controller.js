@@ -97,6 +97,7 @@ let {device_id} = req.body;
       return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
   }
   const existUser = await User.findOne({ where: { email: req.body.email } });
+
   if (existUser) {
     res.status(HttpStatus.CONFLICT).send({ message: 'user already exists', status: HttpStatus.CONFLICT});
     return 0;
@@ -111,18 +112,19 @@ let {device_id} = req.body;
   user.provider_user_id = req.body.provider_user_id;
   user.imagePath = req.body.imagePath;
 
-  if (user.user_type === userConstants.USER_TYPE_DRIVER) {
+  /*if (user.user_type === userConstants.USER_TYPE_DRIVER) {
     await driverAPI.createDriver({
       name: user.name,
       email: user.email
     });
-  }
+  }*/
 
   if (user.user_type === userConstants.USER_TYPE_CHEF) {
     user.restaurant_name = req.body.restaurant_name;
   }
 
   let full_data = user;
+
   const createdUser = await User.create({ ...full_data });
 
   const token = await authService.generateToken({

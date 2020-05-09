@@ -4,7 +4,7 @@ const connection = axios.create({
   baseURL: process.env.DRIVER_API_URL,
 });
 
-exports.createDriver = (data) => connection.post('/driver/register', data);
+//exports.createDriver = (data) => connection.post('/driver/register', data);
 
 exports.updateDriverPosition = (data) => connection.post('/driver/set-location', data);
 
