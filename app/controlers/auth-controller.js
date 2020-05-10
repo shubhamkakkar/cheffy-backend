@@ -34,6 +34,25 @@ const _ = require('lodash');
 
 const { generateHash } = require('../../helpers/password');
 
+const getApplePublicKey = async (kid) => {
+  const ENDPOINT_URL = 'https://appleid.apple.com';
+  const url = new URL(ENDPOINT_URL);
+  url.pathname = '/auth/keys';
+
+  const data = await request({ url: url.toString(), method: 'GET' });
+  let key; 
+  
+  for(let a of JSON.parse(data).keys) {
+    if(a.kid == kid) {
+      key = a;
+      break;
+    }
+  }
+
+  const pubKey = new NodeRSA();
+  pubKey.importKey({ n: Buffer.from(key.n, 'base64'), e: Buffer.from(key.e, 'base64') }, 'components-public');
+  return pubKey.exportKey(['public']);
+};
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
     const contract = new ValidationContract();
@@ -54,26 +73,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     }
 
     if(req.body.provider == 'apple') {
-
-      const getApplePublicKey = async (kid) => {
-        const ENDPOINT_URL = 'https://appleid.apple.com';
-        const url = new URL(ENDPOINT_URL);
-        url.pathname = '/auth/keys';
-      
-        const data = await request({ url: url.toString(), method: 'GET' });
-        let key; 
-        
-        for(let a of JSON.parse(data).keys) {
-          if(a.kid == kid) {
-            key = a;
-            break;
-          }
-        }
-      
-        const pubKey = new NodeRSA();
-        pubKey.importKey({ n: Buffer.from(key.n, 'base64'), e: Buffer.from(key.e, 'base64') }, 'components-public');
-        return pubKey.exportKey(['public']);
-      };
 
       //get kid 
 
@@ -153,22 +152,62 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
 exports.socialauthRegister = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
 
-  let {device_id} = req.body;
+  let { email, device_id } = req.body;
 
-  contract.isRequired(req.body.email, 'email is Required');
-  contract.isRequired(req.body.name, 'name is Required');
   contract.isRequired(req.body.user_type, 'user_type is Required');
   contract.isRequired(req.body.provider, 'provider is Required');
-  contract.isRequired(req.body.provider_user_id, 'provider id is Required');
-  contract.isRequired(req.body.imagePath, 'imagePath id is Required');
+  //contract.isRequired(req.body.provider_user_id, 'provider id is Required');
+  contract.isRequired(req.body.name, 'name is Required');
+  
+  //contract.isRequired(req.body.email, 'email is Required');
+  //contract.isRequired(req.body.imagePath, 'imagePath id is Required');
 
-  if (req.body.user_type === userConstants.USER_TYPE_CHEF) contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
-
+  if (req.body.user_type === userConstants.USER_TYPE_CHEF) 
+    contract.isRequired(req.body.restaurant_name, 'Restaurant name is required!');
 
   if (!contract.isValid()) {
       return res.status(HttpStatus.CONFLICT).send({message:"Review user info"});
   }
-  const existUser = await User.findOne({ where: { email: req.body.email } });
+
+  if(req.body.provider == 'apple') {
+
+    //get kid 
+
+    let decodedToken = jwt.decode(req.body.jwt, {
+      complete: true
+    });
+
+    if(!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
+      res.status(HttpStatus.CONFLICT).send({ message: 'KID missing from token', status: HttpStatus.CONFLICT});
+      return 0;
+    }
+
+    const applePublicKey = await getApplePublicKey(decodedToken.header.kid);
+    
+    jwt.verify(req.body.jwt, applePublicKey, { ignoreExpiration: true }, function (error, decoded) {
+
+      debug('accessToken', error);
+      debug('verifyAccessToken', decoded);
+      //if (jwtClaims.exp < (Date.now() / 1000)) throw new Error('id token has expired');
+      console.info(decoded);
+      if(error || !decoded.email) {
+        res.status(HttpStatus.CONFLICT).send({
+          message: "Invalid token",
+          error: error,
+          payload: decoded
+        }); 
+        return 0;
+      }
+
+      email = decoded.email;
+    });
+  }
+
+  if(!email) {
+    return false;
+  }
+
+  const existUser = await User.findOne({ where: { email: email } });
 
   if (existUser) {
     res.status(HttpStatus.CONFLICT).send({ message: 'user already exists', status: HttpStatus.CONFLICT});
@@ -178,12 +217,12 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
   let user = {};
 
   user.name = req.body.name;
-  user.email = req.body.email;
+  user.email = email;
   user.user_type = req.body.user_type;
   user.provider = req.body.provider;
-  user.provider_user_id = req.body.provider_user_id;
   user.imagePath = req.body.imagePath;
-
+  user.provider_user_id = req.body.provider_user_id;  
+  
   /*if (user.user_type === userConstants.USER_TYPE_DRIVER) {
     await driverAPI.createDriver({
       name: user.name,
@@ -210,7 +249,7 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
   await createdUser.save();
 
   const existUserNew = await User.findOne({
-   where: { email: req.body.email },
+   where: { email: email },
    attributes: userConstants.privateSelectFields,
    include: [{
       model: ShippingAddress,
@@ -225,12 +264,10 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
     "status": HttpStatus.CREATED,
     result: existUserNew
   });
-
-
 });
 
 exports.authenticate = asyncHandler(async (req, res, next) => {
-  console.log(req.body)
+   
   const { password,device_id } = req.body;
   debug('body', req.body);
 
