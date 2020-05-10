@@ -124,6 +124,14 @@ exports.findPlate = async (data) => {
 				{
 					model: User,
 					as: 'chef',
+					required: true,//don't list orphan plates 
+					include: [
+						{
+							model: ShippingAddress,
+							as: 'address',
+							required: true//can't list plates if no address to pick order available
+						},
+					],
 				},
 			],
 		});
@@ -184,7 +192,13 @@ exports.getPlate = async ({ req, plateId }) => {
 				model: User,
 				as: 'chef',
 				attributes: userConstants.userSelectFields,
+				required: true,//don't list orphan plates 
 				include: [
+					{
+						model: ShippingAddress,
+						as: 'address',
+						required: true//can't list plates if no address to pick order available
+					},
 					{
 						model: AggregateReview,
 						required: false,
@@ -299,6 +313,7 @@ exports.deleteKitchenImage = async (data) => {
 
 exports.getPlateSearch = async (data) => {
 	try {
+
 		const response = await Plates.findAll({
 			where: {
 				name: { [Op.like]: '%' + data + '%' },
@@ -306,7 +321,23 @@ exports.getPlateSearch = async (data) => {
 			attributes: {
 				exclude: ['UserId'],
 			},
+			include: [
+				{
+					model: User,
+					as: 'chef',
+					attributes: userConstants.userSelectFields,
+					required: true,//don't list orphan plates 
+					include: [
+						{
+							model: ShippingAddress,
+							as: 'address',
+							required: true//can't list plates if no address to pick order available
+						}
+					],
+				}
+			]
 		});
+
 		return response;
 	} catch (e) {
 		console.log('Error: ', e);
@@ -356,6 +387,7 @@ exports._nearHelper = ({ req }) => {
 				'deliveryPriceEstimate',
 			],
 		];
+
 		plateHavingQuery = { distance: { [Sequelize.Op.lte]: radiusDistance } };
 
 		plateOrderByQuery = [[sequelize.col('distance'), 'ASC']];
@@ -419,6 +451,7 @@ exports.searchPlates = async ({ req, query, pagination }) => {
 	//filter queries
 	//'sort','priceRange','deliveryPrice','dietary'
 	let plateSelectAttributes = plateConstants.selectFields;
+
 	let {
 		userNearQuery,
 		plateHavingQuery,
@@ -516,6 +549,7 @@ exports.searchPlates = async ({ req, query, pagination }) => {
 		dietWhereQUery.name = query.dietary;
 	}
 	console.log(plateOrderByQuery);
+
 	const queryOptions = {
 		where: whereQuery,
 		attributes: [...plateConstants.selectFields],
@@ -526,7 +560,13 @@ exports.searchPlates = async ({ req, query, pagination }) => {
 				model: User,
 				as: 'chef',
 				attributes: userConstants.userSelectFields,
+				require: true,
 				include: [
+					{
+						model: ShippingAddress,
+						as: 'address',
+						required: true//can't list plates if no address to pick order available
+					},
 					{
 						model: AggregateReview,
 						required: false,

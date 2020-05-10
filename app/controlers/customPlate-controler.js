@@ -865,7 +865,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 	//check chef address available 
 
 	for(let elem of basketItems) {
- 
+  
 		const basketType = elem.basket_type;
 		 
 		let loc; 
@@ -1129,7 +1129,9 @@ exports.pay = asyncHandler(async (req, res, next) => {
 
 		//create order items and remove basket items
 		const oderItemsPayload = basketItems.map(async (basketItem) => {
+			
 			const basketType = basketItem.basket_type;
+
 			const orderItem = {
 				orderId: create_order.id,
 				item_type: basketItem.basket_type,
@@ -1166,6 +1168,7 @@ exports.pay = asyncHandler(async (req, res, next) => {
 		});
 
 		//create order items
+
 		let myOrderList = await Promise.all(oderItemsPayload);
 
 		const createdOrderItems = await repositoryOrder.createOrderItems(
