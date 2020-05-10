@@ -37,7 +37,9 @@ const { generateHash } = require('../../helpers/password');
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
     const contract = new ValidationContract();
+    
     let { email, device_id } = req.body;
+
     contract.isRequired(req.body.provider, 'provider is Required');
 
     if(req.body.provider != 'apple') {
@@ -52,22 +54,42 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     }
 
     if(req.body.provider == 'apple') {
-      const getApplePublicKey = async () => {
+
+      const getApplePublicKey = async (kid) => {
         const ENDPOINT_URL = 'https://appleid.apple.com';
         const url = new URL(ENDPOINT_URL);
         url.pathname = '/auth/keys';
       
         const data = await request({ url: url.toString(), method: 'GET' });
-        const key = JSON.parse(data).keys[0];
+        let key; 
+        
+        for(let a of JSON.parse(data).keys) {
+          if(a.kid == kid) {
+            key = a;
+            break;
+          }
+        }
       
         const pubKey = new NodeRSA();
         pubKey.importKey({ n: Buffer.from(key.n, 'base64'), e: Buffer.from(key.e, 'base64') }, 'components-public');
         return pubKey.exportKey(['public']);
       };
 
-      const applePublicKey = await getApplePublicKey();
+      //get kid 
+
+      let decodedToken = jwt.decode(req.body.jwt, {
+        complete: true
+      });
+
+      if(!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
+        res.status(HttpStatus.CONFLICT).send({ message: 'KID missing from token', status: HttpStatus.CONFLICT});
+        return 0;
+      }
+
+      const applePublicKey = await getApplePublicKey(decodedToken.header.kid);
       
-      jwt.verify(req.body.jwt, applePublicKey, function (error, decoded) {
+      jwt.verify(req.body.jwt, applePublicKey, { ignoreExpiration: true }, function (error, decoded) {
+
         debug('accessToken', error);
         debug('verifyAccessToken', decoded);
         //if (jwtClaims.exp < (Date.now() / 1000)) throw new Error('id token has expired');
@@ -82,6 +104,10 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
 
         email = decoded.email;
       });
+    }
+
+    if(!email) {
+      return false;
     }
 
     const existUser = await User.findOne({
@@ -126,7 +152,9 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
 
 exports.socialauthRegister = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
-let {device_id} = req.body;
+
+  let {device_id} = req.body;
+
   contract.isRequired(req.body.email, 'email is Required');
   contract.isRequired(req.body.name, 'name is Required');
   contract.isRequired(req.body.user_type, 'user_type is Required');
