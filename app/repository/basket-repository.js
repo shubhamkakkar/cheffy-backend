@@ -220,6 +220,7 @@ exports.listBasketCustom = async (data) => {
  * both plates and custom plate orders
  */
 exports.getBasketItemsDetail = async (basketId) => {
+	
 	let existBasket = await BasketItem.findAll({
 		where: { basketId: basketId },
 		attributes: [
@@ -251,10 +252,12 @@ exports.getBasketItemsDetail = async (basketId) => {
 						model: User,
 						as: 'chef',
 						attributes: userConstants.userSelectFields,
+						required: true,
 						include: [
 							{
 								model: ShippingAddress,
 								as: 'address',
+								required: true
 							},
 						],
 					},
@@ -279,10 +282,12 @@ exports.getBasketItemsDetail = async (basketId) => {
 						model: User,
 						as: 'chef',
 						attributes: userConstants.userSelectFields,
+						required: true,
 						include: [
 							{
 								model: ShippingAddress,
 								as: 'address',
+								required: true
 							},
 						],
 					},
@@ -291,7 +296,9 @@ exports.getBasketItemsDetail = async (basketId) => {
 		],
 	});
 
-	return existBasket;
+	//need atleast 1 in backetItem
+
+	return existBasket.filter(item => item.plate || item.custom_plate);
 };
 
 exports.peopleAlsoAddedList = async (plateId) => {
@@ -375,6 +382,8 @@ exports.checkPlateChefSameAsBasketItemChef = async (basketId, plates) => {
 	//Get the first plateId and then the chef's Id of that plate as all the plates in basket will have same chef
 	let plateId = k[0].plateId;
 
+	//ordered plate's chef id 
+
 	const plateChefId = await Plates.findOne({
 		attributes: ['userId'],
 		where: {
@@ -386,11 +395,13 @@ exports.checkPlateChefSameAsBasketItemChef = async (basketId, plates) => {
 	if(!plateChefId) {
 		return false;
 	}
-
+ 
 	//Need to validate against one basket item's chef as all basket items of a basket will have same chef
-	let basketItems = await this.getBasketItems(basketId);
 	
+	let basketItems = await this.getBasketItemsDetail(basketId);
+	 
 	if (!_.isEmpty(basketItems)) {
+
 		const plate = await Plates.findOne({
 			attributes: ['userId'],
 			where: {
@@ -398,6 +409,8 @@ exports.checkPlateChefSameAsBasketItemChef = async (basketId, plates) => {
 			},
 		});
 
+		//basket item's chefId should match to requested plate's chefId 
+ 
 		if (plate && plate.userId !== plateChefId.userId) {
 			return false;
 		}

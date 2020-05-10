@@ -54,6 +54,7 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 		basket[0].id,
 		req.body.plates
 	);
+
 	if (!platesChefSameAsBasketItemChef) {
 		return res.status(HttpStatus.CONFLICT).send({
 			message:
@@ -61,6 +62,7 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 			error: true,
 		});
 	}
+	
 	//Check if chef of the plates in the request matches with chef of the plates in the basketItem
 
 	let item_list = req.body.plates;
