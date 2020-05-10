@@ -108,14 +108,14 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   //if isDefaultAddress is sent from request, check if default shipping address exists.
   //if not continue. if yes then throw bad response
-  if(req.body.isDefaultAddress === true) {
-    const existAddress = await repository.getUserDefaultAddress(userId);
-    if(existAddress) {
-      return res.status(HttpStatus.BAD_REQUEST).send({ message: "Default shipping address already set. Please remove isDefaultAddress from request"});
-    }
-    //if no default shippingAddress exists, set the location field of user
-    //shipping address with isDefaultAddress will be created
-  } else {
+  // if(req.body.isDefaultAddress === true) {
+  //   const existAddress = await repository.getUserDefaultAddress(userId);
+  //   if(existAddress) {
+  //     return res.status(HttpStatus.OK);
+  //   }
+  //   //if no default shippingAddress exists, set the location field of user
+  //   //shipping address with isDefaultAddress will be created
+  // } else {
     //if no isDefaultAddress sent in body check for shipping Addres count.
     //if this is the first shipping address, set it as default and update user location fields
 
@@ -125,7 +125,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       full_data.isDefaultAddress = true;
       await exports._updateUserLocation(req, req.body.lat, req.body.lon);
     }
-  }
+  //}
 
   const address = await repository.createAddress(full_data);
 
