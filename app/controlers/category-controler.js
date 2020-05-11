@@ -51,6 +51,8 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 	if (req.files && req.files["category_image"]) {
 		createPayload.url = req.files["category_image"][0].key;
+	} else {
+		createPayload.url = '';
 	}
 
 	const category = await repository.createCategory(createPayload);

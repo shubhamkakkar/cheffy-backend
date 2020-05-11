@@ -5,13 +5,13 @@ const config = require(path.resolve('config/database.js'));
 
 const db = {};
 
-const sequelize = new Sequelize(config.mysql);
+//const sequelize = new Sequelize(config.mysql);
 
-/*const sequelize = new Sequelize('database_test', 'root', 'root', {
+const sequelize = new Sequelize('database_test', 'root', 'root', {
   host: 'localhost',
   port: '8889',
   dialect: 'mysql'
-});*/
+});
 
 fs
   .readdirSync(__dirname)
