@@ -7,6 +7,7 @@ const nunjucks = require('nunjucks');
 const errors = require('./errors');
 const routes = require('./routes');
 const morgan = require("morgan");
+
 var corsOptions = {
   origin: '*',
   optionsSuccessStatus: 200

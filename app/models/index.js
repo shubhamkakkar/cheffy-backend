@@ -7,12 +7,12 @@ const db = {};
 
 //const sequelize = new Sequelize(config.mysql);
 
-const sequelize = new Sequelize('c821iyxdz9lgx1ut', 'n2ad1m9h9pnmrnhx', 'tfmdz7w8adok6587', {
-  host: "umabrisfx8afs3ja.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",//config.mysql.host,
-//  port: '8889',//config.mysql.port,
-  dialect: 'mysql'//config.mysql.dialect
+const sequelize = new Sequelize('database_test', 'root', 'root', {
+  host: 'localhost',
+  port: '8889',
+  dialect: 'mysql'
 });
-  
+
 fs
   .readdirSync(__dirname)
   .filter(file => (file.indexOf('.') !== 0) && (file !== path.basename(__filename)) && (file.slice(-3) === '.js'))

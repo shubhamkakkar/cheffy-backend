@@ -17,7 +17,7 @@ const fieldsFile = udpateFields.map(field => {
 router.post(
 	"/",
 	authService.authorize,
-	userController.getAuthUserMiddleware,
+	//userController.getAuthUserMiddleware,
 	multerStart(fieldsFile),
 	controller.create
 );
@@ -25,7 +25,7 @@ router.post(
 router.put(
 	"/edit/:categoryId",
 	authService.authorize,
-	userController.getAuthUserMiddleware,
+	//userController.getAuthUserMiddleware,
 	categoryPolicies.isOwnerMiddleware(),
 	multerStart(fieldsFile),
 	controller.edit

@@ -81,6 +81,7 @@ exports.verifyAccessToken = asyncHandler(async(req, res, next) => {
 
 //called after authorize middleware
 exports.checkUserLoggedOut = asyncHandler(async(req, res, next) => {
+  
   if(!req.userId) return next();
 
   //check if user with id exists and auth_token is present in database

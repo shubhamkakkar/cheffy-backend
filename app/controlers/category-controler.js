@@ -71,7 +71,7 @@ exports.list = asyncHandler(async (req, res, next) => {
 	const query = { pagination };
 
 	const categories = await repository.listCategories(query);
-	console.log(query);
+	
 	res.status(HttpStatus.OK).send({
 		message: "Categories!",
 		data: categories,
