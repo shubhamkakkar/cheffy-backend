@@ -27,32 +27,34 @@ exports.getWalletData = async (userId) => {
 }
 
 exports.addDriversMoneyToWallet = async (userId, order_total) => {
-
-
+ 
     /* Considering the commission of 2% so calculating 2 percent of delivery
     amount and updating that amount balance in driver wallet */
 
-    let commissionValue = (commission.commissionValue/100)* order_total
+    let commissionValue = (commission.commissionValue/100)* order_total;
+
     try {
       let driverWalletBalance = await Wallet.findOne({
         where: {
           userId: userId
         },
         attribute: ['balance']
-      })
+      });
+
       if(driverWalletBalance) {
         let previousBalance = driverWalletBalance.balance
         let newBalance = previousBalance + commissionValue
 
-
         let balanceDetails = {
           balance: newBalance
         }
+
         return await Wallet.update(balanceDetails, {
           where: {
             userId: userId    
           }
-        })
+        });
+
       }else{
         let total = commissionValue;
         let data = {};
@@ -116,14 +118,16 @@ exports.addTipToWallet = async (userId, tip) => {
       where: { userId: userId },
       attribute: ['tip'],
     });
+    
     if (walletTip) {
+
       let previousTip = walletTip.tip
       let newTip = previousTip + tip
-
 
       let tipDetails = {
         tip: newTip
       }
+
       return await Wallet.update(tipDetails, {
         where: {
           userId: userId

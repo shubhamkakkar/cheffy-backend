@@ -9,6 +9,7 @@ exports.isUser = (req, res, next) =>  {
 };
 
 exports.isAdmin = (req, res, next) =>  {
+	 
 	if (req.user && req.user.user_type === userConstants.USER_TYPE_ADMIN) {
 		return true;
 	}

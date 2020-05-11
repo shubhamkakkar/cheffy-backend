@@ -37,12 +37,24 @@ const notificationConstant = require(path.resolve(
 	'app/constants/notification'
 ));
 const repositoryUser = require(path.resolve('app/repository/user-repository'));
+const policyHelpers = require(path.resolve('app/policies/helpers'));
+const middlewares = require(path.resolve('./server/middlewares'));
+
 const _ = require('underscore');
 distance_mat.key(matrixKey.matrixKey);
 distance_mat.units('metric');
 
+exports.isAdminMiddleware = (app) => {
+	return [
+	  middlewares.authorization((req) => {
+		return policyHelpers.isAdmin(req);
+	  })
+	];
+  };
+
 exports.orderDeliveryByIdMiddleware = asyncHandler(
 	async (req, res, next, orderDeliveryId) => {
+		console.info(req);
 		const orderDelivery = await deliveryRepository.getById(orderDeliveryId);
 		if (!orderDelivery)
 			return res.status(HttpStatus.NOT_FOUND).send({
@@ -380,14 +392,93 @@ exports.checkCanceled = (req, res, next) => {
 
 exports.addMoneyToWallet = async (req, res, next) => {
 	const driverId = req.user.id;
+
 	const order = await Order.findOne({
 		where: { id: req.orderDelivery.orderId },
 		attributes: ['order_total'],
 	});
 
 	const orderAmount = order.order_total;
+	
+	await walletRepository.addDriversMoneyToWallet(driverId, orderAmount);
+	next();
+};
+
+exports.addDriverBonusToWallet = asyncHandler(async (req, res, next) => {
+	//debug('req.body', JSON.stringify(req.body));
+
+	let contract = new ValidationContract();
+	const { driverId, amount  } = req.body;
+
+	contract.isRequired(req.body.driverId, 'Driver ID is required!');
+	contract.isRequired(req.body.amount, 'Amount is required!');
+
+	if (!contract.isValid()) {
+		res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+		return 0;
+	}
+
+	if(req.orderDelivery && req.orderDelivery.is_driver_bonus_added) {
+		res.status(HttpStatus.BAD_REQUEST).send({
+			message: 'Driver bonus already added',
+		});
+		return 0;
+	}
+
+	if(!req.orderDelivery) {
+
+		let deliveyWithoutBonus = OrderDelivery.findOne({ where: { 
+			is_driver_bonus_added : 0,
+			driverId :  driverId
+		}}); 
+		
+		if(!deliveyWithoutBonus) {
+			res.status(HttpStatus.BAD_REQUEST).send({
+				message: 'Driver bonus already added for last deliveries',
+			});
+			return 0;
+		}
+	}
+
+	await walletRepository.addTipToWallet(driverId, Number(amount));
+
+	if(req.orderDelivery) {
+		req.orderDelivery.is_driver_bonus_added = 1;
+		req.orderDelivery.save();
+	} else {
+		OrderDelivery.update({ is_driver_bonus_added : 1 }, { 
+			where : { 
+				driverId :  driverId
+			}
+		}); 
+	}
+
+	res.status(HttpStatus.OK).send({
+		message: 'Driver bonus added',
+	});
+});
+
+exports.addDriverCommissionToWallet = async (req, res, next) => {
+	const driverId = req.user.id;
+
+	const order = await Order.findOne({
+		where: { id: req.orderDelivery.orderId },
+		attributes: ['order_total'],
+	});
+
+	const orderAmount = order.order_total;
+	
+	if(req.orderDelivery.is_driver_commission_added) {
+		return res.status(HttpStatus.BAD_REQUEST).send({
+			message: 'Driver commission already added',
+		});
+		return 0;
+	}
 
 	await walletRepository.addDriversMoneyToWallet(driverId, orderAmount);
+
+	req.body.is_driver_commission_added = true;
+
 	next();
 };
 
@@ -398,7 +489,7 @@ exports.completeDelivery = [
 		req.body.dropoff_time = sequelize.literal('CURRENT_TIMESTAMP');
 		next();
 	},
-	//exports.addMoneyToWallet,
+	exports.addDriverCommissionToWallet,
 	exports.editStateType('Delivery Completed!'),
 	(req) => {
 		setupAndSendDeliveryCompleteNotification(req.orderDelivery);

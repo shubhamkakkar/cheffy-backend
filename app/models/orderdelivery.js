@@ -41,6 +41,14 @@ module.exports = (sequelize, DataTypes) => {
       )
     },
     rating: DataTypes.INTEGER,
+    is_driver_commission_added: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false 
+    },
+    is_driver_bonus_added: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false 
+    },
     driverId: {
       type: DataTypes.INTEGER,
       references: {

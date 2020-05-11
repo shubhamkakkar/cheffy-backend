@@ -5,14 +5,18 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controlers/delivery-controler');
 const authService = require('../services/auth');
+
 const userController = require(path.resolve('app/controlers/user-controler'));
 const orderController = require(path.resolve('app/controlers/order-controler'));
+
 const driverController = require(path.resolve(
 	'app/controlers/driver-controler'
 ));
+
 const orderDeliveryPolicies = require(path.resolve(
 	'app/policies/order-delivery'
 ));
+
 const middlewares = require(path.resolve('server/middlewares'));
 
 router.post(
@@ -95,6 +99,22 @@ router.put(
 	userController.getAuthUserMiddleware,
 	orderDeliveryPolicies.isOrderDeliveryDriverMiddleware(),
 	controller.completeDelivery
+);
+
+router.put(
+	'/bonus',
+	authService.authorize,
+	userController.getAuthUserMiddleware,
+	controller.isAdminMiddleware(),
+	controller.addDriverBonusToWallet
+);
+
+router.put(
+	'/bonus/:orderDeliveryId',
+	authService.authorize,
+	userController.getAuthUserMiddleware,
+	controller.isAdminMiddleware(),
+	controller.addDriverBonusToWallet
 );
 
 router.param('orderId', orderController.orderByIdMiddleware);

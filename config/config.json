@@ -16,10 +16,11 @@
 	},
 	"test": {
 		"username": "root",
-		"password": null,
+		"password": "root",
 		"database": "database_test",
-		"host": "127.0.0.1",
-		"dialect": "mysql"
+		"host": "localhost",
+		"dialect": "mysql",
+		"port": "8889"
 	},
 	"production": {
 		"username": "n2ad1m9h9pnmrnhx",
