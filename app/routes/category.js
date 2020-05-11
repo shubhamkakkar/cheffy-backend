@@ -26,7 +26,7 @@ router.put(
 	"/edit/:categoryId",
 	authService.authorize,
 	//userController.getAuthUserMiddleware,
-	categoryPolicies.isOwnerMiddleware(),
+	//categoryPolicies.isOwnerMiddleware(),
 	multerStart(fieldsFile),
 	controller.edit
 );
