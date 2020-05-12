@@ -174,13 +174,13 @@ exports.remove = asyncHandler(async (req, res, next) => {
    let existAddress = req.shippingAddress;
 
    if(existAddress.isDefaultAddress === true) {
-     res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove default address'});
+     return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove default address'});
    }
 
    const orderExists = await Order.findOne({where: {shippingId: existAddress.id}});
 
    if(orderExists) {
-     res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove address. Order exists for this address'});
+     return res.status(HttpStatus.BAD_REQUEST).send({ message: 'Cannot remove address. Order exists for this address'});
    }
 
    await existAddress.destroy();
