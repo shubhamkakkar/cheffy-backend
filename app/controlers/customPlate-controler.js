@@ -159,6 +159,14 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
 			status: HttpStatus.BAD_REQUEST,
 		});
 	}
+	let shippingAddress = await basketRepository.getShippingAddressOfUser(user.id);
+
+	if (!shippingAddress) {
+		return res.status(HttpStatus.CONFLICT).send({
+			message: `Please enter atleast one address for shipping.`,
+			status: HttpStatus.CONFLICT,
+		});
+	}
 
 	let data_received = customPlateInputFilter.filter(req.body, 'form-data');
 	let images, images_create;
