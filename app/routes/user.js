@@ -144,6 +144,14 @@ router.get('/searchPredictions', controller.searchPredictions);
 router.get('/peopleAlsoAdded/:id', basketController.peopleAlsoAddedList);
 
 //Bank Accounts
+
+router.post(
+	'/ephemeral_keys',
+	authService.authorize,
+	controller.getAuthUserMiddleware,
+	controller.getEphemeralKeys
+);
+
 router.get(
 	'/stripeDetails',
 	authService.authorize,

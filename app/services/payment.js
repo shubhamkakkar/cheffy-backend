@@ -2,7 +2,7 @@
 const path = require('path');
 const paymentConfig = require(path.resolve('config/payment'));
 
-const stripe = require('stripe')(paymentConfig.stripe.client_secret);
+const stripe = require('stripe')('sk_test_M5Hmfwb5Xb8ZD1lmedG3dmXD003y6owZ8D');
 const paypal = require('paypal-rest-sdk');
 const debug = require('debug')('payment-service');
 
@@ -87,6 +87,19 @@ exports.getUser = async (userStripeId) => {
   debug("STRIPE Get user: ", userStripeId)
   const user_req = await stripe.customers.retrieve(userStripeId);
   return user_req;
+}
+
+/**
+* Retrieve EphemeralKey by stripeId
+*/
+
+exports.getEphemeralKey = async (userStripeId, apiVersion) => {
+  debug("STRIPE Get user: ", userStripeId)
+  
+  let key = await stripe.ephemeralKeys.create(
+    { customer: userStripeId },
+    { stripe_version: apiVersion });  
+  return key;
 }
 
 /**

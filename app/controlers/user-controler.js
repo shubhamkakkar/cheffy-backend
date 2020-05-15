@@ -1257,6 +1257,25 @@ exports.stripeDetails = asyncHandler(async (req, res) => {
 	}
 });
 
+exports.getEphemeralKeys = asyncHandler(async (req, res, next) => {
+	var api_version = req.body.api_version;
+	var customerId = req.user.stripe_id;
+
+	if (!api_version) {
+		res.status(400).end();
+		return;
+	}
+	try {
+		const key = await paymentService.getEphemeralKey(customerId, api_version);
+		return res.status(HttpStatus.OK).send(key);
+	} catch(e) {
+		console.log(e);
+		res.send({
+			message: 'No such customer with stripe id: '+customerId 
+		})
+	}
+});
+
 //Method to create a bank account for a user
 
 exports.createBankAccount = asyncHandler(async (req, res, next) => {
@@ -1282,6 +1301,7 @@ exports.createBankAccount = asyncHandler(async (req, res, next) => {
 			.send({ message: err.message });
 	}
 });
+
 
 //Method to update a bank account for a user
 exports.updateBankAccount = asyncHandler(async (req, res, next) => {
