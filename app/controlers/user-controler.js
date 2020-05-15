@@ -838,12 +838,12 @@ exports.setZoomCredentials = asyncHandler(async (req, res, next) => {
 		return 0;
 	}
 
-	const existUser = req.user;
+	const user = req.user;
 
-	existUser.zoom_id = req.body.zoom_id;
-	existUser.zoom_pass = req.body.zoom_pass;
+	const updates = userInputFilter.updateFields.filter(req.body);
+
 	try {
-		await existUser.save();
+		await user.update(updates);
 	  } catch (err) { }
 	
 	res.status(HttpStatus.OK).send({

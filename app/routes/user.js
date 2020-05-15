@@ -58,7 +58,7 @@ router.post('/socialauth', authController.socialauth);
 router.post('/socialauth/register', authController.socialauthRegister);
 
 // zoom credentials
-router.post(
+router.put(
 	'/zoom',
 	authService.authorize,
 	controller.getAuthUserMiddleware,
