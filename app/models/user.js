@@ -41,6 +41,8 @@ module.exports = (sequelize, DataTypes) => {
     stripe_id: DataTypes.STRING,
     provider: DataTypes.STRING,
     provider_user_id: DataTypes.STRING,
+    zoom_id: DataTypes.STRING,
+    zoom_pass: DataTypes.STRING,
     promotionalContent: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,

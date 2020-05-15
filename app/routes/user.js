@@ -57,6 +57,14 @@ router.post('/logout', authService.authorize, authController.logout);
 router.post('/socialauth', authController.socialauth);
 router.post('/socialauth/register', authController.socialauthRegister);
 
+// zoom credentials
+router.post(
+	'/zoom',
+	authService.authorize,
+	controller.getAuthUserMiddleware,
+	controller.setZoomCredentials
+);
+
 // phone add and verify routes
 router.post(
 	'/phone',

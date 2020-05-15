@@ -826,6 +826,33 @@ exports.setUserPhone = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * Sets zoom_id and zoom_pass in user.
+ */
+exports.setZoomCredentials = asyncHandler(async (req, res, next) => {
+	let contract = new ValidationContract();
+	contract.isRequired(req.body.zoom_id, 'Zoom Id is Required!');
+	contract.isRequired(req.body.zoom_pass, 'Zoom Password is Required!');
+
+	if (!contract.isValid()) {
+		res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
+		return 0;
+	}
+
+	const existUser = req.user;
+
+	existUser.zoom_id = req.body.zoom_id;
+	existUser.zoom_pass = req.body.zoom_pass;
+	try {
+		await existUser.save();
+	  } catch (err) { }
+	
+	res.status(HttpStatus.OK).send({
+		message: 'zoom credentials saved',
+		status: HttpStatus.OK,
+	});
+});
+
+/**
  * Verify user phone. User sends sms_token in request
  */
 exports.verifyUserPhone = asyncHandler(async (req, res, next) => {
