@@ -1259,7 +1259,7 @@ exports.stripeDetails = asyncHandler(async (req, res) => {
 
 exports.getEphemeralKeys = asyncHandler(async (req, res, next) => {
 	var api_version = req.body.api_version;
-	var customerId = req.user.stripe_id;
+	var customerId = req.body.customerId;
 
 	if (!api_version) {
 		res.status(400).end();
