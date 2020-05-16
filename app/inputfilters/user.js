@@ -13,7 +13,8 @@ exports.updateFields = require(path.resolve('app/inputfilters/whitelist'))(
   'location_lat',
   'location_lon',
   'zoom_id',
-  'zoom_pass'
+  'zoom_pass',
+  'skip_doc'
 ], 'form-data');
 
 exports.locationFields = require(path.resolve('app/inputfilters/whitelist'))(

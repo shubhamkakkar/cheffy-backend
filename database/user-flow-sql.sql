@@ -1,39 +1,39 @@
 
 /*users*/
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (1000,'james','james@gmail.com', '977','9826572342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','user','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (2,'adam','adam@gmail.com', '1','9926572342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','user','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (3,'chris','chris@gmail.com', '34','9526572345','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','user','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 
 /*chefs*/
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (4,'gordon','gordon@gmail.com', '34','9226572342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','chef','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (5,'almazan','almazan@gmail.com', '12','8926572342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','chef','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (6,'sanjeev','sanjeev@gmail.com', '13','7526572345','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','chef','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 
 /*drivers*/
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (7,'nicky','nicky@gmail.com', '14','5926574342','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','driver','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 INSERT INTO `Users`
-(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`createdAt`,`updatedAt`)
+(`id`,`name`,`email`,`country_code`,`phone_no`,`password`,`user_type`,`imagePath`,`verification_email_token`,`verification_email_status`,`verification_phone_token`,`verification_phone_status`,`zoom_id`,`zoom_pass`,`skip_doc`,`createdAt`,`updatedAt`)
 VALUES (8,'cook','cook@gmail.com', '15','5526572341','$2b$10$ULchVq9SgXHd7.0Kz2Puf.MZ9qoVySHqsxqauDqAZgOEl3Sn/dh6C','driver','https://lorempixel.com/300/300/people',null,'verified',null,'verified','123456','asdfgh','2019-12-17','2019-12-17');
 
 

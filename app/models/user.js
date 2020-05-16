@@ -43,6 +43,10 @@ module.exports = (sequelize, DataTypes) => {
     provider_user_id: DataTypes.STRING,
     zoom_id: DataTypes.STRING,
     zoom_pass: DataTypes.STRING,
+    skip_doc: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     promotionalContent: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
