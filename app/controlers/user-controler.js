@@ -593,6 +593,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
 		req.body.password,
 		bcrypt.genSaltSync(10)
 	);
+	existUser.skip_doc = req.body.skip_doc;
 
 	existUser.promotionalContent = req.body.promotionalContent;
 
