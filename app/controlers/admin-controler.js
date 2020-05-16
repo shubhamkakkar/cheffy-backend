@@ -49,8 +49,20 @@ exports.listAllDocs = async (req, res, next) => {
 
 exports.checkDocs = async (req, res, next) => {
   try {
+    const customer = await repository.authenticateToken({
+      token: req.body.token,
+    });
+  } catch(e) {
+    res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to process"
+    });
+  }
+ 
+  try {
     await repositoryDocs.updateChefLicense(req.body.chef_license)
-    await repositoryDocs.updateChefCertificate(req.body.chef_certificate)
+    if (!customer.skip_doc) {
+      await repositoryDocs.updateChefCertificate(req.body.chef_certificate)
+    }
     await repositoryDocs.updateKitchenPhoto(req.body.kitchen_photo)
     await repositoryDocs.updateNIDFrontSide(req.body.front_side)
     await repositoryDocs.updateProfilePhoto(req.body.profile_photo)

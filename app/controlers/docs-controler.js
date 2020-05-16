@@ -69,7 +69,9 @@ exports.create = asyncHandler(async (req, res, next) => {
     /*Code updated on 8th May 2020 Removing valiation of SSN Numbers*/
     //contract.isRequired(req.body.social_security_number, 'The social security number is incorrect! field: social_security_number');
     contract.isRequired(req.files['chef_license'], "Chef's license is missing! field: chef_license ");
-    contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing! field: chef_certificate");
+    if (!actualUser.skip_doc) {
+      contract.isRequired(req.files['chef_certificate'], "Chef's certificate is missing! field: chef_certificate");
+    }
     contract.isRequired(req.files['kitchen_photo'], "Kitchen photo is missing! field: kitchen_photo");
     contract.isRequired(req.files['front_side'], "Front side document is missing. field: front_side");
     contract.isRequired(req.files['profile_photo'], "User photo is missing. field: profile_photo");
@@ -96,7 +98,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   if (actualUser.user_type === 'chef' && req.files['chef_license'])
     await repository.createChefLicense(new_doc.id, req.files.chef_license.shift());
-  if (actualUser.user_type === 'chef' && req.files['chef_certificate'])
+  if (actualUser.user_type === 'chef' && req.files['chef_certificate'] && !actualUser.skip_doc)
     await repository.createChefCertificate(new_doc.id, req.files.chef_certificate.shift());
   if (actualUser.user_type === 'chef' && req.files['kitchen_photo'])
     await repository.createKitchenPhoto(new_doc.id, req.files.kitchen_photo.shift());
