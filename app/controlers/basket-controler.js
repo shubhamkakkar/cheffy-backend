@@ -4,6 +4,7 @@ const HttpStatus = require('http-status-codes');
 const { User, OrderFrequency } = require('../models/index');
 const ValidationContract = require('../services/validator');
 const repository = require('../repository/basket-repository');
+const shippingRepository = require("../repository/shipping-repository");
 const md5 = require('md5');
 const authService = require('../services/auth');
 const asyncHandler = require('express-async-handler');
@@ -34,6 +35,14 @@ exports.addItem = asyncHandler(async (req, res, next) => {
 		return res.status(HttpStatus.CONFLICT).send(contract.errors());
 	}
 
+	const countShippingAddress = await shippingRepository.userShippingAddressCount(req.userId);
+
+	if(countShippingAddress == 0) {
+		res.status(HttpStatus.OK).send({
+			message: "please add address",
+			error: true
+		})
+	}
 	//get user basket. create on if it doesn't exists yet.
 	let basket = await repository.getOrCreateUserBasket(req.userId);
 	 
