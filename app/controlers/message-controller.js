@@ -11,6 +11,12 @@ exports.list = async (req, res, next) => {
     
     const token_return = await authService.decodeToken(token);
     const messages = await repository.getMessagesByUserId(token_return.id);
+    if (messages && messages.length == 0) {
+        res.status(HttpStatus.OK).send({
+            message: 'no any meesage for the user',
+            error: true
+        });
+    }
     res.set('data', (messages != null) ? JSON.stringify(messages) : null);
     return res.status(HttpStatus.OK).send();
 }

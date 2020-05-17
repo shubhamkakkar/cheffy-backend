@@ -3,9 +3,15 @@
 const { Message,sequelize } = require('../models/index');
 
 exports.getMessagesByUserId = async (id) => {
-    let messages = await Message.findAll({
-        where: { userId: id }
-    })
+    try {
+        let messages = await Message.findAll({
+            where: { userId: id }
+        });
+        return messages;
+    } catch(err) {
+        console.log(err);
+        return null;
+    }
 }
 
 exports.createConversation = async (data) => {
