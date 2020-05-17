@@ -12,6 +12,11 @@ exports.getUserReservation = asyncHandler(async (data) => {
     return response; 
 
 });
+exports.updateById = asyncHandler(async (data) => {
+
+    const response = await Reservation.findOne({where:{id:data}});
+    return response; 
+});
 
 exports.createReservation = asyncHandler(async (data) => {
 

@@ -11,6 +11,7 @@ const events = require(path.resolve('app/services/events'));
 const appConstants = require(path.resolve('app/constants/app'));
 const paginator = require(path.resolve('app/services/paginator'));
 const ValidationContract = require('../services/validator');
+const reservationInputFilter = require(path.resolve('app/inputfilters/reservation'));
 
 exports.list = asyncHandler(async(req, res, next) => {
 
@@ -18,6 +19,13 @@ exports.list = asyncHandler(async(req, res, next) => {
     res
         .status(HttpStatus.OK)
         .send({ data: response });
+  });
+
+  exports.update = asyncHandler(async(req, res, next) => {
+	const updates = reservationInputFilter.filter(req.body);
+    const response = await repository.updateById(req.params.id);
+    await response.update(updates);
+    res.status(HttpStatus.OK).send({ message:"updated successful", data: response });
   });
 
   exports.create = asyncHandler(async(req, res, next) => {
