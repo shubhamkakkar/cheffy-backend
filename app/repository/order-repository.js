@@ -253,20 +253,20 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
 					'status',
 				],
 			},
-			{
-				model: ShippingAddress,
-				attributes: [
-					'id',
-					'addressLine1',
-					'addressLine2',
-					'city',
-					'state',
-					'zipCode',
-					'lat',
-					'lon',
-				],
-				as: 'shipping',
-			},
+			// {
+			// 	model: ShippingAddress,
+			// 	attributes: [
+			// 		'id',
+			// 		'addressLine1',
+			// 		'addressLine2',
+			// 		'city',
+			// 		'state',
+			// 		'zipCode',
+			// 		'lat',
+			// 		'lon',
+			// 	],
+			// 	as: 'shipping',
+			// },
 			{
 				model: OrderItem,
 				attributes: [
@@ -279,11 +279,26 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
 					'chef_location',
 					'name',
 					'description',
+					'shippingId',
 					'amount',
 					'quantity',
 					'deliveryType',
 				],
 				include: [
+					{
+							model: ShippingAddress,
+							attributes: [
+								'id',
+								'addressLine1',
+								'addressLine2',
+								'city',
+								'state',
+								'zipCode',
+								'lat',
+								'lon',
+							],
+							as: 'shipping',
+						},
 					{
 						model: Plates,
 						as: 'plate',

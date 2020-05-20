@@ -23,13 +23,6 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    shippingId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'ShippingAddresses',
-        key: 'id'
-      }
-    },
     state_type: {
       type: DataTypes.ENUM(
         orderConstants.STATE_TYPE_PENDING,
@@ -50,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
   Order.associate = function(models) {
     Order.belongsTo(models.User, {foreignKey: 'userId', as: 'user'})
     //Order.belongsTo(models.Basket, {foreignKey: 'basketId', as: 'basket'})
-    Order.belongsTo(models.ShippingAddress, {foreignKey: 'shippingId', as: 'shipping'})
+    //Order.belongsTo(models.ShippingAddress, {foreignKey: 'shippingId', as: 'shipping'})
     Order.hasMany(models.OrderPayment)
     Order.hasMany(models.OrderItem)
     Order.hasMany(models.OrderDelivery, {as:'order_delivery'})

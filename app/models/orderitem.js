@@ -27,6 +27,13 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },*/
+    shippingId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'ShippingAddresses',
+        key: 'id'
+      }
+    },
     plate_id: {
       type: DataTypes.INTEGER,
       references: {
@@ -83,6 +90,7 @@ module.exports = (sequelize, DataTypes) => {
     OrderItem.belongsTo(models.Order, {foreignKey: 'orderId', as: 'order'});
     OrderItem.hasOne(models.OrderDelivery);
     //OrderItem.belongsTo(models.Wallet, {foreignKey: 'walletId', as: 'wallet'})
+    OrderItem.belongsTo(models.ShippingAddress, {foreignKey: 'shippingId', as: 'shipping'})
     OrderItem.belongsTo(models.Plates, {foreignKey: 'plate_id', as: 'plate'})
     OrderItem.belongsTo(models.CustomPlateOrder, {foreignKey: 'customPlateId', as: 'custom_plate_order'})
     OrderItem.belongsTo(models.User, {foreignKey: 'user_id', as: 'user'})
