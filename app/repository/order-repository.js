@@ -253,20 +253,20 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
 					'status',
 				],
 			},
-			// {
-			// 	model: ShippingAddress,
-			// 	attributes: [
-			// 		'id',
-			// 		'addressLine1',
-			// 		'addressLine2',
-			// 		'city',
-			// 		'state',
-			// 		'zipCode',
-			// 		'lat',
-			// 		'lon',
-			// 	],
-			// 	as: 'shipping',
-			// },
+			{
+				model: ShippingAddress,
+				attributes: [
+					'id',
+					'addressLine1',
+					'addressLine2',
+					'city',
+					'state',
+					'zipCode',
+					'lat',
+					'lon',
+				],
+				as: 'shipping',
+			},
 			{
 				model: OrderItem,
 				attributes: [
