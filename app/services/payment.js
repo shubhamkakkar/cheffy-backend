@@ -85,7 +85,6 @@ exports.updateUser = async (user, updates) => {
 */
 exports.getUser = async (userStripeId) => {
   debug("STRIPE Get user: ", userStripeId)
-  
   const user_req = await stripe.customers.retrieve(userStripeId);
   return user_req;
 }
@@ -93,6 +92,7 @@ exports.getUser = async (userStripeId) => {
 /**
 * Retrieve EphemeralKey by stripeId
 */
+
 exports.getEphemeralKey = async (userStripeId, apiVersion) => {
   debug("STRIPE Get user: ", userStripeId)
   

@@ -299,51 +299,51 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
 							],
 							as: 'shipping',
 						},
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: PlateImage,
-							},
-							{
-								model: User,
-								as: 'chef',
-								include: [
-									{
-										model: ShippingAddress,
-										as: 'address',
-										attributes: [
-											'id',
-											'addressLine1',
-											'addressLine2',
-											'city',
-											'state',
-											'zipCode',
-											'lat',
-											'lon',
-											'userId',
-										],
-									},
-								],
-							},
-						],
-					},
-					{
-						model: CustomPlateOrder,
-						as: 'custom_plate_order',
-						include: [
-							{
-								model: CustomPlate,
-								as: 'custom_plate',
-								include: [
-									{
-										model: CustomPlateImage,
-									},
-								],
-							},
-						],
-					},
+					// {
+					// 	model: Plates,
+					// 	as: 'plate',
+					// 	include: [
+					// 		{
+					// 			model: PlateImage,
+					// 		},
+					// 		{
+					// 			model: User,
+					// 			as: 'chef',
+					// 			include: [
+					// 				{
+					// 					model: ShippingAddress,
+					// 					as: 'address',
+					// 					attributes: [
+					// 						'id',
+					// 						'addressLine1',
+					// 						'addressLine2',
+					// 						'city',
+					// 						'state',
+					// 						'zipCode',
+					// 						'lat',
+					// 						'lon',
+					// 						'userId',
+					// 					],
+					// 				},
+					// 			],
+					// 		},
+					// 	],
+					// },
+					// {
+					// 	model: CustomPlateOrder,
+					// 	as: 'custom_plate_order',
+					// 	include: [
+					// 		{
+					// 			model: CustomPlate,
+					// 			as: 'custom_plate',
+					// 			include: [
+					// 				{
+					// 					model: CustomPlateImage,
+					// 				},
+					// 			],
+					// 		},
+					// 	],
+					// },
 				],
 			},
 			{

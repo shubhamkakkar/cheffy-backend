@@ -40,7 +40,6 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Plates',
         key: 'id'
       },
-      allowNull: true,
     },
     customPlateId: {
       type: DataTypes.INTEGER,
@@ -48,7 +47,6 @@ module.exports = (sequelize, DataTypes) => {
         model: 'CustomPlateOrders',
         key: 'id'
       },
-      allowNull: true,
     },
     item_type: {
       type: DataTypes.ENUM(
