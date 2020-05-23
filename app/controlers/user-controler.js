@@ -820,7 +820,9 @@ exports.setUserPhone = asyncHandler(async (req, res, next) => {
 		});
 		return 0;
 	}
+	const updates = userInputFilter.updateFields.filter(req.body, 'form-data');
 
+	await existUser.update(updates);
 	const retorno = await phoneService.sendMessage(phone, code);
 
 	res.status(HttpStatus.OK).send(retorno);
