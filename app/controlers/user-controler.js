@@ -820,15 +820,7 @@ exports.setUserPhone = asyncHandler(async (req, res, next) => {
 		});
 		return 0;
 	}
-	const updates = userInputFilter.updateFields.filter(req.body, 'form-data');
-	try {
-		await existUser.update(updates);
-	} catch(err) {
-		res.status(HttpStatus.OK).send({
-			message: 'same number resistered with another user, try different one',
-			status: HttpStatus.OK,
-		});
-	}
+
 	const retorno = await phoneService.sendMessage(phone, code);
 
 	res.status(HttpStatus.OK).send(retorno);

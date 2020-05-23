@@ -4,7 +4,7 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.addColumn('Users', 'order_flag', {
       type: Sequelize.BOOLEAN,
-      defaultValue: false
+      defaultValue: true
     });
   },
 
