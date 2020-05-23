@@ -57,6 +57,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    adminVerficaton: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
   },
   {
     paranoid: true,

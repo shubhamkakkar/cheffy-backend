@@ -3,7 +3,7 @@ const NotificationServices = require("./notification");
 const {User,DriverFinder, OrderDelivery} = require('../models/index')
 const userRepository = require('../repository/user-repository')
 const WAITING_TIME_FOR_ACCEPTANCE_INTERVAL=60*1000
-const FAIL_TO_FIND_DRIVERS_JOB  = "failToFindDriver"
+const FAIL_TO_FIND_DRIVERS_JOB = "failToFindDriver"
 
 function DriverFinderService(){
     DriverFinderService.prototype.findBestMatch = (data) => {

@@ -29,6 +29,30 @@ exports.findDriversInsideArea = async (latitude, longitude, radiusMiles) => {
 	return result;
 };
 
+exports.getAllDriver = async ({pagination, user_type}) => {
+  const whereQuery = { user_type };
+  const queryOptions = {
+    where: whereQuery,
+    ...pagination
+  }
+
+  const response = await User.findAll(queryOptions)
+  return response;
+}
+
+exports.acceptUserVerification = async (userId) => {
+	let user = await User.findByPk(userId);
+	user.adminVerficaton = true;
+
+	try {
+		await user.save();
+		return true
+	} catch (error) {
+		console.log(error)
+		return false
+	}	
+}
+
 exports.getUserById = async (userId) => {
 	let user = await User.findOne({
 		where: { id: userId },

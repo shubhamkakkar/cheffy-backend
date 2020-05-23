@@ -1,9 +1,13 @@
 "use strict";
 
+const path = require("path");
+const HttpStatus = require("http-status-codes");
 const repository = require("../repository/admin-repository");
 const repositoryDocs = require("../repository/docs-repository");
 const authService = require("../services/auth");
-var HttpStatus = require('http-status-codes');
+const asyncHandler = require("express-async-handler");
+const userRepository = require('../repository/user-repository');
+const paginator = require(path.resolve("app/services/paginator"));
 
 exports.authenticate = async (req, res, next) => {
   try {
@@ -36,7 +40,7 @@ exports.authenticate = async (req, res, next) => {
 exports.listAllDocs = async (req, res, next) => {
   try {
     const docs = await repository.listAllDocs();
-    res.status(HttpStatus.OK).send( docs );
+    res.status(HttpStatus.OK).send(docs);
     return 0;
   } catch (e) {
     res.status(HttpStatus.CONFLICT).send({
@@ -52,12 +56,12 @@ exports.checkDocs = async (req, res, next) => {
     const customer = await repository.authenticateToken({
       token: req.body.token,
     });
-  } catch(e) {
+  } catch (e) {
     res.status(HttpStatus.CONFLICT).send({
       message: "Fail to process"
     });
   }
- 
+
   try {
     await repositoryDocs.updateChefLicense(req.body.chef_license)
     if (!customer.skip_doc) {
@@ -79,4 +83,24 @@ exports.checkDocs = async (req, res, next) => {
     });
     return 0;
   }
+}
+
+exports.getAllUsers = asyncHandler(async (req, res, next) => {
+  const { user_type } = req.params;
+
+  const pagination = paginator.paginateQuery(req);
+  const query = { pagination, user_type };
+
+  const users = await userRepository.getAllDriver(query)
+  return res.status(HttpStatus.OK).send(users);
+})
+
+exports.acceptUserVerification = async (req, res, next) => {
+  const { user_id } = req.params;
+
+  const status = await userRepository.acceptUserVerification(user_id)
+  if (status) {
+    return res.status(HttpStatus.OK).send(status);
+  }
+  return res.status(HttpStatus.ERROR).send("error valiating user");
 }
