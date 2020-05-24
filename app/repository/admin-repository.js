@@ -46,7 +46,7 @@ exports.listAllDocs = async () => {
 
 exports.authenticateToken = async data => {
   const res = await User.findOne({
-    where: { password: data.token, user_type: 'admin' }
+    where: { email: data.email, user_type: 'admin' }
   });
   return res;
 };

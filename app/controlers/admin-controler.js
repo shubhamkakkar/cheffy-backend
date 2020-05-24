@@ -8,17 +8,25 @@ const authService = require("../services/auth");
 const asyncHandler = require("express-async-handler");
 const userRepository = require('../repository/user-repository');
 const paginator = require(path.resolve("app/services/paginator"));
+const bcrypt = require('bcrypt');
 
 exports.authenticate = async (req, res, next) => {
+  const { password,device_id } = req.body;
   try {
     const customer = await repository.authenticateToken({
-      token: req.body.token,
+      email: req.body.login,
     });
     if (!customer) {
       res.status(HttpStatus.CONFLICT).send({
-        message: "Invalid Token."
+        message: 'User does not exist in our records',
+        status: HttpStatus.OK
       });
       return;
+    }
+    let result = await bcrypt.compare(password, customer.password);
+
+    if (!result) {
+      return res.status(HttpStatus.FORBIDDEN).send({ message: 'Wrong password', data: null });
     }
     const token = await authService.generateToken({
       id: customer.id,
