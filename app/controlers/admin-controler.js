@@ -99,17 +99,8 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
 
   const pagination = paginator.paginateQuery(req);
   const query = { pagination, user_type };
-  let users = [];
 
-  if (user_type ==  userConstants.USER_TYPE_DRIVER) {
-      users = await userRepository.getAllDriver(query)
-  }
-  if (user_type ==  userConstants.USER_TYPE_CHEF) {
-      users = await userRepository.getAllDriver(query)
-  }
-  if (user_type ==  userConstants.USER_TYPE_USER) {
-      users = await userRepository.getAllDriver(query)
-  }
+  const users = await userRepository.getAllDriver(query)
   return res.status(HttpStatus.OK).send(users);
 })
 
