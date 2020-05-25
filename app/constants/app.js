@@ -24,3 +24,7 @@ exports.ACTION_TYPE_PRE_CHECKOUT = 'pre-checkout';
 exports.ACTION_TYPE_CHECKOUT_FAILED = 'checkout-failed';
 exports.ACTION_TYPE_PAYMENT_SUCCESS = 'payment-success';
 exports.ACTION_TYPE_ORDER_APPROVED = 'order-approved';
+exports.ACTION_TYPE_ORDER_COD = 'cash-on-delivery';
+exports.ACTION_TYPE_ORDER_COD_APPROVED = 'cash-on-delivery approved';
+
+

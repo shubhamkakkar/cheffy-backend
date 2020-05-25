@@ -98,6 +98,195 @@ function orderPaymentErrorResponseBuilder({
 	return orderPayment;
 }
 
+async function checkOutCashOnDelivery(req, res, create_order, basketItems, user_basket, userIds) {
+
+	const user_address = req.userShippingAddress;
+
+	const deliveryTypes = [
+		orderItemConstants.DELIVERY_TYPE_USER,
+		orderItemConstants.DELIVERY_TYPE_CHEF,
+		orderItemConstants.DELIVERY_TYPE_DRIVER,
+	];
+
+	const promoCode = req.body.promoCode;
+	const deliveryType = req.body.deliveryType;
+		//create order items and remove basket items
+		const oderItemsPayload = basketItems.map(async (basketItem) => {
+			
+			const basketType = basketItem.basket_type;
+
+			const orderItem = {
+				orderId: create_order.id,
+				item_type: basketItem.basket_type,
+				user_id: req.userId,
+				deliveryType: req.body.deliveryType,
+				//chef_location: DataTypes.STRING,
+				name: basketItem[basketType].name,
+				description: basketItem[basketType].description,
+				amount: basketItem[basketType].price,
+				quantity: basketItem.quantity,
+				note: basketItem.note,
+			};
+
+			let loc = {};
+
+			if (basketType === basketConstants.BASKET_TYPE_PLATE) {
+				loc = await repositoryOrder.userLocation(
+					basketItem.plate.userId
+				);
+				orderItem.plate_id = basketItem.plate.id;
+				orderItem.chef_id = basketItem.plate.userId;
+			}
+
+			if (basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE) {
+				loc = await repositoryOrder.userLocation(
+					basketItem.custom_plate.chefID
+				);
+				orderItem.customPlateId = basketItem.custom_plate.id;
+				orderItem.chef_id = basketItem.custom_plate.chefID;
+			}
+
+			orderItem.chef_location = `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`;
+			return orderItem;
+		});
+		events.publish(
+			{
+				action: appConstants.ACTION_TYPE_ORDER_COD,
+				user: req.user,
+				payload: { cod: true },
+				body: req.body,
+				scope: appConstants.SCOPE_USER,
+				type: 'checkout',
+			},
+			req
+		);
+
+		events.publish(
+			{
+				action: appConstants.ACTION_TYPE_ORDER_APPROVED,
+				user: req.user,
+				order: create_order,
+				body: req.body,
+				payload: { cod: true},
+				scope: appConstants.SCOPE_USER,
+				type: 'order',
+			},
+			req
+		);
+
+		//create order items
+
+		let myOrderList = await Promise.all(oderItemsPayload);
+
+		const createdOrderItems = await repositoryOrder.createOrderItems(
+			myOrderList
+		);
+
+		//remove basket items of a user
+
+		await basketRepository.removeBasketItems(user_basket.id);
+
+		//if not pickup by user create order deliveries
+		if (deliveryType != orderItemConstants.DELIVERY_TYPE_DRIVER) {
+			//create delivery for items which offers delivery
+			const oderDeliveryPayload = basketItems
+				.filter((basketItem) => {
+					const basketType = basketItem.basket_type;
+					if (basketItem[basketType].chefDeliveryAvailable)
+						return true;
+					return false;
+				})
+				.map((basketItem, index) => {
+					const basketType = basketItem.basket_type;
+					const orderDelivery = {
+						orderItemId: createdOrderItems[index].id,
+						order_delivery_type:
+							orderDeliveryConstants.DELIVERY_TYPE_ORDER_ITEM,
+						userId: req.userId,
+						state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+						delivery_type: deliveryType,
+					};
+
+					//set driverId from chef field of plate or custom_plate_order
+					if (basketType === basketConstants.BASKET_TYPE_PLATE) {
+						orderDelivery.driverId = basketItem.plate.userId;
+					}
+
+					if (
+						basketType === basketConstants.BASKET_TYPE_CUSTOM_PLATE
+					) {
+						orderDelivery.driverId = basketItem.custom_plate.chefID;
+					}
+					return orderDelivery;
+				});
+
+			const orderDeliveries = await repositoryOrderDelivery.createOrderDeliveries(
+				oderDeliveryPayload
+			);
+		}
+
+		//orderFrquency count
+
+		myOrderList = myOrderList.filter((elem) => elem.item_type == 'plate');
+
+		let frequencyList = [];
+
+		if (myOrderList.length > 1) {
+			for (let i = 0; i < myOrderList.length; i++) {
+				for (let j = i + 1; j < myOrderList.length; j++) {
+					let freq = {};
+
+					freq.plate1 = myOrderList[i].plate_id;
+					freq.plate2 = myOrderList[j].plate_id;
+					freq.frequency = 1;
+
+					frequencyList.push(freq);
+				}
+			}
+		}
+
+		frequencyList.map(async (obj) => {
+			let existRecord = await OrderFrequency.findOne({
+				where: {
+					[Op.or]: [
+						{ plate1: obj.plate1, plate2: obj.plate2 },
+						{ plate1: obj.plate2, plate2: obj.plate1 },
+					],
+				},
+			});
+
+			if (!existRecord) {
+				await OrderFrequency.create(obj);
+			} else {
+				existRecord.frequency = existRecord.frequency + 1;
+				existRecord.save();
+			}
+		});
+
+		const users = await repository.getDeviceTokens(userIds.join());
+
+		const deviceTokens = users
+			.filter((user) => user.deviceToken)
+			.map((user) => user.deviceToken);
+		if (deviceTokens.length > 0) {
+			const title = notificationConstant.ORDER_RECEIVED_TITLE;
+			const body = notificationConstant.ORDER_RECEIVED_BODY;
+			let pushnotification = {
+				orderTitle: title,
+				orderBrief: body,
+				device_registration_tokens: deviceTokens,
+				detail: users,
+			};
+			FCM(pushnotification);
+		}
+		return res.status(HttpStatus.OK).send({
+			message: 'Your order was successfully placed',
+			payment_return: appConstants.ACTION_TYPE_ORDER_COD,
+			payment_type: {cod: true}
+			//orderDeliveries: orderDeliveries
+		});
+
+}
 exports.customPlateByIdMiddleware = asyncHandler(
 	async (req, res, next, customPlateId) => {
 		const customPlate = await repository.getCustomPlate(customPlateId);
@@ -822,7 +1011,7 @@ exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
  * Remove BasketItems
  * Send Back Response
  */
-exports.pay = asyncHandler(async (req, res, next) => {
+exports.checkOut = asyncHandler(async (req, res, next) => {
 	let existUser = req.user;
 
 	//user shipping address. if req.body.shipping_id || req.query.shipping_id is sent, it is that shipping address,
@@ -972,6 +1161,18 @@ exports.pay = asyncHandler(async (req, res, next) => {
 	let card_return, stripeCustomerResponse, confirm;
 	//create order
 	let create_order = await repositoryOrder.create(payload);
+
+	if (req.body.cod) {
+		try {
+			await checkOutCashOnDelivery(req, res, create_order, basketItems, user_basket, userIds)
+		}
+		catch(err) {
+			res.status(HttpStatus.BAD_REQUEST).send({
+				message: 'something went wrong',
+				status: HttpStatus.BAD_REQUEST
+			})
+		}
+	}
 
 	try {
 		if (existUser.stripe_id) {

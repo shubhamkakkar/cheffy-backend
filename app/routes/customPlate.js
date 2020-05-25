@@ -70,7 +70,7 @@ router.post(
 	authService.authorize,
 	userController.getAuthUserMiddleware,
 	shippingController.getAuthUserShippingAddress,
-	controller.pay
+	controller.checkOut
 );
 
 //Chef bid for a custom plate

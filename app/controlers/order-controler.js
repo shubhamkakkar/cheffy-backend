@@ -339,7 +339,7 @@ exports.getOneOrder = async (req, res, next) => {
  * Create order for plates in basket items.
  * This follows the same process as custom plates
  */
-exports.create = [customPlateControllers.pay];
+exports.create = [customPlateControllers.checkOut];
 
 /**Edit order state*/
 exports.editOrderStateType = asyncHandler(async (req, res, next) => {
