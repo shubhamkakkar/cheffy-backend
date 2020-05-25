@@ -72,6 +72,7 @@
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.19.1",
     "faker": "^4.1.0",
+    "heroku": "^7.41.1",
     "mocha": "^6.2.0",
     "nodemon": "^1.18.9",
     "progress": "^2.0.3",
