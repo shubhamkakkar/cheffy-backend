@@ -1,13 +1,17 @@
-'use strict';
+"use strict";
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const controller = require('../controlers/admin-controler');
+const controller = require("../controlers/admin-controler");
 const authService = require("../services/auth");
 
 router.post("/autenticate", controller.authenticate);
 router.get("/list-docs", authService.authorizeAdmin, controller.listAllDocs);
 router.post("/edit-docs", authService.authorizeAdmin, controller.checkDocs);
-router.get('/list/:userType', authService.authorizeAdmin, controller.getAllUsers)
+router.get(
+  "/list/:userType",
+  //   authService.authorizeAdmin, // not required admin autherization for this list
+  controller.getAllUsers
+);
 
 module.exports = router;
