@@ -64,6 +64,13 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
+    plate_id: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Plates',
+        key: 'id'
+      },
+    },
     pickup_time: DataTypes.DATE,
     dropoff_time: DataTypes.DATE,
     state_type: {
@@ -85,6 +92,7 @@ module.exports = (sequelize, DataTypes) => {
     OrderDelivery.belongsTo(models.OrderItem, {foreignKey: 'orderItemID', as: 'order_item'});
     OrderDelivery.belongsTo(models.User, {foreignKey: 'driverId', as: 'Driver' });
     OrderDelivery.belongsTo(models.User, {foreignKey: 'userId'});
+    OrderDelivery.belongsTo(models.Plates, {foreignKey: 'plate_id', as: 'plate'})
   };
   
   return OrderDelivery;

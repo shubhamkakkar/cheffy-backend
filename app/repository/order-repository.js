@@ -350,7 +350,39 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
 				model: OrderDelivery,
 				as: 'order_delivery',
 				// required: true,
-				attributes: ['id', 'state_type'],
+				attributes: ['id', 'state_type', 'plate_id'],
+				include: [
+					{
+						model: Plates,
+						as: 'plate',
+						include: [
+							{
+								model: PlateImage,
+							},
+							{
+								model: User,
+								as: 'chef',
+								include: [
+									{
+										model: ShippingAddress,
+										as: 'address',
+										attributes: [
+											'id',
+											'addressLine1',
+											'addressLine2',
+											'city',
+											'state',
+											'zipCode',
+											'lat',
+											'lon',
+											'userId',
+										],
+									},
+								],
+							},
+						],
+					}
+				]
 			},
 		],
 	});
