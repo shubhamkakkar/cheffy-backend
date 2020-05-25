@@ -1,0 +1,32 @@
+{
+	"krushn": {
+		"username": "root",
+		"password": "root",
+		"database": "database_test",
+		"host": "localhost",
+		"port": "8889",
+		"dialect": "mysql"
+	},
+	"development": {
+		"username": "root",
+		"password": "root",
+		"database": "database_development",
+		"host": "localhost",
+		"dialect": "mysql"
+	},
+	"test": {
+		"username": "root",
+		"password": "root",
+		"database": "database_test",
+		"host": "localhost",
+		"dialect": "mysql",
+		"port": "8889"
+	},
+	"production": {
+		"username": "n2ad1m9h9pnmrnhx",
+		"password": "tfmdz7w8adok6587",
+		"database": "c821iyxdz9lgx1ut",
+		"host": "umabrisfx8afs3ja.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+		"dialect": "mysql"
+	}
+}

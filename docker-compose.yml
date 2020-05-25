@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  redis:
+    container_name: cheffy-redis-container
+    image: redis:5.0
+    restart: always
+    hostname: cheffy-redis
+    command: redis-server --port 6380
+    ports:
+      - "6380:6380"
+    expose:
+      - 6380
+    networks:
+      - default
+
+  mysql:
+    container_name: cheffy-mysql-container
+    image: mysql:5.7.28
+    restart: always
+    environment:
+     - MYSQL_ALLOW_EMPTY_PASSWORD= yes
+    command: mysqld --port 3308
+    ports:
+      - "3308:3308"
+    expose:
+      - 3308
+    networks:
+      - default
+  backend-api:
+    container_name: cheffy-app
+    environment:
+      - PORT=9009
+      - DOCKER_MODE=true
+      #- DEBUG=server
+    build: .
+    networks:
+      - default
+    links:
+      - redis:cheffy-redis-container
+      - mysql:cheffy-mysql-container
+    ports:
+      - "9009:9009"
+    #volumes:
+      #- .:/var/www/app
+      #- /var/www/app/node_modules
+    #command: "npx pm2-runtime start ecosystem.config.js"
+    command: "node ./bin/server.js"

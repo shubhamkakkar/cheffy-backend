@@ -1,0 +1,100 @@
+{
+  "name": "cheffyapi",
+  "version": "1.0.3",
+  "description": "This repository hosts the Cheffy App Api.",
+  "main": "./bin/index.js",
+  "scripts": {
+    "test": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000",
+    "watch": "NODE_ENV=test mocha 'test/**/*.js' --timeout 10000 -w",
+    "start": "NODE_ENV=production node ./bin/server.js",
+    "dev": "NODE_ENV=development nodemon ./bin/server.js",
+    "krushn": "NODE_ENV=krushn nodemon ./bin/server.js",
+    "migrate": "sequelize db:migrate --migrations-path ./database/migrations"
+  },
+  "keywords": [
+    "nodejs",
+    "sequelize",
+    "bcrypt",
+    "jwt"
+  ],
+  "author": "Cheffy Team",
+  "dependencies": {
+    "apple-signin": "^1.0.9",
+    "axios": "^0.19.0",
+    "bcrypt": "^3.0.6",
+    "body-parser": "^1.19.0",
+    "bull": "^3.10.0",
+    "bunyan": "^1.8.12",
+    "cloudinary": "^1.20.0",
+    "cors": "^2.8.5",
+    "debug": "^4.1.1",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1",
+    "express-async-handler": "^1.1.4",
+    "fcm-push": "^1.1.3",
+    "geolib": "^3.2.1",
+    "google-distance-matrix": "^1.1.1",
+    "guid": "0.0.12",
+    "http-status-codes": "^1.3.2",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.15",
+    "md5": "^2.2.1",
+    "migrate": "^1.6.2",
+    "moment": "^2.24.0",
+    "morgan": "^1.9.1",
+    "multer": "^1.4.2",
+    "multer-storage-cloudinary": "^2.2.1",
+    "mysql2": "^1.7.0",
+    "nock": "^11.7.0",
+    "nodemailer": "^6.3.0",
+    "nodemailer-express-handlebars": "^3.1.0",
+    "nunjucks": "^3.2.0",
+    "paypal-rest-sdk": "^1.8.1",
+    "querystring": "^0.2.0",
+    "redis": "^2.8.0",
+    "request": "^2.88.0",
+    "sendgrid": "^5.2.3",
+    "sequelize": "^5.21.8",
+    "sequelize-cli": "^5.5.1",
+    "slack-node": "^0.1.8",
+    "socket.io": "^2.3.0",
+    "sqlite3": "^4.0.9",
+    "stripe": "^7.6.0",
+    "swagger-ui-express": "^4.0.7",
+    "twilio": "^3.33.2",
+    "underscore": "^1.10.2",
+    "useragent": "^2.3.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.19.1",
+    "faker": "^4.1.0",
+    "mocha": "^6.2.0",
+    "nodemon": "^1.18.9",
+    "progress": "^2.0.3",
+    "sequelize-test-helpers": "^1.1.2",
+    "sinon": "^7.4.2",
+    "sinon-chai": "^3.3.0",
+    "supertest": "^4.0.2",
+    "yargs": "^15.0.2"
+  },
+  "bin": {
+    "cheffyapi": "server.js"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SihyunC/animated-rotary-phone.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SihyunC/animated-rotary-phone/issues"
+  },
+  "homepage": "https://github.com/SihyunC/animated-rotary-phone#readme"
+}

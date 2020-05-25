@@ -1,0 +1,7 @@
+{
+  "fcm": {
+    "serverKey":"AAAAG9WFTvA:APA91bGcFQSUo0TnT0le_pv_uen9CBFMhGe-QsT7gDEE7RcDLdhL4IxRHlLyshdqs81i9IfkGGLusDn6nY5XbAwkf9VFmfeSVkBNqd5m3J9CpveeGkvNhs3NAPKqNzy2NoQN6vYfJCod",
+    "url": "https://fcm.googleapis.com/fcm/send"
+  }
+}
+

@@ -1,0 +1,1444 @@
+{
+	"info": {
+		"_postman_id": "1218d065-4b49-4d12-bcb2-67f551c94ac6",
+		"name": "CHEF API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "ANOTHER ROUTES",
+			"item": [
+				{
+					"name": "GET PROFILE PHOTOS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/manage/profile-photos/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"manage",
+								"profile-photos",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET NID FRONTSIDES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/manage/nid-frontsides/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"manage",
+								"nid-frontsides",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET DRIVER FINDERS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/driver/driver-finders/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"driver",
+								"driver-finders",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET DOCUMENTS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/docs/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"docs",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "0b3078ef-f2a5-42e0-9dc4-cd2a8b359025",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "871a92d1-0d89-4a1d-9b8d-bbd215a6d3e9",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "CHEF ROUTES",
+			"item": [
+				{
+					"name": "GET CHEF LICENSE MODEL TYPES",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "http://localhost:3000/manage/chef-licenses/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"manage",
+								"chef-licenses",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET CHEF CERTIFICATES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/manage/chef-certificates/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"manage",
+								"chef-certificates",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "USER ROUTES",
+			"item": [
+				{
+					"name": "LOGIN",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "login",
+									"value": "jonh@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/user/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SIGNUP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "Jonh",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "jonh@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "user_type",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "123456",
+									"type": "text"
+								},
+								{
+									"key": "location_lat",
+									"value": "-7.0714081",
+									"type": "text"
+								},
+								{
+									"key": "location_lon",
+									"value": "-34.8434524",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PLATES NEAR YOU",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/near?latitude=-5.0328144&longitude=-42.8150343&radius=10&popular",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"near"
+							],
+							"query": [
+								{
+									"key": "latitude",
+									"value": "-5.0328144"
+								},
+								{
+									"key": "longitude",
+									"value": "-42.8150343"
+								},
+								{
+									"key": "radius",
+									"value": "10"
+								},
+								{
+									"key": "popular",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SEARCH PLATES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/search/Salad",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"search",
+								"Salad"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POPULAR PLATES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate?popular",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate"
+							],
+							"query": [
+								{
+									"key": "popular",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NEW PLATES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate?new",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate"
+							],
+							"query": [
+								{
+									"key": "new",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SHOW PLATE BY ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/show/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"show",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RELATED PLATES BY ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/1/related",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"1",
+								"related"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET USER MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/user/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"user",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET USER MESSAGES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/user/messages/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"user",
+								"messages",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ORDERS ROUTES",
+			"item": [
+				{
+					"name": "POST INSERT ORDER TO TEST",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"type": "text",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NDA4OSwiZXhwIjoxNjAyODEwMDg5fQ.sQjsl4jQCibXf7ClUZ1hJSX_DwEnqLVF9S1N8iGlal4"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/x-www-form-urlencoded",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "basketId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "userId",
+									"value": "22",
+									"type": "text"
+								},
+								{
+									"key": "shippingId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "state_type",
+									"value": "aproved",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/insert?",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"insert"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDER LIST",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/list",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDERS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDER DELIVERIES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/delivery/deliveries/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"delivery",
+								"deliveries",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDER ITEMS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/items/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"items",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDER PAYMENTS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/payments/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"payments",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDER TRANSACTIONS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/transactions/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"transactions",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ORDER WALLETS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/order/wallets/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"order",
+								"wallets",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "81dbc7ce-07d3-4a42-86fd-db4ee5074dde",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "180bc2ce-043d-48d0-8b6f-eb6ce1228413",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "BASKET ROUTES",
+			"item": [
+				{
+					"name": "POST ADD ITEM",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"name": "Content-Type",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "plateId",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/basket/add",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"basket",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST SUBTRACT ITEM",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/basket/subtract",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"basket",
+								"subtract"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET BASKET ITEMS MODEL TYPES",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "http://localhost:3000/basket/items/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"basket",
+								"items",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET BASKET MODEL TYPES",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "http://localhost:3000/basket/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"basket",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET BASKET RESULT",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/basket/result",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"basket",
+								"result"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET BASKET ITEMS",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/basket/items",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"basket",
+								"items"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PLATES ROUTES",
+			"item": [
+				{
+					"name": "GET PLATE MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE CATEGORIES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/categories/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"categories",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE CUSTOM PLATES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/custom-plates/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"custom-plates",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE RECEIPT IMAGES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/receipt-images/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"receipt-images",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE CUSTOM AUCTION BIDS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/custom-auction-bids/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"custom-auction-bids",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE INGREDIENTS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/ingredients/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"ingredients",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE CUSTOM IMAGES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/custom-images/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"custom-images",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE IMAGES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/images/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"images",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE REVIEWS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/reviews/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"reviews",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE CUSTOM AUCTION MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/custom-auction/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"custom-auction",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET PLATE CUSTOM ORDERS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/plate/custom-orders/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"plate",
+								"custom-orders",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SHIPPING ROUTES",
+			"item": [
+				{
+					"name": "GET SHIPPING MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/shipping/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"shipping",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST SHIPPING",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"name": "Content-Type",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NDA4OSwiZXhwIjoxNjAyODEwMDg5fQ.sQjsl4jQCibXf7ClUZ1hJSX_DwEnqLVF9S1N8iGlal4",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NDA4OSwiZXhwIjoxNjAyODEwMDg5fQ.sQjsl4jQCibXf7ClUZ1hJSX_DwEnqLVF9S1N8iGlal4"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "addressLine1",
+									"value": "Rua Paulo",
+									"type": "text"
+								},
+								{
+									"key": "city",
+									"value": "João Pessoa",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "Paraiba",
+									"type": "text"
+								},
+								{
+									"key": "zipCode",
+									"value": "123456",
+									"type": "text"
+								},
+								{
+									"key": "lat",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "lon",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/shipping",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"shipping"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "KITCHEN ROUTES",
+			"item": [
+				{
+					"name": "GET KITCHEN IMAGES MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/manage/kitchen-images/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"manage",
+								"kitchen-images",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET KITCHEN PHOTOS MODEL TYPES",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:3000/manage/kitchen-photos/getmodeltype",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"manage",
+								"kitchen-photos",
+								"getmodeltype"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
