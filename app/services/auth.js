@@ -120,6 +120,7 @@ exports.authorizeOptional = [
 ];
 
 exports.authorizeAdmin = function (req, res, next) {
+  const userTypeIsAdmin = req.params.userType === "admin";
   var token = req.query.token || req.headers["x-access-token"];
 
   if (!token) {
@@ -134,7 +135,7 @@ exports.authorizeAdmin = function (req, res, next) {
       });
     }
 
-    if (decoded.user_type !== "admin") {
+    if (userTypeIsAdmin && decoded.user_type !== "admin") {
       return res.status(401).json({
         message: "You ar not Admin",
       });
