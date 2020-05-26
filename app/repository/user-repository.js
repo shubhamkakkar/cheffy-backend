@@ -29,11 +29,10 @@ exports.findDriversInsideArea = async (latitude, longitude, radiusMiles) => {
   return result;
 };
 
-exports.getAllDriver = async ({ pagination, user_type }) => {
+exports.getAllDriver = async ({ user_type }) => {
   const whereQuery = { user_type };
   const queryOptions = {
     where: whereQuery,
-    ...pagination,
   };
 
   const response = await User.findAll(queryOptions);
