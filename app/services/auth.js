@@ -120,33 +120,28 @@ exports.authorizeOptional = [
 ];
 
 exports.authorizeAdmin = function (req, res, next) {
-  const userTypeIsAdmin = req.params.userType === "admin";
   var token = req.query.token || req.headers["x-access-token"];
 
-  if (userTypeIsAdmin) {
-    if (!token) {
+  if (!token) {
+    return res.status(401).json({
+      message: "Acess denny",
+    });
+  }
+  jwt.verify(token, global.SALT_KEY, function (error, decoded) {
+    if (error) {
       return res.status(401).json({
-        message: "Acess denny",
+        message: "Token Invalid",
       });
     }
-    jwt.verify(token, global.SALT_KEY, function (error, decoded) {
-      if (error) {
-        return res.status(401).json({
-          message: "Token Invalid",
-        });
-      }
 
-      if (decoded.type !== "admin") {
-        return res.status(401).json({
-          message: "You ar not Admin",
-        });
-      }
+    if (decoded.user_type !== "admin") {
+      return res.status(401).json({
+        message: "You ar not Admin",
+      });
+    }
 
-      //use this req.userId in getAuthUserMiddleware
-      req.userId = decoded.id;
-      next();
-    });
-  } else {
+    //use this req.userId in getAuthUserMiddleware
+    req.userId = decoded.id;
     next();
-  }
+  });
 };

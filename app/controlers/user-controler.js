@@ -616,6 +616,7 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
   const token = await authService.generateToken({
     id: existUser.id,
     email: existUser.email,
+    user_type: existUser.user_type, // added user_type to token generation
   });
 
   // save token in user auth_token field.

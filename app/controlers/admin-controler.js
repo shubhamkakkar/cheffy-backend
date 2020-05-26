@@ -35,7 +35,7 @@ exports.authenticate = async (req, res, next) => {
       id: customer.id,
       email: customer.email,
       name: customer.name,
-      type: customer.user_type,
+      type: "admin",
     });
     res.status(HttpStatus.OK).send({
       token: token,
