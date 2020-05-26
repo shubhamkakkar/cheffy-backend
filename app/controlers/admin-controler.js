@@ -115,3 +115,41 @@ exports.acceptUserVerification = async (req, res, next) => {
   }
   return res.status(HttpStatus.ERROR).send("error valiating user");
 };
+
+exports.acceptDriverRequest = async (req, res, next) => {
+  const {
+    params: { driverId },
+  } = req;
+
+  const driver = await userRepository.getUserById(driverId);
+
+  if (driver.status && !driver.order_flag) {
+    // status === true && order_flag === false
+    driver.order_flag = true;
+    // order_flag = true means the driver is on a delivery
+    driver.save();
+    return res.status(HttpStatus.OK).send({
+      data: {
+        requestApproved: true,
+      },
+    });
+  } else {
+    return res.status(HttpStatus.OK).send({
+      data: {
+        requestApproved: !driver.order_flag,
+      },
+    });
+  }
+};
+
+exports.rejectDriverRequest = async (req, res, next) => {
+  const {
+    params: { driverId },
+  } = req;
+
+  return res.status(HttpStatus.OK).send({
+    data: {
+      requestRejected: true,
+    },
+  });
+};
