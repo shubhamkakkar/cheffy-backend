@@ -122,30 +122,40 @@ exports.acceptDriverRequest = async (req, res, next) => {
   } = req;
 
   const driver = await userRepository.getUserById(driverId);
-
-  if (driver.status && !driver.order_flag) {
-    // status === true && order_flag === false
-    driver.order_flag = true;
-    // order_flag = true means the driver is on a delivery
-    driver.save();
-    return res.status(HttpStatus.OK).send({
+  if (driver.adminVerification) {
+    return res.status(HttpStatus.CONFLICT).send({
       data: {
-        requestApproved: true,
-      },
-    });
-  } else {
-    return res.status(HttpStatus.OK).send({
-      data: {
-        requestApproved: !driver.order_flag,
+        requestRejected: false,
+        message: "Driver's documents are already autherized",
       },
     });
   }
+
+  driver.adminVerification = true;
+  driver.save();
+  return res.status(HttpStatus.OK).send({
+    data: {
+      requestApproved: true,
+    },
+  });
 };
 
 exports.rejectDriverRequest = async (req, res, next) => {
   const {
     params: { driverId },
   } = req;
+
+  const driver = await userRepository.getUserById(driverId);
+  if (!driver.adminVerification) {
+    return res.status(HttpStatus.CONFLICT).send({
+      data: {
+        requestRejected: false,
+        message: "Driver's documents are already not verified",
+      },
+    });
+  }
+  driver.adminVerification = false;
+  driver.save();
 
   return res.status(HttpStatus.OK).send({
     data: {
