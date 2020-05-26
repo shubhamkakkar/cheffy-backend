@@ -25,7 +25,6 @@ const reviewConstants = require(path.resolve('app/constants/reviews'));
 exports.getById = async (orderId) => {
 	try {
 		const order = await Order.findByPk(orderId);
-
 		return order;
 	} catch (e) {
 		console.log(e);

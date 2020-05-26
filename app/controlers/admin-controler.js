@@ -7,6 +7,7 @@ const repositoryDocs = require("../repository/docs-repository");
 const authService = require("../services/auth");
 const asyncHandler = require("express-async-handler");
 const userRepository = require("../repository/user-repository");
+const orderPaymentRepository = require("../repository/orderPayment-repository");
 const paginator = require(path.resolve("app/services/paginator"));
 const userConstants = require(path.resolve("app/constants/users"));
 const bcrypt = require("bcrypt");
@@ -257,4 +258,14 @@ exports.rejectChefRequest = async (req, res, next) => {
       requestRejected: rejectChefVerification,
     },
   });
+};
+
+exports.getAllOrderPayments = async (req, res, next) => {
+  const pagination = paginator.paginateQuery(req);
+  const query = { pagination };
+
+  const orderPayments = await orderPaymentRepository.getOrderPayments(query);
+
+  console.log(orderPayments.length);
+  return res.status(HttpStatus.OK).send(orderPayments);
 };

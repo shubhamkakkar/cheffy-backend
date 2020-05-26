@@ -34,4 +34,10 @@ router.get(
   controller.getAllUsers
 );
 
+router.get(
+  "/orderPayments",
+  authService.authorizeAdminForAdminListingOnly,
+  controller.getAllOrderPayments
+);
+
 module.exports = router;
