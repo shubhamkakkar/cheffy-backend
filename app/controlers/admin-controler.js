@@ -122,20 +122,32 @@ exports.acceptDriverRequest = async (req, res, next) => {
   } = req;
 
   const driver = await userRepository.getUserById(driverId);
-  if (driver.adminVerification) {
+
+  if (driver.adminVerficaton) {
     return res.status(HttpStatus.CONFLICT).send({
       data: {
-        requestRejected: false,
+        requestApproved: false,
         message: "Driver's documents are already autherized",
       },
     });
   }
+  const acceptDriverVerification = await userRepository.acceptUserVerification(
+    driverId
+  );
 
-  driver.adminVerification = true;
-  driver.save();
-  return res.status(HttpStatus.OK).send({
+  if (acceptDriverVerification) {
+    return res.status(HttpStatus.OK).send({
+      data: {
+        //true
+        requestApproved: acceptDriverVerification,
+      },
+    });
+  }
+
+  return res.status(HttpStatus.NOT_MODIFIED).send({
     data: {
-      requestApproved: true,
+      //false
+      requestApproved: acceptDriverVerification,
     },
   });
 };
@@ -146,7 +158,7 @@ exports.rejectDriverRequest = async (req, res, next) => {
   } = req;
 
   const driver = await userRepository.getUserById(driverId);
-  if (!driver.adminVerification) {
+  if (!driver.adminVerficaton) {
     return res.status(HttpStatus.CONFLICT).send({
       data: {
         requestRejected: false,
@@ -154,12 +166,97 @@ exports.rejectDriverRequest = async (req, res, next) => {
       },
     });
   }
-  driver.adminVerification = false;
-  driver.save();
 
-  return res.status(HttpStatus.OK).send({
+  const rejectDriverVerification = await userRepository.rejectUserVerification(
+    driverId
+  );
+
+  if (rejectDriverVerification) {
+    return res.status(HttpStatus.OK).send({
+      data: {
+        //true
+        requestRejected: rejectDriverVerification,
+      },
+    });
+  }
+
+  return res.status(HttpStatus.NOT_MODIFIED).send({
     data: {
-      requestRejected: true,
+      //false
+      requestRejected: rejectDriverVerification,
+    },
+  });
+};
+
+exports.acceptChefRequest = async (req, res, next) => {
+  const {
+    params: { chefId },
+  } = req;
+
+  const chef = await userRepository.getUserById(chefId);
+
+  if (chef.adminVerficaton) {
+    return res.status(HttpStatus.CONFLICT).send({
+      data: {
+        requestRejected: false,
+        message: "chef's documents are already autherized",
+      },
+    });
+  }
+
+  const acceptChefVerification = await userRepository.acceptUserVerification(
+    chefId
+  );
+
+  if (acceptChefVerification) {
+    return res.status(HttpStatus.OK).send({
+      data: {
+        //true
+        requestApproved: acceptChefVerification,
+      },
+    });
+  }
+
+  return res.status(HttpStatus.NOT_MODIFIED).send({
+    data: {
+      //false
+      requestApproved: acceptChefVerification,
+    },
+  });
+};
+
+exports.rejectChefRequest = async (req, res, next) => {
+  const {
+    params: { chefId },
+  } = req;
+
+  const chef = await userRepository.getUserById(chefId);
+  if (!chef.adminVerficaton) {
+    return res.status(HttpStatus.CONFLICT).send({
+      data: {
+        requestRejected: false,
+        message: "chef's documents are already not verified",
+      },
+    });
+  }
+
+  const rejectChefVerification = await userRepository.rejectUserVerification(
+    chefId
+  );
+
+  if (rejectChefVerification) {
+    return res.status(HttpStatus.OK).send({
+      data: {
+        //true
+        requestRejected: rejectChefVerification,
+      },
+    });
+  }
+
+  return res.status(HttpStatus.NOT_MODIFIED).send({
+    data: {
+      //false
+      requestRejected: rejectChefVerification,
     },
   });
 };
