@@ -35,7 +35,7 @@ exports.authenticate = async (req, res, next) => {
       id: customer.id,
       email: customer.email,
       name: customer.name,
-      type: "admin",
+      type: customer.user_type,
     });
     res.status(HttpStatus.OK).send({
       token: token,
@@ -101,8 +101,6 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
 
   const pagination = paginator.paginateQuery(req);
   const query = { pagination, user_type };
-
-  console.log({ query });
 
   const users = await userRepository.getAllDriver(query);
   return res.status(HttpStatus.OK).send(users);

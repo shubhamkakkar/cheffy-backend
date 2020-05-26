@@ -1,0 +1,10 @@
+DB_USER='root'
+DB_PASS=''
+DB_NAME='cheffy_development'
+DB_HOST='mysql'
+DB_DIALECT='mysql'
+DB_PORT=3308
+DB_LOGGING=
+REDIS_HOST='cheffy-redis'
+REDIS_PORT=6380
+REDIS_PASSWORD=''

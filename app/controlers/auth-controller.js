@@ -162,6 +162,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     id: existUser.id,
     email: existUser.email,
     name: existUser.name,
+    user_type: existUser.user_type,
   });
 
   existUser.auth_token = token;

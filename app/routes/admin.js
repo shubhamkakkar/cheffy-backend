@@ -10,7 +10,7 @@ router.get("/list-docs", authService.authorizeAdmin, controller.listAllDocs);
 router.post("/edit-docs", authService.authorizeAdmin, controller.checkDocs);
 router.get(
   "/list/:userType",
-  authService.authorizeAdmin, //  required admin autherization for this list of admin only
+  authService.authorizeAdmin,
   controller.getAllUsers
 );
 

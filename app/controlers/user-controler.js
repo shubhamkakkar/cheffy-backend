@@ -77,8 +77,6 @@ exports.userResponseHelper = userResponseHelper;
  * Sets user in express req object
  */
 exports.getAuthUserMiddleware = asyncHandler(async (req, res, next) => {
-  console.log({ req });
-
   const user = await User.findByPk(req.userId, {
     attributes: userConstants.privateSelectFields,
     //raw: true
@@ -616,7 +614,6 @@ exports.completeRegistration = asyncHandler(async (req, res, next) => {
   const token = await authService.generateToken({
     id: existUser.id,
     email: existUser.email,
-    user_type: existUser.user_type, // added user_type to token generation
   });
 
   // save token in user auth_token field.
