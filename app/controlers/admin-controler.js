@@ -262,6 +262,33 @@ exports.rejectChefRequest = async (req, res, next) => {
 
 exports.getAllOrderPayments = async (req, res, next) => {
   const pagination = paginator.paginateQuery(req);
+
+  function customErOverDateRange(missingField) {
+    return res.status(HttpStatus.BAD_REQUEST).send({
+      message:
+        "For getting data over date range, both endDate and startDate are required",
+      missingField,
+    });
+  }
+
+  if (req.query.startDate && !req.query.endDate) {
+    return customErOverDateRange("endDate");
+  }
+
+  if (!req.query.startDate && req.query.endDate) {
+    return customErOverDateRange("startDate");
+  }
+
+  if (
+    req.query.startDate &&
+    req.query.endDate &&
+    req.query.startDate > req.query.endDate
+  ) {
+    return res.status(HttpStatus.BAD_REQUEST).send({
+      message: "starDate can't be greater than endDate",
+    });
+  }
+
   const query = { pagination, ...req.query };
 
   const orderPayments = await orderPaymentRepository.getOrderPayments(query);
