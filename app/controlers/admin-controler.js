@@ -262,10 +262,8 @@ exports.rejectChefRequest = async (req, res, next) => {
 
 exports.getAllOrderPayments = async (req, res, next) => {
   const pagination = paginator.paginateQuery(req);
-  const query = { pagination };
+  const query = { pagination, ...req.query };
 
   const orderPayments = await orderPaymentRepository.getOrderPayments(query);
-
-  console.log(orderPayments.length);
   return res.status(HttpStatus.OK).send(orderPayments);
 };

@@ -35,7 +35,7 @@ router.get(
 );
 
 router.get(
-  "/orderPayments",
+  "/orderPayments/:orderId?/:createdAt?/:updatedAt?:status?",
   authService.authorizeAdminForAdminListingOnly,
   controller.getAllOrderPayments
 );

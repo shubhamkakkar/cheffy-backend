@@ -33,7 +33,12 @@ exports.promotion = async (promoCode) => {
   return discount;
 };
 
-exports.getOrderPayments = async (data) => {
-  const query = { ...data.pagination };
+exports.getOrderPayments = async ({ pagination, ...rest }) => {
+  const query = {
+    ...pagination,
+    where: {
+      ...rest,
+    },
+  };
   return await OrderPayment.findAll(query);
 };
