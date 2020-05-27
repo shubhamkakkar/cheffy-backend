@@ -33,12 +33,40 @@ exports.promotion = async (promoCode) => {
   return discount;
 };
 
-exports.getOrderPayments = async ({ pagination, ...rest }) => {
+exports.getOrderPayments = async ({
+  pagination,
+  createdAt,
+  updatedAt,
+  ...rest
+}) => {
+  let where = {
+    ...rest,
+  };
+
+  if (createdAt) {
+    where = {
+      ...where,
+      createdAt: { [Op.like]: "%" + createdAt + "%" },
+    };
+  }
+
+  if (updatedAt) {
+    where = {
+      ...where,
+      updatedAt: { [Op.like]: "%" + createdAt + "%" },
+    };
+  }
+
   const query = {
     ...pagination,
-    where: {
-      ...rest,
-    },
+    where,
+    order: [["createdAt", "DESC"]],
   };
-  return await OrderPayment.findAll(query);
+  console.log({ query });
+  try {
+    return await OrderPayment.findAll(query);
+  } catch (er) {
+    console.log({ er });
+    throw er;
+  }
 };
