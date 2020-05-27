@@ -321,17 +321,31 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
 });
 
 exports.authenticate = asyncHandler(async (req, res, next) => {
-  const { password, device_id } = req.body;
+  const { password, device_id, login } = req.body;
   debug("body", req.body);
+
+  function emptyFieldError(missingField) {
+    return res.status(HttpStatus.BAD_REQUEST).send({
+      message: `${missingField} field is empty`,
+    });
+  }
+
+  if (!login) {
+    return emptyFieldError("login");
+  }
+
+  if (!password) {
+    return emptyFieldError("password");
+  }
 
   let customer;
   var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
   let whereClause = {};
 
-  if (reg.test(req.body.login)) {
-    whereClause = { email: req.body.login };
+  if (reg.test(login)) {
+    whereClause = { email: login };
   } else {
-    const num_list = req.body.login.split(" ");
+    const num_list = login.split(" ");
     whereClause = { country_code: num_list[0], phone_no: num_list[1] };
   }
 
