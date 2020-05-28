@@ -3,25 +3,6 @@
 
 
 "@babel/code-frame@^7.0.0":
-<<<<<<< HEAD
-  version "7.10.1"
-  resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.10.1.tgz#d5481c5095daa1c57e16e54c6f9198443afb49ff"
-  integrity sha512-IGhtTmpjGbYzcEDOw7DcQtbQSXcG9ftmAXtWTu9V936vDye4xjjekktFAtgZsWpzTj/X01jocB46mTywm/4SZw==
-  dependencies:
-    "@babel/highlight" "^7.10.1"
-
-"@babel/helper-validator-identifier@^7.10.1":
-  version "7.10.1"
-  resolved "https://registry.yarnpkg.com/@babel/helper-validator-identifier/-/helper-validator-identifier-7.10.1.tgz#5770b0c1a826c4f53f5ede5e153163e0318e94b5"
-  integrity sha512-5vW/JXLALhczRCWP0PnFDMCJAchlBvM7f4uk/jXritBnIa6E1KmqmtrS3yn1LAnxFBypQ3eneLuXjsnfQsgILw==
-
-"@babel/highlight@^7.10.1":
-  version "7.10.1"
-  resolved "https://registry.yarnpkg.com/@babel/highlight/-/highlight-7.10.1.tgz#841d098ba613ba1a427a2b383d79e35552c38ae0"
-  integrity sha512-8rMof+gVP8mxYZApLF/JgNDAkdKa+aJt3ZYxF8z6+j/hpeXL7iMsKCPHa2jNMHu/qqBwzQF4OHNoYi8dMA/rYg==
-  dependencies:
-    "@babel/helper-validator-identifier" "^7.10.1"
-=======
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.8.3.tgz#33e25903d7481181534e12ec0a25f16b6fcf419e"
   integrity sha512-a9gxpmdXtZEInkCSHUJDLHZVBgb1QS0jhss4cPP93EW7s+uC5bikET2twEF3KV+7rDblJcmNvTR7VJejqd2C2g==
@@ -39,7 +20,6 @@
   integrity sha512-lJZPilxX7Op3Nv/2cvFdnlepPXDxi29wxteT57Q965oc5R9v86ztx0jfxVrTcBk8C2kcPkkDa2Z4T3ZsPPVWsQ==
   dependencies:
     "@babel/helper-validator-identifier" "^7.9.0"
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
@@ -2033,15 +2013,9 @@ create-error-class@^3.0.0:
     capture-stack-trace "^1.0.0"
 
 cron-parser@^2.13.0:
-<<<<<<< HEAD
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/cron-parser/-/cron-parser-2.15.0.tgz#04803cd51d8efcfcc6f83ac08e60f3f8c40c7ec5"
-  integrity sha512-rMFkrQw8+oG5OuwjiXesup4KeIlEG/IU82YtG4xyAHbO5jhKmYaHPp/ZNhq9+7TjSJ65E3zV3kQPUbmXSff2/g==
-=======
   version "2.14.0"
   resolved "https://registry.yarnpkg.com/cron-parser/-/cron-parser-2.14.0.tgz#a8f4e85a58a4e7d59dc42cdfca76865982b68612"
   integrity sha512-/VuS5TLnyaB0yNznygEFmujOjn8DxyZRn3F2wN3h8e+4A5zETQYMbtCLCIvz23XhI/1di2B+ke702/grEaPfTg==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
   dependencies:
     is-nan "^1.3.0"
     moment-timezone "^0.5.31"
@@ -2107,15 +2081,9 @@ dateformat@^2.0.0:
   integrity sha1-QGXiATz5+5Ft39gu+1Bq1MZ2kGI=
 
 dayjs@^1.8.21:
-<<<<<<< HEAD
-  version "1.8.28"
-  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.8.28.tgz#37aa6201df483d089645cb6c8f6cef6f0c4dbc07"
-  integrity sha512-ccnYgKC0/hPSGXxj7Ju6AV/BP4HUkXC2u15mikXT5mX9YorEaoi1bEKOmAqdkJHN4EEkmAf97SpH66Try5Mbeg==
-=======
   version "1.8.27"
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.8.27.tgz#a8ae63ee990af28c05c430f0e160ae835a0fbbf8"
   integrity sha512-Jpa2acjWIeOkg8KURUHICk0EqnEFSSF5eMEscsOgyJ92ZukXwmpmRkPSUka7KHSfbj5eKH30ieosYip+ky9emQ==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
 
 debug@2.6.9, debug@^2.1.0, debug@^2.2.0, debug@^2.3.3, debug@^2.6.9:
   version "2.6.9"
@@ -5054,15 +5022,9 @@ nodemailer-express-handlebars@^3.1.0:
     express-handlebars "^3.0.0"
 
 nodemailer@^6.3.0:
-<<<<<<< HEAD
-  version "6.4.8"
-  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.4.8.tgz#aca52886e4e56f71f6b8a65f5ca6b767ca751fc7"
-  integrity sha512-UbJD0+g5e2H20bWv7Rpj3B+N3TMMJ0MLoLwaGVJ0k3Vo8upq0UltwHJ5BJfrpST1vFa91JQ8cf7cICK5DSIo1Q==
-=======
   version "6.4.6"
   resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.4.6.tgz#d37f504f6560b36616f646a606894fe18819107f"
   integrity sha512-/kJ+FYVEm2HuUlw87hjSqTss+GU35D4giOpdSfGp7DO+5h6RlJj7R94YaYHOkoxu1CSaM0d3WRBtCzwXrY6MKA==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
 
 nodemon@^1.18.9:
   version "1.19.4"
@@ -5227,15 +5189,9 @@ object-keys@^1.0.11, object-keys@^1.0.12, object-keys@^1.1.1:
   integrity sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==
 
 object-treeify@^1.1.4:
-<<<<<<< HEAD
-  version "1.1.25"
-  resolved "https://registry.yarnpkg.com/object-treeify/-/object-treeify-1.1.25.tgz#eb634c397bfc6512a28f569809079c93f41fe6d0"
-  integrity sha512-6Abx0xlXDnYd50JkQefvoIly3jWOu8/PqH4lh8p2/aMFEx5TjsUGHt0H9NHfzt+pCwOhpPgNYofD8e2YywIXig==
-=======
   version "1.1.24"
   resolved "https://registry.yarnpkg.com/object-treeify/-/object-treeify-1.1.24.tgz#ff3be5a93635d0f79af5e8a06d08c9bd3600e1a6"
   integrity sha512-ttlIN3MoqnhevarRtDNELvNjQ85Wguq2zSkR2N9DGFM3pFWMjsz7tSqbjX7lx16BmFwLOwBa3w0TY1jJajklFg==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
 
 object-visit@^1.0.0:
   version "1.0.1"
@@ -6273,15 +6229,9 @@ sequelize-test-helpers@^1.1.2:
   integrity sha512-JYGKyIFdL5CaDuLF6Ih481zf7ztHVqNP1wnAoYgJ/SkFIewNuyBWwFiWW9j2YdnmGpY1zqq6+MObEkJg5ZLEIQ==
 
 sequelize@^5.21.8:
-<<<<<<< HEAD
-  version "5.21.11"
-  resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-5.21.11.tgz#32ed94aa550ddf3ad4a4c6fe1414a130ab38b952"
-  integrity sha512-ZJw3Hp+NS7iHcTz4fHlKvIBm4I7xYibYRCP4HhSyMB26xgqFYFOXTaeWbHD2UUwAFaksTLw5ntzfpA9kE33SVA==
-=======
   version "5.21.10"
   resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-5.21.10.tgz#a7ddc5f7fa7c12db6fb24a92c9210b52fc1a59d5"
   integrity sha512-qni5lKIa4wBdbi3KQYj20R5TC0/a88qi/1XhGDzDvTaWxhx4gEpLr6aGwvfbvVD7XCilvOgjoBkBB0fLVpwNsw==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
   dependencies:
     bluebird "^3.5.0"
     cls-bluebird "^2.1.0"
@@ -6889,15 +6839,9 @@ supports-hyperlinks@^1.0.1:
     supports-color "^5.0.0"
 
 swagger-ui-dist@^3.18.1:
-<<<<<<< HEAD
-  version "3.25.5"
-  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-3.25.5.tgz#57a17c9b45851370a9a76c1659f21d4f14a9f3d2"
-  integrity sha512-JZ6dVQS2nPgVYW0+JIIxm84vvFbR/ole6xYJG2DcSdejDLt8ARqIhbZ4InL7RVsLdXpPirUMb7hf2z4Fzqesyw==
-=======
   version "3.25.4"
   resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-3.25.4.tgz#045fdcc37d4b756c00bc228eec82153014474f00"
   integrity sha512-IiupbwT2znZ/BXDgSv9gIaxTL+oVSvhaSe5K4NxSCxRe6bTFK/Q4JwOGzYLep5I2h460xSbwdIuUUblNDolTNg==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
 
 swagger-ui-express@^4.0.7:
   version "4.1.4"
@@ -7131,15 +7075,9 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
 twilio@^3.33.2:
-<<<<<<< HEAD
-  version "3.44.0"
-  resolved "https://registry.yarnpkg.com/twilio/-/twilio-3.44.0.tgz#ba3f21b1352bd51af9f00485eda410922c4d6fb5"
-  integrity sha512-h1WoppDsBtHUOZuNxKhCd8N91HvdCIy5/aKCRDOzvYIZNbt2H0Zm+oac5jVyeOYd5O8Ifb0rlu566HfgNHdQBA==
-=======
   version "3.43.1"
   resolved "https://registry.yarnpkg.com/twilio/-/twilio-3.43.1.tgz#bcf1c434fc312f95f423e48877f025432b642e89"
   integrity sha512-vULKUCWY712Jv6Jb3VRceneuvcdO0JZ9adTofiDo3Ks/z58WKlj8vHawsjiZxsKAHnuBSGnhL3WKxQoUj/xmHQ==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
   dependencies:
     "@types/express" "^4.17.3"
     axios "^0.19.2"
@@ -7204,15 +7142,9 @@ typedarray@^0.0.6:
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
 uglify-js@^3.1.4:
-<<<<<<< HEAD
-  version "3.9.4"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.9.4.tgz#867402377e043c1fc7b102253a22b64e5862401b"
-  integrity sha512-8RZBJq5smLOa7KslsNsVcSH+KOXf1uDU8yqLeNuVKwmT0T3FA0ZoXlinQfRad7SDcbZZRZE4ov+2v71EnxNyCA==
-=======
   version "3.9.3"
   resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.9.3.tgz#4a285d1658b8a2ebaef9e51366b3a0f7acd79ec2"
   integrity sha512-r5ImcL6QyzQGVimQoov3aL2ZScywrOgBXGndbWrdehKoSvGe/RmiE5Jpw/v+GvxODt6l2tpBXwA7n+qZVlHBMA==
->>>>>>> 26ea188b2dd0ecc21ef8b7a83a69ff2cc4d3e99a
   dependencies:
     commander "~2.20.3"
 
