@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 exports.deleteImage = async (fieldName, url) => {
   const photoPath = url.replace(process.env.URL_SERVER, "");
@@ -8,9 +8,9 @@ exports.deleteImage = async (fieldName, url) => {
 
   await fs.access(dirPhoto, (err) => {
     if (!err) {
-      fs.unlink(dirPhoto, err => {
+      fs.unlink(dirPhoto, (err) => {
         if (err) throw "Directory is not exists!";
-      })
+      });
     }
-  })
+  });
 };
