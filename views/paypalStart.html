@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>PayPal Connection</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+    html,
+    body {
+      height: 100%;
+    }
+    .wrap-btn-collab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20%;
+    }
+    .btn-collab {
+      padding: 5px 20px;
+      background-color: #337ab7;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      line-height: 1.38461538;
+      min-width: 4rem;
+      padding: 0.5625rem 1.125rem;
+      position: relative;
+      text-align: center;
+      color: #fff;
+      transition: opacity 200ms linear;
+    }
+    .btn-collab:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <form class="wrap-btn-collab" method="POST" action="/paypal">
+    <button class="btn-collab">Pay</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Get Tracking Location</title>
+  <style>
+    #map {
+      height: 400px;
+      width: 100%;
+    }
+  </style>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqsLflj6MC-b3n1F5gDeUOCDfpHeZvkuw&callback=initMap">
+    </script>
+</head>
+
+<body>
+  <h3>Cheffy Get Tracking Location</h3>
+  <div id="map"></div>
+  <button onclick="initMap()">Init Map</button>
+</body>
+<script>
+  // var buffer = new Buffer(require('smalloc').kMaxLength);
+  // var numberOfConnections = 1000;
+  // var WebSocket = require('ws');
+
+  // for (var i = 0; i < numberOfConnections; i++) {
+  //   (function () {
+  //     var ws = new WebSocket('ws://localhost:8080/');
+  //     ws.on('open', function () {
+  //       ws.send(buffer, { binary: true, mask: false }, function () {
+  //         ws.close();
+  //       });
+  //     });
+  //   })();
+  // }
+</script>
+<script>
+
+  function initMap() {
+    var uluru = { lat: -7.0707705, lng: -34.8451622 };
+    var map = new google.maps.Map(
+      document.getElementById('map'), { zoom: 17, center: uluru });
+    var marker = new google.maps.Marker({ position: uluru, map: map });
+
+    map.addListener('click', function (event) {
+      const location = {
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng()
+      }
+      marker.setPosition(location);
+    });
+
+    const getTrackingUrl = 'ws://localhost:3002/driver/get-tracking?userId=19';
+    const getTrackingSocket = new WebSocket(getTrackingUrl);
+
+    const data = {
+      type: 'authenticate',
+      payload: {
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjIsImVtYWlsIjoiam9uaEBnbWFpbC5jb20iLCJuYW1lIjoiSm9uaCIsImlhdCI6MTU3MTI3NjkyMywiZXhwIjoxNjAyODEyOTIzfQ.OBQqcgjfJQZtT16RSdpQzd-RxDBhI2WuJ8bU01eJPO0',
+        command: 'start'
+      }
+    };
+
+    getTrackingSocket.onopen = function (e) {
+      getTrackingSocket.send(JSON.stringify(data));
+      console.log(`Websocket connection to ${getTrackingUrl}`);
+    };
+
+    getTrackingSocket.onmessage = function (event) {
+      console.log(event.data);
+      const data = JSON.parse(event.data);
+      if (marker) {
+        const location = {
+          lat: parseFloat(data.location_lat),
+          lng: parseFloat(data.location_lon)
+        }
+        marker.setPosition(location);
+      }
+    }
+  };
+</script>
+
+</html>
