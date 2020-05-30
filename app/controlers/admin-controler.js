@@ -7,30 +7,20 @@ const repositoryDocs = require("../repository/docs-repository");
 const authService = require("../services/auth");
 const asyncHandler = require("express-async-handler");
 const userRepository = require("../repository/user-repository");
-const orderPaymentRepository = require("../repository/orderPayment-repository");
 const paginator = require(path.resolve("app/services/paginator"));
-const userConstants = require(path.resolve("app/constants/users"));
-const bcrypt = require("bcrypt");
+const orderPaymentRepository = require("../repository/orderPayment-repository");
+const debug = require("debug")("admin");
 
 exports.authenticate = async (req, res, next) => {
-  const { password, device_id } = req.body;
   try {
     const customer = await repository.authenticateToken({
-      email: req.body.login,
+      token: req.body.token,
     });
     if (!customer) {
       res.status(HttpStatus.CONFLICT).send({
-        message: "User does not exist in our records",
-        status: HttpStatus.OK,
+        message: "Invalid Token.",
       });
       return;
-    }
-    let result = await bcrypt.compare(password, customer.password);
-
-    if (!result) {
-      return res
-        .status(HttpStatus.FORBIDDEN)
-        .send({ message: "Wrong password", data: null });
     }
     const token = await authService.generateToken({
       id: customer.id,
@@ -99,21 +89,45 @@ exports.checkDocs = async (req, res, next) => {
 
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
   const { userType: user_type, id } = req.params;
-  let query = { user_type };
+  debug("user type: ", user_type);
+  const pagination = paginator.paginateQuery(req);
+  let query = { pagination, user_type };
+
   if (!isNaN(id)) {
     query = {
       ...query,
       id,
     };
   }
-  const users = await userRepository.getAllDriver(query);
-  return res.status(HttpStatus.OK).send(users);
+
+  try {
+    const users = await userRepository.getAllDriver(query);
+    return res.status(HttpStatus.OK).send(users);
+  } catch (error) {
+    debug("error ", error);
+    return res.status(HttpStatus.ERROR).send(error.message);
+  }
+});
+
+exports.getSingleUser = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const user = await userRepository.getUserById(id);
+    if (user) {
+      return res.status(HttpStatus.OK).send(users);
+    }
+    return res.status(HttpStatus.NOT_FOUND).send(null);
+  } catch (error) {
+    debug(message);
+    return res.status(HttpStatus.ERROR).send(error.message);
+  }
 });
 
 exports.acceptUserVerification = async (req, res, next) => {
-  const { user_id } = req.params;
+  const { id } = req.params;
 
-  const status = await userRepository.acceptUserVerification(user_id);
+  const status = await userRepository.acceptUserVerification(id);
   if (status) {
     return res.status(HttpStatus.OK).send(status);
   }
