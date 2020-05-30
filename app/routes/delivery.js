@@ -74,7 +74,11 @@ router.get(
   controller.getDeliveryPrice
 );
 
-router.get("/chef/tracking/:orderItemId", controller.getOrderItemTrackingData);
+router.get(
+  "/chef/tracking/:orderItemId",
+  authService.authorize,
+  controller.getOrderItemTrackingData
+);
 
 //router.put('/edit/:id',authService.authorize, userController.getAuthUserMiddleware, orderDeliveryPolicies.isOwnerMiddleware, controller.edit);
 router.put(
