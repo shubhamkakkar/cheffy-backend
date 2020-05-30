@@ -127,7 +127,6 @@ exports.authorizeAdmin = function (req, res, next) {
       message: "Acess denny",
     });
   }
-
   jwt.verify(token, global.SALT_KEY, function (error, decoded) {
     if (error) {
       return res.status(401).json({
@@ -135,7 +134,33 @@ exports.authorizeAdmin = function (req, res, next) {
       });
     }
 
-    if (decoded.type !== "admin") {
+    if (decoded.user_type !== "admin") {
+      return res.status(401).json({
+        message: "You ar not Admin",
+      });
+    }
+
+    //use this req.userId in getAuthUserMiddleware
+    req.userId = decoded.id;
+    next();
+  });
+};
+
+exports.authorizeAdminForAdminListingOnly = function (req, res, next) {
+  const token = req.query.token || req.headers["x-access-token"];
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Acess denny",
+    });
+  }
+  jwt.verify(token, global.SALT_KEY, function (error, decoded) {
+    if (error) {
+      return res.status(401).json({
+        message: "Token Invalid",
+      });
+    }
+    if (req.params.userType === "admin" && decoded.user_type !== "admin") {
       return res.status(401).json({
         message: "You ar not Admin",
       });
