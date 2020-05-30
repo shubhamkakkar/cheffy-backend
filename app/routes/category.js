@@ -10,31 +10,36 @@ const categoryPolicies = require(path.resolve("app/policies/category"));
 
 const udpateFields = ["category_image"];
 
-const fieldsFile = udpateFields.map(field => {
-	return { name: field, maxCount: 1 };
+const fieldsFile = udpateFields.map((field) => {
+  return { name: field, maxCount: 1 };
 });
 
 router.post(
-	"/",
-	authService.authorize,
-	//userController.getAuthUserMiddleware,
-	multerStart(fieldsFile),
-	controller.create
+  "/",
+  authService.authorize,
+  //userController.getAuthUserMiddleware,
+  multerStart(fieldsFile),
+  controller.create
 );
 
 router.put(
-	"/edit/:categoryId",
-	authService.authorize,
-	//userController.getAuthUserMiddleware,
-	//categoryPolicies.isOwnerMiddleware(),
-	multerStart(fieldsFile),
-	controller.edit
+  "/edit/:categoryId",
+  authService.authorize,
+  //userController.getAuthUserMiddleware,
+  //categoryPolicies.isOwnerMiddleware(),
+  multerStart(fieldsFile),
+  controller.edit
 );
 
-router.get("/", controller.list);
+router.get("/", authService.authorizeOptional, controller.list);
 
-router.get("/:categoryId", controller.getCategory);
+router.get(
+  "/:categoryId",
+  authService.authorizeOptional,
+  controller.getCategory
+);
 
+//TODO: need more info
 router.param("categoryId", controller.categoryByIdMiddleware);
 
 module.exports = router;
