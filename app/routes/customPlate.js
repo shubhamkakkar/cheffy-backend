@@ -115,7 +115,7 @@ router.post(
 
 router.get(
   "/user/:userId",
-  authService.authorizeOptional,
+  authService.authorize,
   controller.listUserCustomPlates
 );
 
