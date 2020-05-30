@@ -29,7 +29,7 @@ router.post(
   controller.rejectChefRequest
 );
 router.get(
-  "/list/:userType",
+  "/list/:userType/:id?",
   authService.authorizeAdminForAdminListingOnly,
   controller.getAllUsers
 );
