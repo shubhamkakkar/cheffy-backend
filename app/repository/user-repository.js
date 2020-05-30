@@ -29,8 +29,9 @@ exports.findDriversInsideArea = async (latitude, longitude, radiusMiles) => {
   return result;
 };
 
-exports.getAllDriver = async (where) => {
+exports.getAllDriver = async ({ pagination, ...where }) => {
   const queryOptions = {
+    pagination,
     where,
   };
 

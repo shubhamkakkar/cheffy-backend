@@ -32,3 +32,37 @@ exports.promotion = async (promoCode) => {
   });
   return discount;
 };
+
+exports.getOrderPayments = async ({
+  pagination,
+  startDate,
+  endDate,
+  ...rest
+}) => {
+  let where = {
+    ...rest,
+  };
+
+  if (startDate && endDate) {
+    const startDateJS = new Date(startDate);
+    const endDateJS = new Date(endDate);
+    where = {
+      ...where,
+      createdAt: {
+        [Op.between]: [startDateJS, endDateJS],
+      },
+    };
+  }
+
+  const query = {
+    ...pagination,
+    where,
+    order: [["createdAt", "DESC"]],
+  };
+  try {
+    return await OrderPayment.findAll(query);
+  } catch (er) {
+    console.log({ er });
+    throw er;
+  }
+};

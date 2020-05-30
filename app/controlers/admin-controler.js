@@ -105,7 +105,7 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
     return res.status(HttpStatus.OK).send(users);
   } catch (error) {
     debug("error ", error);
-    return res.status(HttpStatus.ERROR).send(error.message);
+    return res.status(HttpStatus.BAD_REQUEST).send(error.message);
   }
 });
 
@@ -120,7 +120,7 @@ exports.getSingleUser = asyncHandler(async (req, res, next) => {
     return res.status(HttpStatus.NOT_FOUND).send(null);
   } catch (error) {
     debug(message);
-    return res.status(HttpStatus.ERROR).send(error.message);
+    return res.status(HttpStatus.BAD_REQUEST).send(error.message);
   }
 });
 
@@ -131,7 +131,7 @@ exports.acceptUserVerification = async (req, res, next) => {
   if (status) {
     return res.status(HttpStatus.OK).send(status);
   }
-  return res.status(HttpStatus.ERROR).send("error valiating user");
+  return res.status(HttpStatus.BAD_REQUEST).send("error valiating user");
 };
 
 exports.acceptDriverRequest = async (req, res, next) => {
