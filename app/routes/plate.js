@@ -89,25 +89,41 @@ router.delete(
   controller.deleteImage
 );
 
-router.get("/:id/kitchen", controller.imagePlateKitchen);
-router.get("/:id/review", controller.getPlateReview);
-router.get("/:id/related", controller.getRelatedPlates);
-router.get("/:id/receipt", controller.listReceipt);
+router.get(
+  "/:id/kitchen",
+  authService.authorizeOptional,
+  controller.imagePlateKitchen
+);
+router.get(
+  "/:id/review",
+  authService.authorizeOptional,
+  controller.getPlateReview
+);
+router.get(
+  "/:id/related",
+  authService.authorizeOptional,
+  controller.getRelatedPlates
+);
+router.get(
+  "/:id/receipt",
+  authService.authorizeOptional,
+  controller.listReceipt
+);
 
-router.get("/category/:categoryId", controller.categoryPlates);
+router.get(
+  "/category/:categoryId",
+  authService.authorizeOptional,
+  controller.categoryPlates
+);
 router.get(
   "/chef/:chefId",
   authService.authorizeOptional,
   userController.getAuthUserIfPresentMiddleware,
   controller.getChefPlates
 );
-router.get(
-  "/popular",
-  authService.authorizeOptional,
-  userController.getAuthUserIfPresentMiddleware,
-  controller.popularPlates
-);
+router.get("/popular", authService.authorizeOptional, controller.popularPlates);
 
+//TODO: need more info
 router.param("categoryId", categoryController.categoryByIdMiddleware);
 router.param("chefId", userController.getUserByUserIdParamMiddleware);
 router.param("id", controller.getPlateByIdMiddleware);

@@ -23,7 +23,18 @@ router.get(
 router.post(
   "/:user_type/accept/:id",
   authService.authorizeAdmin,
-  controller.acceptUserVerification
+  controller.rejectChefRequest
+);
+router.get(
+  "/list/:userType/:id?",
+  authService.authorizeAdminForAdminListingOnly,
+  controller.getAllUsers
+);
+
+router.get(
+  "/orderPayments/:orderId?/:status?/:startDate?/:endDate?",
+  authService.authorizeAdmin,
+  controller.getAllOrderPayments
 );
 
 module.exports = router;

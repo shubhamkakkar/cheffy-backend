@@ -258,19 +258,19 @@ exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 });
 
 exports.listTrackingUser = async (req, res, next) => {
-  try {
-    const pagination = paginator.paginateQuery(req);
-    const page = req.query.page || 0;
-    const pageSize = req.query.pageSize || 0;
-    const query = { userId: req.userId, pagination, page, pageSize };
-    const user_orders = await repository.listTrackingUser(query);
+  const pagination = paginator.paginateQuery(req);
+  const page = req.query.page || 0;
+  const pageSize = req.query.pageSize || 0;
+  const query = { userId: req.userId, pagination, page, pageSize };
+  console.log({ query });
 
-    res.status(HttpStatus.OK).send({
+  try {
+    const user_orders = await repository.listTrackingUser(query);
+    return res.status(HttpStatus.OK).send({
       message: "Here are your orders!",
       data: user_orders,
       ...(page && pageSize && { ...paginator.paginateInfo(pagination) }),
     });
-    return 0;
   } catch (e) {
     console.log(e);
     res.status(HttpStatus.CONFLICT).send({

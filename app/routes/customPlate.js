@@ -42,7 +42,7 @@ router.get(
   controller.chefSearchCustomPlates
 );
 
-router.get("/:customPlateId", controller.customPlate);
+router.get("/:customPlateId", authService.authorize, controller.customPlate);
 
 router.post(
   "/:customPlateId/images",
@@ -70,7 +70,7 @@ router.post(
   authService.authorize,
   userController.getAuthUserMiddleware,
   shippingController.getAuthUserShippingAddress,
-  controller.pay
+  controller.checkOut
 );
 
 //Chef bid for a custom plate
@@ -113,7 +113,11 @@ router.post(
   controller.acceptCustomPlateBid
 );
 
-router.get("/user/:userId", controller.listUserCustomPlates);
+router.get(
+  "/user/:userId",
+  authService.authorize,
+  controller.listUserCustomPlates
+);
 
 router.get(
   "/user/my/list",

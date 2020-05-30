@@ -86,11 +86,14 @@ exports.checkDocs = async (req, res, next) => {
 };
 
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
-  const { user_type } = req.params;
-
-  const pagination = paginator.paginateQuery(req);
-  const query = { pagination, user_type };
-
+  const { userType: user_type, id } = req.params;
+  let query = { user_type };
+  if (!isNaN(id)) {
+    query = {
+      ...query,
+      id,
+    };
+  }
   const users = await userRepository.getAllDriver(query);
   return res.status(HttpStatus.OK).send(users);
 });
