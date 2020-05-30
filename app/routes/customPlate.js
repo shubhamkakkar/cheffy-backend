@@ -113,7 +113,11 @@ router.post(
   controller.acceptCustomPlateBid
 );
 
-router.get("/user/:userId", controller.listUserCustomPlates);
+router.get(
+  "/user/:userId",
+  authService.authorizeOptional,
+  controller.listUserCustomPlates
+);
 
 router.get(
   "/user/my/list",
