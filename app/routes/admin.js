@@ -36,7 +36,7 @@ router.get(
 
 router.get(
   "/orderPayments/:orderId?/:status?/:startDate?/:endDate?",
-  authService.authorizeAdminForAdminListingOnly,
+  authService.authorizeAdmin,
   controller.getAllOrderPayments
 );
 
