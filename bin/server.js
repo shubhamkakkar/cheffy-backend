@@ -19,8 +19,8 @@ debug("en vars", process.env);
 global.SALT_KEY = process.env.SALT_KEY;
 
 const app = require("../server/index");
-const http = require("http");
-const io = require("socket.io")(http);
+const server = require("http").Server(app);
+const io = require("socket.io")(server);
 
 // socket's needed library import
 const HttpStatus = require("http-status-codes");
@@ -29,9 +29,11 @@ const authService = require("../app/services/auth");
 const ValidationContract = require("../app/services/validator");
 
 const port = normalizePort(process.env.PORT || "9000");
-app.set("port", port);
+// app.set('port', port);
 
-const server = http.createServer(app);
+server.listen(port);
+server.on("listening", onListening);
+console.log(`Server is currently running on port: ${port}`);
 
 const driverIO = io.of("/driver");
 driverIO.on("connection", (socket) => {
@@ -70,17 +72,6 @@ driverIO.on("connection", (socket) => {
     }
   });
 });
-// stream server
-io.on("connection", (socket) => {
-  console.log("a user connected");
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  });
-});
-
-server.listen(port);
-server.on("listening", onListening);
-console.log(`Server is currently running on port: ${port}`);
 
 function normalizePort(val) {
   const port = parseInt(val, 10);

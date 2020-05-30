@@ -162,7 +162,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     id: existUser.id,
     email: existUser.email,
     name: existUser.name,
-    user_type: existUser.user_type,
   });
 
   existUser.auth_token = token;
@@ -337,7 +336,6 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
   if (!password) {
     return emptyFieldError("password");
   }
-
   let customer;
   var reg = new RegExp(/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/);
   let whereClause = {};
@@ -349,79 +347,86 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
     whereClause = { country_code: num_list[0], phone_no: num_list[1] };
   }
 
-  customer = await User.findOne({
-    where: whereClause,
-    include: [
-      {
-        model: ShippingAddress,
-        attributes: [
-          "addressLine1",
-          "addressLine2",
-          "city",
-          "state",
-          "zipCode",
-          "lat",
-          "lon",
-        ],
-        as: "address",
-      },
-    ],
-  });
+  try {
+    customer = await User.findOne({
+      where: whereClause,
+      include: [
+        {
+          model: ShippingAddress,
+          attributes: [
+            "addressLine1",
+            "addressLine2",
+            "city",
+            "state",
+            "zipCode",
+            "lat",
+            "lon",
+          ],
+          as: "address",
+        },
+      ],
+    });
 
-  if (!customer) {
-    res.status(HttpStatus.FORBIDDEN).send({
-      message: "User does not exist in our records",
+    if (!customer) {
+      res.status(HttpStatus.FORBIDDEN).send({
+        message: "User does not exist in our records",
+        data: null,
+      });
+      return 0;
+    }
+
+    if (customer.verification_email_status !== userConstants.STATUS_VERIFIED) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send({ message: "Email Not verified. Complete registration first" });
+    }
+
+    debug("customer", customer);
+    let result = await bcrypt.compare(password, customer.password);
+
+    if (!result) {
+      return res
+        .status(HttpStatus.FORBIDDEN)
+        .send({ message: "Wrong password", data: null });
+    }
+
+    const doc = await Documents.findOne({ where: { userId: customer.id } });
+    const token = await authService.generateToken({
+      id: customer.id,
+      email: customer.email,
+      name: customer.name,
+      type: customer.user_type,
+    });
+
+    customer.auth_token = token;
+    device_id ? (customer.device_id = device_id) : null;
+    await customer.save();
+
+    const userResponse = userResponseHelper({ user: customer });
+
+    res.status(200).send({
+      token: token,
+      data: { userResponse, user_doc: !!doc },
+    });
+
+    //publish create action
+    events.publish(
+      {
+        action: "login",
+        user: customer.get({}),
+        query: req.query,
+        //login can be by any user so scope is all
+        scope: appConstants.SCOPE_ALL,
+        type: "user",
+      },
+      req
+    );
+  } catch (error) {
+    return res.send(500).send({
+      message: "server is bussy. please try after some time",
       data: null,
     });
-    return 0;
   }
-
-  if (customer.verification_email_status !== userConstants.STATUS_VERIFIED) {
-    return res
-      .status(HttpStatus.BAD_REQUEST)
-      .send({ message: "Email Not verified. Complete registration first" });
-  }
-
-  debug("customer", customer);
-  let result = await bcrypt.compare(password, customer.password);
-
-  if (!result) {
-    return res
-      .status(HttpStatus.FORBIDDEN)
-      .send({ message: "Wrong password", data: null });
-  }
-
-  const doc = await Documents.findOne({ where: { userId: customer.id } });
-  const token = await authService.generateToken({
-    id: customer.id,
-    email: customer.email,
-    name: customer.name,
-    user_type: customer.user_type, //added user_type during login in the token
-  });
-
-  customer.auth_token = token;
-  device_id ? (customer.device_id = device_id) : null;
-  await customer.save();
-
-  const userResponse = userResponseHelper({ user: customer });
-
-  res.status(200).send({
-    token: token,
-    data: { userResponse, user_doc: !!doc },
-  });
-
-  //publish create action
-  events.publish(
-    {
-      action: "login",
-      user: customer.get({}),
-      query: req.query,
-      //login can be by any user so scope is all
-      scope: appConstants.SCOPE_ALL,
-      type: customer.user_type,
-    },
-    req
-  );
 });
 
 exports.logout = asyncHandler(async (req, res, next) => {
