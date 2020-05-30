@@ -127,6 +127,7 @@ exports.authorizeAdmin = function (req, res, next) {
       message: "Acess denny",
     });
   }
+
   jwt.verify(token, global.SALT_KEY, function (error, decoded) {
     if (error) {
       return res.status(401).json({
