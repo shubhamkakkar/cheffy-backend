@@ -135,7 +135,7 @@ exports.authorizeAdmin = function (req, res, next) {
       });
     }
 
-    if (decoded.user_type !== "admin") {
+    if (decoded.type !== "admin") {
       return res.status(401).json({
         message: "You ar not Admin",
       });
@@ -161,7 +161,7 @@ exports.authorizeAdminForAdminListingOnly = function (req, res, next) {
         message: "Token Invalid",
       });
     }
-    if (req.params.userType === "admin" && decoded.user_type !== "admin") {
+    if (req.params.userType === "admin" && decoded.type !== "admin") {
       return res.status(401).json({
         message: "You ar not Admin",
       });

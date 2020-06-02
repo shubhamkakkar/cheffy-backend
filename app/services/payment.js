@@ -1,50 +1,49 @@
-'use strict';
-const path = require('path');
-const paymentConfig = require(path.resolve('config/payment'));
+"use strict";
+const path = require("path");
+const paymentConfig = require(path.resolve("config/payment"));
 
-const stripe = require('stripe')('sk_test_M5Hmfwb5Xb8ZD1lmedG3dmXD003y6owZ8D');
-const paypal = require('paypal-rest-sdk');
-const debug = require('debug')('payment-service');
+const stripe = require("stripe")("sk_test_M5Hmfwb5Xb8ZD1lmedG3dmXD003y6owZ8D");
+const paypal = require("paypal-rest-sdk");
+const debug = require("debug")("payment-service");
 
 stripe.setMaxNetworkRetries(3);
 exports.createSession = async (userID, list_items, address) => {
-
   const session = await stripe.checkout.sessions.create({
     customer: userID,
-    payment_method_types: ['card'],
+    payment_method_types: ["card"],
     submit_type: "pay",
     line_items: list_items,
     payment_intent_data: {
       shipping: {
-        name: 'home',
+        name: "home",
         address: {
           line1: address.addressLine1,
           line2: address.addressLine2,
           city: address.city,
           state: address.state,
           postal_code: address.zipCode,
-        }
-      }
+        },
+      },
     },
     success_url: paymentConfig.stripe.success_url,
     cancel_url: paymentConfig.stripe.cancel_url,
   });
   return session;
-}
+};
 
 /**
-* Create Stripe Customer for future recurring payments and saving cards
-* customer_id will be sent by stripe which will be saved in user.stripe_id
-*/
+ * Create Stripe Customer for future recurring payments and saving cards
+ * customer_id will be sent by stripe which will be saved in user.stripe_id
+ */
 exports.createUser = async (user, address = null) => {
   debug("STRIPE Create user: ", user.email);
 
   let params = {
     email: user.email,
-    name: user.name
+    name: user.name,
   };
 
-  if(address) {
+  if (address) {
     params = {
       ...params,
       address: {
@@ -55,89 +54,101 @@ exports.createUser = async (user, address = null) => {
         postal_code: address.zipCode,
       },
       shipping: {
-        name: 'home',
+        name: "home",
         address: {
           line1: address.addressLine1,
           line2: address.addressLine2,
           city: address.city,
           state: address.state,
           postal_code: address.zipCode,
-        }
-      }
-    }  
-  };
+        },
+      },
+    };
+  }
 
   const user_req = await stripe.customers.create(params);
   return user_req;
-}
+};
 
 /**
-* Update Stripe customer
-*/
+ * Update Stripe customer
+ */
 exports.updateUser = async (user, updates) => {
   debug("STRIPE Update user: ", user.email);
-  const updatedResponse = await stripe.customers.update(user.stripe_id, updates);
+  const updatedResponse = await stripe.customers.update(
+    user.stripe_id,
+    updates
+  );
   return updatedResponse;
-}
+};
 
 /**
-* Retrieve Stripe Customer by stripeId
-*/
+ * Retrieve Stripe Customer by stripeId
+ */
 exports.getUser = async (userStripeId) => {
-  debug("STRIPE Get user: ", userStripeId)
-  
+  debug("STRIPE Get user: ", userStripeId);
+
   const user_req = await stripe.customers.retrieve(userStripeId);
   return user_req;
-}
+};
 
 /**
-* Retrieve EphemeralKey by stripeId
-*/
+ * Retrieve EphemeralKey by stripeId
+ */
 exports.getEphemeralKey = async (userStripeId, apiVersion) => {
-  debug("STRIPE Get user: ", userStripeId)
-  
+  debug("STRIPE Get user: ", userStripeId);
+
   let key = await stripe.ephemeralKeys.create(
     { customer: userStripeId },
-    { stripe_version: apiVersion });  
+    { stripe_version: apiVersion }
+  );
   return key;
-}
+};
 
 /**
-* ADMIN
-* List all customers in stripe
-*/
+ * ADMIN
+ * List all customers in stripe
+ */
 exports.listUsers = async (query) => {
   const data = await stripe.customers.list(query);
   return data;
-}
-
+};
 
 /**
-* ADMIN
-* Delete Stripe Customer
-*/
+ * ADMIN
+ * Delete Stripe Customer
+ */
 exports.deleteUser = async (user) => {
   debug("STRIPE Delete user: ", user.stripe_id);
   const updatedResponse = await stripe.customers.del(user.stripe_id);
   return updatedResponse;
-}
-
+};
 
 /**
-* List paymentMethods of a user of 'card' type from stripe
-*/
+ * List paymentMethods of a user of 'card' type from stripe
+ */
 exports.getUserCardsList = async (stripeCustomerId, queryOptions = {}) => {
-  debug("STRIPE Get user cards: ", stripeCustomerId)
+  debug("STRIPE Get user cards: ", stripeCustomerId);
   // const user_req = await stripe.paymentMethods.list({ customer: stripeCustomerId, type: 'card', ...queryOptions });
-  const user_req = await stripe.paymentMethods.list({ customer: stripeCustomerId, type: 'card' });
-  return user_req;
-}
+  try {
+    const user_req = await stripe.paymentMethods.list({
+      customer: stripeCustomerId,
+      type: "card",
+    });
+    return user_req;
+  } catch (er) {
+    console.log({ er });
+    throw er;
+  }
+};
 
 /**
-* Creates payment Method of type card for a customer
-*/
+ * Creates payment Method of type card for a customer
+ */
 exports.createCard = async (user, card, address = null) => {
-  debug("STRIPE Create card: ", card.cvc)
+  console.log("createCard");
+
+  debug("STRIPE Create card: ", card.cvc);
 
   let params = {
     type: "card",
@@ -146,10 +157,10 @@ exports.createCard = async (user, card, address = null) => {
       exp_month: card.exp_month,
       exp_year: card.exp_year,
       cvc: card.cvc,
-    }
-  }
+    },
+  };
 
-  if(address) {
+  if (address) {
     params = {
       ...params,
       billing_details: {
@@ -162,117 +173,140 @@ exports.createCard = async (user, card, address = null) => {
           city: address.city,
           state: address.state,
           postal_code: address.zipCode,
-        }
-      }
-    }
-  };
+        },
+      },
+    };
+  }
 
-  const card_req = await stripe.paymentMethods.create(params);
-  return card_req;
-}
+  console.log({ params });
+
+  try {
+    return await stripe.paymentMethods.create(params);
+  } catch (e) {
+    console.log({ e });
+    throw e;
+  }
+};
 
 exports.createBankAccount = async (stripeCustomerId, accountDetails) => {
-  try{
-    const bank_account = await stripe.customers.createSource(stripeCustomerId, {source:
-      {
-        object: 'bank_account',
-        country: 'US',
-        currency: 'usd',
-        account_holder_type: 'individual',
+  try {
+    const bank_account = await stripe.customers.createSource(stripeCustomerId, {
+      source: {
+        object: "bank_account",
+        country: "US",
+        currency: "usd",
+        account_holder_type: "individual",
         account_holder_name: accountDetails.account_holder_name,
         account_number: accountDetails.account_number,
-        routing_number: accountDetails.routing_number
-      }});
-    return bank_account;
-  } catch (err) {
-    throw err.raw;
-  }
-}
-
-/**
- * Update a bank account
- */
-exports.updateBankAccount = async (stripeCustomerId, bankAccountId, account_holder_name) => {
-  try{
-    const bank_account = await stripe.customers.updateSource(stripeCustomerId, bankAccountId,
-      {
-        source:{
-        account_holder_type: 'individual',
-        account_holder_name: account_holder_name
-      }
+        routing_number: accountDetails.routing_number,
+      },
     });
     return bank_account;
   } catch (err) {
     throw err.raw;
   }
-}
+};
+
 /**
-* Gets a Bank Account object for a customer via Bank Account ID
-*/
+ * Update a bank account
+ */
+exports.updateBankAccount = async (
+  stripeCustomerId,
+  bankAccountId,
+  account_holder_name
+) => {
+  try {
+    const bank_account = await stripe.customers.updateSource(
+      stripeCustomerId,
+      bankAccountId,
+      {
+        source: {
+          account_holder_type: "individual",
+          account_holder_name: account_holder_name,
+        },
+      }
+    );
+    return bank_account;
+  } catch (err) {
+    throw err.raw;
+  }
+};
+/**
+ * Gets a Bank Account object for a customer via Bank Account ID
+ */
 exports.retrieveBankAccountById = async (stripeCustomerId, bankAccountId) => {
-  const bank_account = await stripe.customers.retrieveSource(stripeCustomerId, bankAccountId);
+  const bank_account = await stripe.customers.retrieveSource(
+    stripeCustomerId,
+    bankAccountId
+  );
   return bank_account;
-}
+};
 
 /**
-* Gets all Bank Account objects for a customer
-*/
+ * Gets all Bank Account objects for a customer
+ */
 exports.retrieveAllBankAccounts = async (stripeCustomerId, limit) => {
-  const bank_account = await stripe.customers.listSources(stripeCustomerId,
-  {
-    object: 'bank_account',
-    limit: limit
+  const bank_account = await stripe.customers.listSources(stripeCustomerId, {
+    object: "bank_account",
+    limit: limit,
   });
   return bank_account;
-}
+};
 
 /**
-* Delete a Bank Account object for a customer via Bank Account ID
-*/
+ * Delete a Bank Account object for a customer via Bank Account ID
+ */
 exports.deleteBankAccount = async (stripeCustomerId, bankAccountId) => {
-  const response = await stripe.customers.deleteSource(stripeCustomerId, bankAccountId);
+  const response = await stripe.customers.deleteSource(
+    stripeCustomerId,
+    bankAccountId
+  );
   return response;
-}
+};
 
 /**
-* Verify a Bank Account object for a customer via Bank Account ID
-*/
+ * Verify a Bank Account object for a customer via Bank Account ID
+ */
 exports.verifyBankAccount = async (stripeCustomerId, bankAccountId) => {
-  const response = await stripe.customers.verifySource(stripeCustomerId, bankAccountId, {
-    amounts: [32, 45]
-  });
+  const response = await stripe.customers.verifySource(
+    stripeCustomerId,
+    bankAccountId,
+    {
+      amounts: [32, 45],
+    }
+  );
   return response;
-}
+};
 
 exports.attachPaymentMethod = async (card, user) => {
   const card_req = await stripe.paymentMethods.attach(card, { customer: user });
   return card_req;
-}
+};
 
 exports.confirmPayment = async (ammount, card, customer) => {
-  debug("STRIPE Confirm payment: ", card)
+  debug("STRIPE Confirm payment: ", card);
   const paymentIntent = await stripe.paymentIntents.create({
     amount: ammount,
-    currency: 'usd',
-    payment_method_types: ['card'],
+    currency: "usd",
+    payment_method_types: ["card"],
     customer: customer,
     payment_method: card,
     confirm: true,
   });
   return paymentIntent;
-}
+};
 
 exports.createPayout = async (amount, bankAccount) => {
   let payload = {
     amount: Math.round(amount),
-    currency: 'usd'
-  }
+    currency: "usd",
+  };
   if (bankAccount) {
-    payload.destination = bankAccount
+    payload.destination = bankAccount;
   }
-  const payout = await stripe.payouts.create(payload)
+  const payout = await stripe.payouts.create(payload);
   return payout;
-}
+};
 
 //STRIPE METHOD
 /**
@@ -365,8 +399,11 @@ exports.createPayout = async (amount, bankAccount) => {
  }
  */
 
-exports.payPalConnection = async () => await paypal.configure({
-  'mode': 'sandbox',
-  'client_id': 'AX0rIM3otenMBgA2oLXLs0OmV1WsJxNTYOjXoML5J1yv-qe_g6Bj_9pPhQ-dW6PQ5EShQSadLF-UxRNj',
-  'client_secret': 'ELJGz7y4lKWoRVPdrnxfqUt0NOvFucR9w6_6iGkNVFn7HyBL0QCSYDqwRLrBCPIoOnlHzfSAoAD8EN9f'
-});
+exports.payPalConnection = async () =>
+  await paypal.configure({
+    mode: "sandbox",
+    client_id:
+      "AX0rIM3otenMBgA2oLXLs0OmV1WsJxNTYOjXoML5J1yv-qe_g6Bj_9pPhQ-dW6PQ5EShQSadLF-UxRNj",
+    client_secret:
+      "ELJGz7y4lKWoRVPdrnxfqUt0NOvFucR9w6_6iGkNVFn7HyBL0QCSYDqwRLrBCPIoOnlHzfSAoAD8EN9f",
+  });
