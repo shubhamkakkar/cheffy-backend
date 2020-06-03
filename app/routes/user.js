@@ -224,7 +224,7 @@ router.post(
 
 router.post(
   "/addDevice",
-  // authService.authorize,
+  authService.authorizeOptional,
   controller.getAuthUserMiddleware,
   controller.addDevice
 );
