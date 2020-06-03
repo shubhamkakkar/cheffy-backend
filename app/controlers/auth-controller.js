@@ -67,7 +67,9 @@ const getApplePublicKey = async (kid) => {
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
-  console.log({ contract: contract.errors() });
+  console.log({ contract1: contract.errors() });
+  contract.clear();
+  console.log({ contract2: contract.errors() });
   let { email, device_id } = req.body;
   contract.isRequired(req.body.provider, "provider is Required");
 
@@ -453,7 +455,7 @@ exports.logout = asyncHandler(async (req, res, next) => {
 
     existUser.save();
   } catch (er) {
-    console.log({ erLogout: er });
+    console.log({ erLogout });
   }
 
   res.status(200).send({
