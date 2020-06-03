@@ -71,10 +71,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   let { email, device_id } = req.body;
   contract.isRequired(req.body.provider, "provider is Required");
 
-  console.log({
-    socialauth: req.body,
-  });
-
   if (req.body.provider != "apple") {
     contract.isRequired(req.body.provider_user_id, "provider id is Required");
     contract.isRequired(req.body.email, "email is Required");
@@ -133,53 +129,59 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     return false;
   }
 
-  const existUser = await User.findOne({
-    where: { email: email },
-    attributes: userConstants.privateSelectFields,
-    include: [
-      {
-        model: ShippingAddress,
-        attributes: [
-          "addressLine1",
-          "addressLine2",
-          "city",
-          "state",
-          "zipCode",
-          "lat",
-          "lon",
-        ],
-        as: "address",
-      },
-    ],
-  });
+  try {
+    const existUser = await User.findOne({
+      where: { email: email },
+      attributes: userConstants.privateSelectFields,
+      include: [
+        {
+          model: ShippingAddress,
+          attributes: [
+            "addressLine1",
+            "addressLine2",
+            "city",
+            "state",
+            "zipCode",
+            "lat",
+            "lon",
+          ],
+          as: "address",
+        },
+      ],
+    });
 
-  if (!existUser) {
-    res
-      .status(HttpStatus.CONFLICT)
-      .send({ message: "user not found", status: HttpStatus.CONFLICT });
-    return 0;
+    if (!existUser) {
+      res
+        .status(HttpStatus.CONFLICT)
+        .send({ message: "user not found", status: HttpStatus.CONFLICT });
+      return 0;
+    }
+
+    existUser.provider = req.body.provider;
+    existUser.provider_user_id = req.body.provider_user_id;
+
+    const token = await authService.generateToken({
+      id: existUser.id,
+      email: existUser.email,
+      name: existUser.name,
+    });
+
+    existUser.auth_token = token;
+    existUser.verification_email_status = "verified";
+    device_id ? (existUser.device_id = device_id) : null;
+    await existUser.save();
+
+    const userResponse = userResponseHelper({ user: existUser });
+
+    return res.status(200).send({
+      token: token,
+      data: userResponse,
+    });
+  } catch (er) {
+    console.log({
+      er,
+    });
   }
-
-  existUser.provider = req.body.provider;
-  existUser.provider_user_id = req.body.provider_user_id;
-
-  const token = await authService.generateToken({
-    id: existUser.id,
-    email: existUser.email,
-    name: existUser.name,
-  });
-
-  existUser.auth_token = token;
-  existUser.verification_email_status = "verified";
-  device_id ? (existUser.device_id = device_id) : null;
-  await existUser.save();
-
-  const userResponse = userResponseHelper({ user: existUser });
-
-  res.status(200).send({
-    token: token,
-    data: userResponse,
-  });
 });
 
 exports.socialauthRegister = asyncHandler(async (req, res, next) => {
@@ -314,7 +316,7 @@ exports.socialauthRegister = asyncHandler(async (req, res, next) => {
     ],
   });
 
-  res.status(200).send({
+  return res.status(200).send({
     message:
       "Congratulations, successfully created user type " +
       user.user_type +
