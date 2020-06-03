@@ -69,7 +69,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
 
   let { email, device_id } = req.body;
-
   contract.isRequired(req.body.provider, "provider is Required");
 
   if (req.body.provider != "apple") {
@@ -80,9 +79,11 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   }
 
   if (!contract.isValid()) {
-    return res
-      .status(HttpStatus.CONFLICT)
-      .send({ message: "Review user info" });
+    return res.status(HttpStatus.CONFLICT).send({
+      message: contract.errors().length
+        ? contract.errors()
+        : "Review user info",
+    });
   }
 
   if (req.body.provider == "apple") {
