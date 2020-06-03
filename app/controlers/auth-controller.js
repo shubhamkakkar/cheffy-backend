@@ -78,7 +78,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   }
   console.log("here-79");
   if (!contract.isValid()) {
-    console.log("here-81");
+    console.log("here-81", contract.errors());
     return res.status(HttpStatus.CONFLICT).send({
       message: contract.errors().length
         ? contract.errors()
