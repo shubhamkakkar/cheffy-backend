@@ -448,9 +448,13 @@ exports.logout = asyncHandler(async (req, res, next) => {
     });
   }
 
-  existUser.auth_token = null;
+  try {
+    existUser.auth_token = null;
 
-  existUser.save();
+    existUser.save();
+  } catch (er) {
+    console.log({ erLogout: er });
+  }
 
   res.status(200).send({
     message: "successfully logged out!",
