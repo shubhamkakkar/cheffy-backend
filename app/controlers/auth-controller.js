@@ -67,7 +67,6 @@ const getApplePublicKey = async (kid) => {
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
-  console.log("here");
   let { email, device_id } = req.body;
   contract.isRequired(req.body.provider, "provider is Required");
 
@@ -77,7 +76,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   } else {
     contract.isRequired(req.body.jwt, "jwt is Required");
   }
-
+  console.log("here-79");
   if (!contract.isValid()) {
     return res.status(HttpStatus.CONFLICT).send({
       message: contract.errors().length
@@ -85,7 +84,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
         : "Review user info",
     });
   }
-
+  console.log("here-87");
   if (req.body.provider == "apple") {
     //get kid
 
@@ -124,12 +123,13 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
       }
     );
   }
-
+  console.log("here-126");
   if (!email) {
     return false;
   }
 
   try {
+    console.log("here-132");
     const existUser = await User.findOne({
       where: { email: email },
       attributes: userConstants.privateSelectFields,
@@ -149,8 +149,9 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
         },
       ],
     });
-
+    console.log("here-152");
     if (!existUser) {
+      console.log("here-154");
       res
         .status(HttpStatus.CONFLICT)
         .send({ message: "user not found", status: HttpStatus.CONFLICT });
@@ -172,7 +173,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     await existUser.save();
 
     const userResponse = userResponseHelper({ user: existUser });
-
+    console.log("here-176");
     return res.status(200).send({
       token: token,
       data: userResponse,
