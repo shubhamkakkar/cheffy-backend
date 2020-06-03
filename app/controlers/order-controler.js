@@ -262,7 +262,6 @@ exports.listTrackingUser = async (req, res, next) => {
   const page = req.query.page || 0;
   const pageSize = req.query.pageSize || 0;
   const query = { userId: req.userId, pagination, page, pageSize };
-  console.log({ query });
 
   try {
     const user_orders = await repository.listTrackingUser(query);
@@ -272,8 +271,7 @@ exports.listTrackingUser = async (req, res, next) => {
       ...(page && pageSize && { ...paginator.paginateInfo(pagination) }),
     });
   } catch (e) {
-    console.log(e);
-    res.status(HttpStatus.CONFLICT).send({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
       message: "Fail to get your orders!",
       error: true,
     });
@@ -291,7 +289,7 @@ exports.listTrackingDriver = async (req, res, next) => {
     return 0;
   } catch (e) {
     console.log(e);
-    res.status(HttpStatus.CONFLICT).send({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
       message: "Fail to get your orders!",
       error: true,
     });
