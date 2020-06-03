@@ -71,6 +71,10 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   let { email, device_id } = req.body;
   contract.isRequired(req.body.provider, "provider is Required");
 
+  console.log({
+    socialauth: req.body,
+  });
+
   if (req.body.provider != "apple") {
     contract.isRequired(req.body.provider_user_id, "provider id is Required");
     contract.isRequired(req.body.email, "email is Required");
