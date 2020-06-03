@@ -67,6 +67,7 @@ const getApplePublicKey = async (kid) => {
 
 exports.socialauth = asyncHandler(async (req, res, next) => {
   const contract = new ValidationContract();
+  console.log({ contract: contract.errors() });
   let { email, device_id } = req.body;
   contract.isRequired(req.body.provider, "provider is Required");
 
@@ -76,7 +77,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
   } else {
     contract.isRequired(req.body.jwt, "jwt is Required");
   }
-  console.log("here-79");
   if (!contract.isValid()) {
     console.log("here-81", contract.errors());
     return res.status(HttpStatus.CONFLICT).send({
