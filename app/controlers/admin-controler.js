@@ -78,10 +78,10 @@ exports.checkDocs = async (req, res, next) => {
       message: "Successfully updated!",
     });
     return 0;
-  } catch (e) {
+  } catch (error) {
     res.status(HttpStatus.CONFLICT).send({
       message: "Fail to process",
-      error: e,
+      error: error,
     });
     return 0;
   }
@@ -105,7 +105,10 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
     return res.status(HttpStatus.OK).send(users);
   } catch (error) {
     debug("error ", error);
-    return res.status(HttpStatus.BAD_REQUEST).send(error.message);
+    return res.status(HttpStatus.BAD_REQUEST).send({
+      message: error.message,
+      error,
+    });
   }
 });
 
@@ -128,10 +131,22 @@ exports.acceptUserVerification = async (req, res, next) => {
   const { id } = req.params;
 
   const status = await userRepository.acceptUserVerification(id);
-  if (status) {
-    return res.status(HttpStatus.OK).send(status);
+
+  try {
+    if (status) {
+      const status = await userRepository.acceptUserVerification(id);
+      if (status) {
+        return res.status(HttpStatus.OK).send(status);
+      }
+      return res.status(HttpStatus.NOT_FOUND).send(null);
+    }
+  } catch (error) {
+    debug("error ", error.message);
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Fail to process",
+      error,
+    });
   }
-  return res.status(HttpStatus.BAD_REQUEST).send("error valiating user");
 };
 
 exports.acceptDriverRequest = async (req, res, next) => {

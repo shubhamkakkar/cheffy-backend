@@ -1132,6 +1132,10 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
   //create order
   let create_order = await repositoryOrder.create(payload);
 
+  console.log({
+    body: req.body,
+  });
+
   if (req.body.cod) {
     try {
       await checkOutCashOnDelivery(

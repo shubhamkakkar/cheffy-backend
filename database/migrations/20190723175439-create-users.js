@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Users', {
+    return queryInterface.createTable("Users", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -33,15 +33,15 @@ module.exports = {
       },
       location_lat: {
         allowNull: true,
-        type: Sequelize.DECIMAL(10,8),
+        type: Sequelize.DECIMAL(10, 8),
       },
       location_lon: {
         allowNull: true,
-        type: Sequelize.DECIMAL(10,8)
+        type: Sequelize.DECIMAL(10, 8),
       },
       user_type: {
         allowNull: false,
-        type: Sequelize.ENUM('user', 'chef', 'admin', 'driver'),
+        type: Sequelize.ENUM("user", "chef", "admin", "driver"),
       },
       imagePath: {
         allowNull: true,
@@ -65,8 +65,8 @@ module.exports = {
       },
       verification_email_status: {
         allowNull: true,
-        type: Sequelize.ENUM('pending', 'verified'),
-        defaultValue: "pending"
+        type: Sequelize.ENUM("pending", "verified"),
+        defaultValue: "pending",
       },
       verification_phone_token: {
         allowNull: true,
@@ -74,8 +74,8 @@ module.exports = {
       },
       verification_phone_status: {
         allowNull: true,
-        type: Sequelize.ENUM('pending', 'verified'),
-        defaultValue: "pending"
+        type: Sequelize.ENUM("pending", "verified"),
+        defaultValue: "pending",
       },
       status: {
         allowNull: true,
@@ -84,6 +84,10 @@ module.exports = {
       user_ip: {
         allowNull: true,
         type: Sequelize.STRING,
+      },
+      adminVerficaton: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       },
       createdAt: {
         allowNull: false,
@@ -97,6 +101,6 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Users');
-  }
+    return queryInterface.dropTable("Users");
+  },
 };
