@@ -87,7 +87,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
         : "Review user info",
     });
   }
-  console.log("here-87");
   if (req.body.provider == "apple") {
     //get kid
 
@@ -126,13 +125,11 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
       }
     );
   }
-  console.log("here-126");
   if (!email) {
     return false;
   }
 
   try {
-    console.log("here-132");
     const existUser = await User.findOne({
       where: { email: email },
       attributes: userConstants.privateSelectFields,
@@ -152,9 +149,7 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
         },
       ],
     });
-    console.log("here-152");
     if (!existUser) {
-      console.log("here-154");
       res
         .status(HttpStatus.CONFLICT)
         .send({ message: "user not found", status: HttpStatus.CONFLICT });
@@ -176,7 +171,6 @@ exports.socialauth = asyncHandler(async (req, res, next) => {
     await existUser.save();
 
     const userResponse = userResponseHelper({ user: existUser });
-    console.log("here-176");
     return res.status(200).send({
       token: token,
       data: userResponse,
