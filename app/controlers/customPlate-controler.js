@@ -48,6 +48,7 @@ const notificationConstant = require(path.resolve(
   "app/constants/notification"
 ));
 const FCM = require("../services/fcm");
+const { PAYMENT_TYPE_COD } = require("../constants/order-item");
 
 /**
  * Helper method
@@ -1136,9 +1137,9 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
     body: req.body,
   });
 
-  if (req.body.cod) {
+  if (req.body.paymentType === PAYMENT_TYPE_COD) {
     try {
-      await checkOutCashOnDelivery(
+      return await checkOutCashOnDelivery(
         req,
         res,
         create_order,
@@ -1148,7 +1149,7 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
       );
     } catch (err) {
       console.log({ err });
-      res.status(HttpStatus.BAD_REQUEST).send({
+      return res.status(HttpStatus.BAD_REQUEST).send({
         message: "something went wrong",
         status: HttpStatus.BAD_REQUEST,
       });
