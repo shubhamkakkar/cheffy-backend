@@ -348,20 +348,30 @@ exports.getDocsByUserType = asyncHandler(async (req, res, next) => {
       };
     }
 
-    if (name) {
-      query = {
-        ...query,
-        name,
-      };
-    }
-
-    console.log({ query });
-
-    if (query.userId && query.name) {
+    if (query.userId && name) {
       return res.status(HttpStatus.BAD_REQUEST).send({
         message: "Search can be done either by ID or NAME, not both",
         data: [],
       });
+    }
+
+    if (name) {
+      const attributes = ["id"];
+      const { id: userId } = await userRepository.getUserByName(
+        name,
+        attributes
+      );
+      if (!isNaN(userId)) {
+        query = {
+          ...query,
+          userId,
+        };
+      } else {
+        return res.status(HttpStatus.BAD_REQUEST).send({
+          message: "No user found",
+          data: [],
+        });
+      }
     }
 
     let userDoc = await repositoryDocs.getAllDriverChefDocsWithFilter(query);

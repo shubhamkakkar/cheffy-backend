@@ -7,6 +7,8 @@ const {
 const path = require("path");
 const userConstants = require(path.resolve("app/constants/users"));
 const Sequelize = require("sequelize");
+const { option } = require("yargs");
+const Op = Sequelize.Op;
 
 exports.findDriversInsideArea = async (latitude, longitude, radiusMiles) => {
   let strQuery =
@@ -164,5 +166,23 @@ exports.deleteUserAccount = async (data) => {
 exports.getUserByUserId = async (userId) => {
   return await User.findOne({
     where: { id: userId },
+  });
+};
+
+exports.getUserByName = async (name, attributes) => {
+  let optionalFields = {};
+  if (attributes) {
+    optionalFields = {
+      ...optionalFields,
+      attributes,
+    };
+  }
+  return await User.findOne({
+    where: {
+      name: {
+        [Op.like]: "%" + name + "%",
+      },
+    },
+    ...optionalFields,
   });
 };
