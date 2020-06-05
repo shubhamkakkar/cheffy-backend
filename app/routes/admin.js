@@ -30,7 +30,7 @@ router.post(
 );
 router.get(
   "/:userType/docs",
-  // authService.authorizeAdmin,
+  authService.authorizeAdmin,
   controller.getDocsByUserType
 );
 router.get(
