@@ -228,16 +228,16 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
     ...(page && pageSize && { ...pagination }),
     attributes: [
       "id",
-      "basketId",
-      "userId",
-      "shippingId",
+      //   "basketId",
+      //   "userId",
+      //   "shippingId",
       "state_type",
       "promoCode",
-      "total_items",
+      //   "total_items",
       "shipping_fee",
-      "order_total",
-      "createdAt",
-      "updatedAt",
+      //   "order_total",
+      //   "createdAt",
+      //   "updatedAt",
     ],
     order: [["id", "DESC"]],
     include: [
@@ -271,14 +271,13 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
         attributes: [
           "id",
           "plate_id",
-          "customPlateId",
           "item_type",
-          "user_id",
-          "chef_id",
-          "chef_location",
-          "name",
-          "description",
-          "amount",
+          //   "user_id",
+          //   "chef_id",
+          //   "chef_location",
+          //   "name",
+          //   "description",
+          //   "amount",
           "quantity",
           "deliveryType",
         ],
@@ -286,36 +285,74 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
           {
             model: Plates,
             as: "plate",
+            attributes: [
+              "id",
+              "name",
+              "description",
+              "price",
+              "delivery_type",
+              "chefDeliveryAvailable",
+              "userId",
+              "rating",
+              "updatedAt",
+              "createdAt",
+              "delivery_time",
+              "sell_count",
+              "available",
+            ],
             include: [
               {
                 model: PlateImage,
+                attributes: ["id", "url"],
               },
               {
                 model: User,
                 as: "chef",
-                include: [
-                  {
-                    model: ShippingAddress,
-                    as: "address",
-                    attributes: [
-                      "id",
-                      "addressLine1",
-                      "addressLine2",
-                      "city",
-                      "state",
-                      "zipCode",
-                      "lat",
-                      "lon",
-                      "userId",
-                    ],
-                  },
+                attributes: [
+                  "id",
+                  "name",
+                  "email",
+                  "restaurant_name",
+                  "location_lat",
+                  "location_lon",
+                  "user_type",
+                  "imagePath",
                 ],
+                // include: [
+                //   {
+                //     model: ShippingAddress,
+                //     as: "address",
+                //     attributes: [
+                //       "id",
+                //       "addressLine1",
+                //       "addressLine2",
+                //       "city",
+                //       "state",
+                //       "zipCode",
+                //       "lat",
+                //       "lon",
+                //       "userId",
+                //     ],
+                //   },
+                // ],
               },
             ],
           },
           {
             model: CustomPlateOrder,
             as: "custom_plate_order",
+            attributes: [
+              "id",
+              "name",
+              "description",
+              "price",
+              "delivery_type",
+              "chefDeliveryAvailable",
+              "userId",
+              "rating",
+              "updatedAt",
+              "createdAt",
+            ],
             include: [
               {
                 model: CustomPlate,
@@ -323,6 +360,7 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
                 include: [
                   {
                     model: CustomPlateImage,
+                    attributes: ["id", "url"],
                   },
                 ],
               },
@@ -334,21 +372,22 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
         model: OrderDelivery,
         as: "order_delivery",
         // required: true,
-        attributes: ["id", "state_type"],
+        // attributes: ["id", "state_type"],
       },
     ],
   });
-  const order = JSON.parse(JSON.stringify(response));
-  order.forEach((val, key) => {
-    if (val.OrderItems.length > 0) {
-      val.OrderItems.forEach((inVal, inKey) => {
-        if (inVal.plate && inVal.plate.chef) {
-          order[key].OrderItems[inKey].chef_name = inVal.plate.chef.name;
-        }
-      });
-    }
-  });
-  return order;
+  return response;
+  //  JSON.parse(JSON.stringify(response));
+  // order.forEach((val, key) => {
+  //   if (val.OrderItems.length > 0) {
+  //     val.OrderItems.forEach((inVal, inKey) => {
+  //       if (inVal.plate && inVal.plate.chef) {
+  //         order[key].OrderItems[inKey].chef_name = inVal.plate.chef.name;
+  //       }
+  //     });
+  //   }
+  // });
+  // return order;
 };
 
 exports.listTrackingDriver = async (data) => {

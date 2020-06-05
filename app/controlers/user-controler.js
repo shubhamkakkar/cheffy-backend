@@ -58,7 +58,12 @@ async function sendMail({ req, pass }) {
     context: { token: pass, user: " One more step..." },
   };
 
-  return await mailer.sendMail(args);
+  try {
+    return await mailer.sendMail(args);
+  } catch (err) {
+    console.log({ err });
+    return 0;
+  }
 }
 
 function userResponseHelper({ user }) {
@@ -228,16 +233,16 @@ exports.create = asyncHandler(async (req, res, next) => {
 
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, "Invalid email");
+  contract.isRequired(req.body.email, "Email is required");
 
   if (!contract.isValid()) {
-    res
-      .status(HttpStatus.NON_AUTHORITATIVE_INFORMATION)
+    return res
+      .status(HttpStatus.BAD_REQUEST)
       .send({
         message: contract.errors(),
-        status: HttpStatus.NON_AUTHORITATIVE_INFORMATION,
+        status: HttpStatus.BAD_REQUEST,
       })
       .end();
-    return 0;
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
@@ -315,7 +320,6 @@ exports.create = asyncHandler(async (req, res, next) => {
   res.status(payload.status).send(payload);
 
   //send email after sending response
-
   await sendMail({ req, pass });
 
   //publish create action
