@@ -135,7 +135,7 @@ exports.authorizeAdmin = function (req, res, next) {
       });
     }
 
-    if (decoded.type !== "admin") {
+    if (decoded.user_type !== "admin") {
       return res.status(401).json({
         message: "You ar not Admin",
       });
