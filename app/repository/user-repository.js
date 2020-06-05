@@ -35,8 +35,7 @@ exports.getAllDriver = async ({ pagination, ...where }) => {
     where,
   };
 
-  const response = await User.findAll(queryOptions);
-  return response;
+  return await User.findAll(queryOptions);
 };
 
 exports.acceptUserVerification = async (userId) => {

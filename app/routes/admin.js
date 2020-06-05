@@ -29,6 +29,11 @@ router.post(
   controller.rejectChefRequest
 );
 router.get(
+  "/:userType/docs/:userId?",
+  // authService.authorizeAdmin,
+  controller.getDocsByUserType
+);
+router.get(
   "/list/:userType/:id?",
   authService.authorizeAdminForAdminListingOnly,
   controller.getAllUsers

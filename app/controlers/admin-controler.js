@@ -8,6 +8,7 @@ const authService = require("../services/auth");
 const asyncHandler = require("express-async-handler");
 const userRepository = require("../repository/user-repository");
 const paginator = require(path.resolve("app/services/paginator"));
+const userConstants = require(path.resolve("app/constants/users"));
 const orderPaymentRepository = require("../repository/orderPayment-repository");
 const debug = require("debug")("admin");
 
@@ -328,3 +329,39 @@ exports.getAllOrderPayments = async (req, res, next) => {
   const orderPayments = await orderPaymentRepository.getOrderPayments(query);
   return res.status(HttpStatus.OK).send(orderPayments);
 };
+
+exports.getDocsByUserType = asyncHandler(async (req, res, next) => {
+  const { userType: user_type, userId } = req.params;
+  if (
+    user_type === userConstants.USER_TYPE_DRIVER ||
+    user_type === userConstants.USER_TYPE_CHEF
+  ) {
+    debug("user type: ", user_type);
+    const pagination = paginator.paginateQuery(req);
+    let query = { pagination, user_type };
+
+    if (!isNaN(userId)) {
+      query = {
+        ...query,
+        userId,
+      };
+    }
+    let userDoc = await repositoryDocs.getAllDriverChefDocsWithFilter(query);
+
+    if (userDoc.length) {
+      return res.status(HttpStatus.OK).send({
+        message: "Docs are here",
+        data: userDoc,
+      });
+    }
+
+    return res.status(HttpStatus.OK).send({
+      message: `Docs are not uploaded for this ${user_type}`,
+      data: [],
+    });
+  }
+
+  return res.status(HttpStatus.BAD_REQUEST).send({
+    message: `userType can either be : ${userConstants.USER_TYPE_DRIVER} or ${userConstants.USER_TYPE_CHEF}`,
+  });
+});
