@@ -177,7 +177,7 @@ exports.getUserByName = async (name, attributes) => {
       attributes,
     };
   }
-  return await User.findOne({
+  return await User.findAll({
     where: {
       name: {
         [Op.like]: "%" + name + "%",

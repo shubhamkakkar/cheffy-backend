@@ -11,7 +11,8 @@ const paginator = require(path.resolve("app/services/paginator"));
 const userConstants = require(path.resolve("app/constants/users"));
 const orderPaymentRepository = require("../repository/orderPayment-repository");
 const debug = require("debug")("admin");
-
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 exports.authenticate = async (req, res, next) => {
   try {
     const customer = await repository.authenticateToken({
@@ -357,14 +358,16 @@ exports.getDocsByUserType = asyncHandler(async (req, res, next) => {
 
     if (name) {
       const attributes = ["id"];
-      const { id: userId } = await userRepository.getUserByName(
-        name,
-        attributes
-      );
-      if (!isNaN(userId)) {
+      const user = await userRepository.getUserByName(name, attributes);
+
+      const idsArray = user.map(({ id }) => id);
+      console.log({ idsArray });
+      if (idsArray.length) {
         query = {
           ...query,
-          userId,
+          userId: {
+            [Op.in]: idsArray,
+          },
         };
       } else {
         return res.status(HttpStatus.BAD_REQUEST).send({
