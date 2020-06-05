@@ -160,3 +160,9 @@ exports.deleteUserAccount = async (data) => {
     },
   });
 };
+
+exports.getUserByUserId = async (userId) => {
+  return await User.findOne({
+    where: { id: userId },
+  });
+};

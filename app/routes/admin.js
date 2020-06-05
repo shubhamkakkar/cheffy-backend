@@ -29,8 +29,8 @@ router.post(
   controller.rejectChefRequest
 );
 router.get(
-  "/:userType/docs/:userId?",
-  authService.authorizeAdmin,
+  "/:userType/docs",
+  // authService.authorizeAdmin,
   controller.getDocsByUserType
 );
 router.get(

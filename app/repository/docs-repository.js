@@ -8,12 +8,13 @@ const {
   ChefLicense,
   ChefCertificate,
   DriverLicenseFrontSide,
+  User,
   DriverVehicleRegistration,
 } = require("../models/index");
 const documentConstants = require(path.resolve("app/constants/documents"));
 const userConstants = require(path.resolve("app/constants/users"));
 const uploadService = require("../services/upload");
-
+const userRepository = require("./user-repository");
 const driverIncludes = [
   {
     model: ProfilePhoto,
@@ -110,15 +111,32 @@ exports.getAllDriverChefDocsWithFilter = async ({
   user_type,
   ...where
 }) => {
+  if (where.name) {
+  }
+
+  console.log({ where });
+
   const queryOptions = {
     pagination,
     where,
-    include:
-      user_type === userConstants.USER_TYPE_DRIVER
+    include: [
+      ...(user_type === userConstants.USER_TYPE_DRIVER
         ? driverIncludes
-        : chefIncludes,
+        : chefIncludes),
+      {
+        model: User,
+        as: "user",
+        attributes: ["id", "name", "email"],
+      },
+    ],
+    attributes: [
+      "id",
+      "comment",
+      "social_security_number",
+      "updatedAt",
+      "createdAt",
+    ],
   };
-
   return await Documents.findAll(queryOptions);
 };
 

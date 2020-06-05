@@ -331,7 +331,8 @@ exports.getAllOrderPayments = async (req, res, next) => {
 };
 
 exports.getDocsByUserType = asyncHandler(async (req, res, next) => {
-  const { userType: user_type, userId } = req.params;
+  const { userType: user_type } = req.params;
+  const { userId, name } = req.query;
   if (
     user_type === userConstants.USER_TYPE_DRIVER ||
     user_type === userConstants.USER_TYPE_CHEF
@@ -346,8 +347,24 @@ exports.getDocsByUserType = asyncHandler(async (req, res, next) => {
         userId,
       };
     }
-    let userDoc = await repositoryDocs.getAllDriverChefDocsWithFilter(query);
 
+    if (name) {
+      query = {
+        ...query,
+        name,
+      };
+    }
+
+    console.log({ query });
+
+    if (query.userId && query.name) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        message: "Search can be done either by ID or NAME, not both",
+        data: [],
+      });
+    }
+
+    let userDoc = await repositoryDocs.getAllDriverChefDocsWithFilter(query);
     if (userDoc.length) {
       return res.status(HttpStatus.OK).send({
         message: "Docs are here",
