@@ -599,15 +599,15 @@ exports.popularPlates = async (req, res, next) => {
   const contract = new ValidationContract();
   let popular_plates = [];
 
-  const { radius } = req.body;
+  const { radius } = req.query;
   let location_lat,
     location_lon = null;
   if (req.user) {
     location_lat = req.user.location_lat;
     location_lon = req.user.location_lon;
   } else {
-    location_lat = req.body.location_lat;
-    location_lon = req.body.location_lon;
+    location_lat = req.query.location_lat;
+    location_lon = req.query.location_lon;
   }
 
   contract.isRequired(location_lat, "location lattitude is Required");
