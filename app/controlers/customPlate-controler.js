@@ -754,6 +754,7 @@ exports.acceptCustomPlateBid = asyncHandler(async (req, res, next) => {
 });
 
 exports.checkout = require("./customPlateController/checkout").checkOut;
+
 /**
  * Method: GET
  * Get custom plate orders of a user.
