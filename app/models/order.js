@@ -61,9 +61,9 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "shippingId",
       as: "shipping",
     });
-    Order.hasMany(models.OrderPayment);
-    Order.hasMany(models.OrderItem);
-    Order.hasMany(models.OrderDelivery, { as: "order_delivery" });
+    Order.hasOne(models.OrderPayment);
+    Order.hasOne(models.OrderItem);
+    Order.hasOne(models.OrderDelivery, { as: "order_delivery" });
     Order.hasMany(models.Transactions);
   };
   return Order;

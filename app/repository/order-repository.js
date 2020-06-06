@@ -22,78 +22,10 @@ const userConstants = require(path.resolve("app/constants/users"));
 const orderItemConstants = require(path.resolve("app/constants/order-item"));
 const reviewConstants = require(path.resolve("app/constants/reviews"));
 
-exports.getById = async (orderId) => {
-  try {
-    const order = await Order.findByPk(orderId);
-    return order;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  }
-};
-
-exports.getOrderItemById = async (orderItemId) => {
-  try {
-    const order = await OrderItem.findByPk(orderItemId, {
-      attributes: {
-        exclude: ["WalletId"],
-      },
-    });
-    return order;
-  } catch (e) {
-    console.log(e);
-    throw e;
-  }
-};
-
-exports.getOrderItemByIdDetails = async (orderItemId) => {
-  const orderItem = await OrderItem.findByPk(orderItemId, {
-    attributes: orderItemConstants.selectFields,
-    include: [
-      {
-        model: User,
-        foreignKey: "user_id",
-        as: "user",
-        attributes: userConstants.userSelectFields,
-      },
-      {
-        model: User,
-        foreignKey: "chef_id",
-        as: "chef",
-        attributes: userConstants.userSelectFields,
-      },
-      {
-        model: Plates,
-        as: "plate",
-        include: [
-          {
-            model: PlateImage,
-          },
-        ],
-      },
-      {
-        model: CustomPlateOrder,
-        as: "custom_plate_order",
-        include: [
-          {
-            model: CustomPlate,
-            as: "custom_plate",
-            include: [
-              {
-                model: CustomPlateImage,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-  return orderItem;
-};
-
-exports.createOrderItem = async (data) => {
-  return await OrderItem.create(data);
-};
+exports.getById = require("./orderRepository/getById").getById;
+exports.getOrderItemById = require("./orderRepository/getOrderItemById").getOrderItemById;
+exports.getOrderItemByIdDetails = require("./orderRepository/getOrderItemByIdDetails").getOrderItemByIdDetails;
+exports.createOrderItem = require("./orderRepository/createOrderItem").createOrderItem;
 
 /**
  * TODO use bulk create in future
