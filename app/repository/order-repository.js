@@ -74,17 +74,8 @@ exports.editOrder = async (orderId, data) => {
   }
 };
 
-exports.create = async (data) => {
-  let doc = await Order.create({ ...data });
-  return doc;
-};
-
-exports.editState = async (data, state) => {
-  let order = await Order.findByPk(data);
-  order.state_type = state;
-  await order.save();
-  return order;
-};
+exports.create = require("./orderRepository/create").create;
+exports.editState = require("./orderRepository/editState").editState;
 
 /**
  * Main Table: Orders
