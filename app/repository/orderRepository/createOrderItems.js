@@ -6,7 +6,7 @@
 exports.createOrderItems = async (dataArray) => {
   //  return await OrderItem.bulkCreate(dataArray);
   const orderItems = dataArray.map(async (data) => {
-    return await exports.createOrderItem(data);
+    return await require("./createOrderItem").createOrderItem(data);
   });
 
   return Promise.all(orderItems);

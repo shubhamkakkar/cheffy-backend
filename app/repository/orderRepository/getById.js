@@ -1,8 +1,7 @@
 const { Order } = require("../../models/index");
 exports.getById = async (orderId) => {
   try {
-    const order = await Order.findByPk(orderId);
-    return order;
+    return await Order.findByPk(orderId);
   } catch (e) {
     console.log(e);
     throw e;
