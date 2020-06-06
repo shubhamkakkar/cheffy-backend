@@ -211,7 +211,7 @@ async function checkOutCashOnDelivery(
   });
 }
 
-exports = {
+module.exports = {
   dollarToCents,
   centsToDollar,
   orderPaymentErrorResponseBuilder,
