@@ -1,5 +1,6 @@
+const path = require("path");
 const userConstants = require(path.resolve("app/constants/users"));
-const { OrderItem } = require("../../models/index");
+const { OrderItem, User } = require("../../models/index");
 
 exports.getFirstOrderItemByOrderId = async (orderId) => {
   try {

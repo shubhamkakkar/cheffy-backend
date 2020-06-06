@@ -1,41 +1,40 @@
-const path = require("path");
-const orderItemConstants = require(path.resolve("app/constants/order-item"));
-const userConstants = require(path.resolve("app/constants/users"));
-
 const {
   OrderItem,
-  User,
-  ShippingAddress,
-  Order,
   Plates,
   PlateImage,
   CustomPlateOrder,
   CustomPlate,
   CustomPlateImage,
 } = require("../../models/index");
-
-exports.getOrderItemWithPickupAndDropAddress = async (orderItemId) => {
-  const orderItem = await OrderItem.findByPk(orderItemId, {
+const path = require("path");
+const userConstants = require(path.resolve("app/constants/users"));
+const orderItemConstants = require(path.resolve("app/constants/order-item"));
+/**
+ * Main Table: OrderItems
+ * Get chef orders
+ * Chef user orders are in order items table instead of orders because a user can order from multiple chef,
+ * so it's not necessary that a wole order can contain the same chef.
+ */
+exports.getChefOrders = async ({
+  chef_id,
+  state_type,
+  pagination,
+  page,
+  pageSize,
+}) => {
+  const whereQuery = { chef_id };
+  if (state_type) {
+    whereQuery.state_type = state_type;
+  }
+  return OrderItem.findAll({
+    where: whereQuery,
+    ...(page && pageSize && { ...pagination }),
     attributes: orderItemConstants.selectFields,
     include: [
       {
         model: User,
-        foreignKey: "user_id",
         as: "user",
         attributes: userConstants.userSelectFields,
-      },
-      {
-        model: User,
-        foreignKey: "chef_id",
-        as: "chef",
-        attributes: userConstants.userSelectFields,
-        include: [{ model: ShippingAddress, as: "address" }],
-      },
-      {
-        model: Order,
-        foreignKey: "order_id",
-        as: "order",
-        include: [{ model: ShippingAddress, as: "shipping" }],
       },
       {
         model: Plates,
@@ -63,5 +62,4 @@ exports.getOrderItemWithPickupAndDropAddress = async (orderItemId) => {
       },
     ],
   });
-  return orderItem;
 };
