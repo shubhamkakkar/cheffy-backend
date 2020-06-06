@@ -1,5 +1,6 @@
 const {
   OrderItem,
+  User,
   Plates,
   PlateImage,
   CustomPlateOrder,

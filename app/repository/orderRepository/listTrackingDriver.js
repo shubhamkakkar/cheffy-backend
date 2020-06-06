@@ -11,7 +11,7 @@ const {
   OrderDelivery,
 } = require("../../models/index");
 exports.listTrackingDriver = async (data) => {
-  let order = await Order.findAll({
+  return await Order.findAll({
     order: [["id", "DESC"]],
     include: [
       {
@@ -88,5 +88,4 @@ exports.listTrackingDriver = async (data) => {
       },
     ],
   });
-  return order;
 };

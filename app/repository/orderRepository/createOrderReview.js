@@ -1,6 +1,11 @@
 const path = require("path");
 const reviewConstants = require(path.resolve("app/constants/reviews"));
-const { OrderItem, Review, AggregateReview } = require("../../models/index");
+const {
+  sequelize,
+  OrderItem,
+  Review,
+  AggregateReview,
+} = require("../../models/index");
 exports.createOrderReview = async (review) => {
   let orderItem, plate, createdReview;
   try {

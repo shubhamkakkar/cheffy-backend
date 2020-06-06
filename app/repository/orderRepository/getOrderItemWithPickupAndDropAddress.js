@@ -15,7 +15,7 @@ const {
 } = require("../../models/index");
 
 exports.getOrderItemWithPickupAndDropAddress = async (orderItemId) => {
-  const orderItem = await OrderItem.findByPk(orderItemId, {
+  return await OrderItem.findByPk(orderItemId, {
     attributes: orderItemConstants.selectFields,
     include: [
       {
@@ -63,5 +63,4 @@ exports.getOrderItemWithPickupAndDropAddress = async (orderItemId) => {
       },
     ],
   });
-  return orderItem;
 };

@@ -8,7 +8,7 @@ const {
   CustomPlate,
   CustomPlateImage,
 } = require("../../models/index");
-
+const { Op } = require("Sequelize");
 exports.getOrderItemByOrderId = async (orderId) => {
   const response = await OrderItem.findAll({
     where: {

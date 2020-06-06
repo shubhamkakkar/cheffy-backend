@@ -13,7 +13,7 @@ const userConstants = require(path.resolve("app/constants/users"));
 const orderItemConstants = require(path.resolve("app/constants/order-item"));
 
 exports.getOrderItemByIdDetails = async (orderItemId) => {
-  const orderItem = await OrderItem.findByPk(orderItemId, {
+  return await OrderItem.findByPk(orderItemId, {
     attributes: orderItemConstants.selectFields,
     include: [
       {
@@ -54,5 +54,4 @@ exports.getOrderItemByIdDetails = async (orderItemId) => {
       },
     ],
   });
-  return orderItem;
 };

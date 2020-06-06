@@ -1,6 +1,6 @@
 const { Order, OrderPayment, OrderItem } = require("../../models/index");
 exports.getUserOrder = async (data, id) => {
-  let order = await Order.findOne({
+  return await Order.findOne({
     where: { userId: data, id: id },
     include: [
       {
@@ -29,5 +29,4 @@ exports.getUserOrder = async (data, id) => {
       },
     ],
   });
-  return order;
 };

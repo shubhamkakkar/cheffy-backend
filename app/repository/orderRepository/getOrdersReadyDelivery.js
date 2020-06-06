@@ -1,7 +1,7 @@
 const { Order, ShippingAddress } = require("../../models/index");
 exports.getOrdersReadyDelivery = async (data) => {
   try {
-    const orders_ready = await Order.findAll({
+    return await Order.findAll({
       where: { state_type: 5 },
       include: [
         {
@@ -11,8 +11,6 @@ exports.getOrdersReadyDelivery = async (data) => {
         },
       ],
     });
-    console.log(orders_ready);
-    return orders_ready;
   } catch (e) {
     console.log(e);
     return { message: "Erro to return orders!", error: e };
