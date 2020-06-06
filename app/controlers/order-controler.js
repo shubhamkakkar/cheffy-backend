@@ -274,6 +274,7 @@ exports.listTrackingUser = async (req, res, next) => {
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
       message: "Fail to get your orders!",
       error: true,
+      data: e,
     });
     return 0;
   }
