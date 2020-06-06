@@ -47,6 +47,10 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
       message: contract.errors(),
     });
   }
+  console.log({
+    contract: contract.errors(),
+    50: shippingAddress,
+  });
 
   const user = req.user;
   let shippingAddress = await basketRepository.getShippingAddressOfUser(
