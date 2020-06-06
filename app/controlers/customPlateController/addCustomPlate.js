@@ -43,8 +43,9 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
   //contract.isRequired(req.body.chef_location_radius, 'The amount of plates is obligatory!');
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
-    return 0;
+    return res.status(HttpStatus.CONFLICT).send({
+      message: contract.errors(),
+    });
   }
 
   const user = req.user;
@@ -58,6 +59,10 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
       status: HttpStatus.CONFLICT,
     });
   }
+  console.log({
+    contract: contract.errors(),
+    shippingAddress,
+  });
 
   let data_received = customPlateInputFilter.filter(req.body, "form-data");
   let images, images_create;
