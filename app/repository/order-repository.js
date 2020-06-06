@@ -28,77 +28,9 @@ exports.getOrderItemByIdDetails = require("./orderRepository/getOrderItemByIdDet
 exports.createOrderItem = require("./orderRepository/createOrderItem").createOrderItem;
 exports.createOrderItems = require("./orderRepository/createOrderItems").createOrderItems;
 exports.editOrder = require("./orderRepository/editOrder").editOrder;
-
 exports.create = require("./orderRepository/create").create;
 exports.editState = require("./orderRepository/editState").editState;
-
-/**
- * Main Table: Orders
- *List user orders
- * User orders are contained in orders table with respective items in orderitems table referenced to orderId
- */
-exports.getUserOrders = async (data) => {
-  let order = await Order.findAll({
-    where: { userId: data },
-    order: [["id", "DESC"]],
-    include: [
-      {
-        model: OrderPayment,
-        attributes: [
-          "id",
-          "amount",
-          "client_secret",
-          "customer",
-          "payment_method",
-          "status",
-        ],
-      },
-      {
-        model: OrderItem,
-        attributes: [
-          "id",
-          "plate_id",
-          "customPlateId",
-          "user_id",
-          "chef_id",
-          "item_type",
-          "chef_location",
-          "name",
-          "description",
-          "amount",
-          "quantity",
-        ],
-        include: [
-          {
-            model: Plates,
-            as: "plate",
-            include: [
-              {
-                model: PlateImage,
-              },
-            ],
-          },
-          {
-            model: CustomPlateOrder,
-            as: "custom_plate_order",
-            include: [
-              {
-                model: CustomPlate,
-                as: "custom_plate",
-                include: [
-                  {
-                    model: CustomPlateImage,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-  return order;
-};
+exports.getUserOrders = require("./orderRepository/getUserOrders").getUserOrders;
 
 exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
   const response = await Order.findAll({
