@@ -52,7 +52,6 @@ if no req.accessToken exists it should call next middleware
 exports.verifyAccessToken = asyncHandler(async (req, res, next) => {
   let token = req.accessToken;
   if (!token) return next();
-
   jwt.verify(token, global.SALT_KEY, function (error, decoded) {
     debug("accessToken", token);
     debug("verifyAccessToken", decoded);
