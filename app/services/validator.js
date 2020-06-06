@@ -43,7 +43,6 @@ ValidationContract.prototype.errors = () => {
 };
 
 ValidationContract.prototype.clear = () => {
-  console.log("clear called");
   error = "";
 };
 
