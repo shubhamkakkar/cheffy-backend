@@ -23,9 +23,9 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
       //   "shippingId",
       "state_type",
       "promoCode",
-      //   "total_items",
+      "total_items",
       "shipping_fee",
-      //   "order_total",
+      "order_total",
       //   "createdAt",
       //   "updatedAt",
     ],
@@ -166,16 +166,33 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
       },
     ],
   });
-  return response;
-  //  JSON.parse(JSON.stringify(response));
-  // order.forEach((val, key) => {
-  //   if (val.OrderItems.length > 0) {
-  //     val.OrderItems.forEach((inVal, inKey) => {
-  //       if (inVal.plate && inVal.plate.chef) {
-  //         order[key].OrderItems[inKey].chef_name = inVal.plate.chef.name;
-  //       }
-  //     });
-  //   }
-  // });
-  // return order;
+  const order = JSON.parse(JSON.stringify(response));
+  order.forEach((val, key) => {
+    order.forEach((val, key) => {
+      if (val.OrderItems.length > 0) {
+        if (val && val.OrderItem && Object.keys(val.OrderItem).length > 0) {
+          val.OrderItems.forEach((inVal, inKey) => {
+            const orderItem = val.OrderItem;
+            if (inVal.plate && inVal.plate.chef) {
+              if (orderItem) {
+                order[key].OrderItems[inKey].chef_name = delete order[key]
+                  .OrderItem;
+                inVal.plate.chef.name;
+                order[key].plate = orderItem.plate;
+              }
+            }
+          });
+          // if (val.OrderItems.length > 0) {
+          // 	val.OrderItems.forEach((inVal, inKey) => {
+          // 		if (inVal.plate && inVal.plate.chef) {
+          // 			order[key].OrderItems[inKey].chef_name =
+          // 				inVal.plate.chef.name;
+          // 		}
+          // 	});
+          // }
+        }
+      }
+    });
+  });
+  return order;
 };
