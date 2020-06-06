@@ -17,7 +17,7 @@ const TransactionsService = require("../../services/transactions");
 const basketConstants = require(path.resolve("app/constants/baskets"));
 const events = require(path.resolve("app/services/events"));
 const appConstants = require(path.resolve("app/constants/app"));
-
+const commission = require(path.resolve("config/driverCommision"));
 const orderPaymentConstants = require(path.resolve(
   "app/constants/order-payment"
 ));

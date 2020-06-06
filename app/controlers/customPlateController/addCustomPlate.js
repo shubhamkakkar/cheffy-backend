@@ -48,13 +48,6 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
   }
 
   const user = req.user;
-
-  if (user.user_type !== userConstants.USER_TYPE_USER) {
-    return res.status(HttpStatus.BAD_REQUEST).send({
-      message: `Only 'user' role can create custom plate, ${user.name} is ${user.user_type}`,
-      status: HttpStatus.BAD_REQUEST,
-    });
-  }
   let shippingAddress = await basketRepository.getShippingAddressOfUser(
     user.id
   );
