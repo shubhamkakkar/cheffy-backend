@@ -6,6 +6,7 @@ const repository = require("../../repository/shipping-repository");
 const shippingAddressInputFilters = require(path.resolve(
   "app/inputfilters/shipping-address"
 ));
+const appConstants = require(path.resolve("app/constants/app"));
 const events = require(path.resolve("app/services/events"));
 
 exports.create = asyncHandler(async (req, res, next) => {
