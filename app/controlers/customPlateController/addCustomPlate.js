@@ -51,9 +51,6 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
         message: contract.errors(),
       });
     }
-    console.log({
-      contract: contract.errors(),
-    });
 
     const user = req.user;
     let shippingAddress = await basketRepository.getShippingAddressOfUser(
@@ -66,10 +63,6 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
         status: HttpStatus.CONFLICT,
       });
     }
-    console.log({
-      contract: contract.errors(),
-      shippingAddress,
-    });
 
     let data_received = customPlateInputFilter.filter(req.body, "form-data");
     let images, images_create;
@@ -154,7 +147,11 @@ exports.addCustomPlate = asyncHandler(async (req, res, next) => {
       message: "The custom plate was successfully added!",
       data: payload,
     });
-  } catch (er) {
-    console.log({ er });
+  } catch (errror) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+      message: "Internal server error, will get back to you shortly",
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      errror,
+    });
   }
 });
