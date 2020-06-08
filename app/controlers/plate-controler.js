@@ -84,22 +84,20 @@ exports.create = asyncHandler(async (req, res, next) => {
     return 0;
   }
   if (existUser.verification_email_status !== "verified") {
-    res
+    return res
       .status(HttpStatus.CONFLICT)
       .send({ message: "Your email was not verified", error: true })
       .end();
-    return 0;
   }
-  if (existUser.verification_phone_status !== "verified") {
-    res
-      .status(HttpStatus.CONFLICT)
-      .send({
-        message: "Your phone number was not verified",
-        error: true,
-      })
-      .end();
-    return 0;
-  }
+  // if (existUser.verification_phone_status !== "verified") {
+  //   return res
+  //     .status(HttpStatus.CONFLICT)
+  //     .send({
+  //       message: "Your phone number was not verified",
+  //       error: true,
+  //     })
+  //     .end();
+  // }
   const validate_docs = await repositoryDocs.getUserDocs(existUser.id);
   if (
     validate_docs === null ||
