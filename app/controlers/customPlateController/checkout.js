@@ -191,7 +191,7 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
     0
   );
   const shipping_fee = (commission.commissionValue / 100) * total_cart;
-  total_cart += shipping_fee;
+  total_cart += parseInt(shipping_fee);
 
   let payload = {
     shippingId: user_address.id,
