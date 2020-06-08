@@ -170,7 +170,6 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
       currency: "usd",
       quantity: elem.quantity,
     };
-
     cart_items.push(element);
   }
 
@@ -185,7 +184,6 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
   }
 
   cart_items = await Promise.all(cart_items);
-
   let total_cart = cart_items.reduce(
     (prevVal, elem) => prevVal + parseFloat(elem.quantity * elem.amount),
     0

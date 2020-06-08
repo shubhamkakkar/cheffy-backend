@@ -6,6 +6,8 @@ const {
 } = require("../models/index");
 const path = require("path");
 const userConstants = require(path.resolve("app/constants/users"));
+const docConstants = require(path.resolve("app/constants/documents"));
+const docsRepository = require("./docs-repository");
 const Sequelize = require("sequelize");
 const { option } = require("yargs");
 const Op = Sequelize.Op;
@@ -59,6 +61,38 @@ exports.rejectUserVerification = async (userId) => {
 
   try {
     await user.save();
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+exports.acceptUserVerificationAndDocStatusTypeToApproved = async (userId) => {
+  try {
+    await exports.acceptUserVerification(userId);
+    const { id } = await docsRepository.getUserDoc(userId);
+    const data = {
+      id,
+      state_type: docConstants.STATUS_APPROVED,
+    };
+    await docsRepository.updateDoc(data);
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+exports.rejectUserVerificationAndDocStatusTypeToApproved = async (userId) => {
+  try {
+    await exports.rejectUserVerification(userId);
+    const { id } = await docsRepository.getUserDoc(userId);
+    const data = {
+      id,
+      state_type: docConstants.STATUS_REJECTED,
+    };
+    await docsRepository.updateDoc(data);
     return true;
   } catch (error) {
     console.log(error);

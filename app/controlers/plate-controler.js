@@ -99,6 +99,7 @@ exports.create = asyncHandler(async (req, res, next) => {
   //     .end();
   // }
   const validate_docs = await repositoryDocs.getUserDocs(existUser.id);
+  console.log({ validate_docs });
   if (
     validate_docs === null ||
     validate_docs.state_type !== documentConstants.STATUS_APPROVED

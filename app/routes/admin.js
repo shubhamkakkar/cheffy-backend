@@ -35,7 +35,7 @@ router.get(
 );
 router.get(
   "/list/:userType/:id?",
-  authService.authorizeAdminForAdminListingOnly,
+  // authService.authorizeAdminForAdminListingOnly,
   controller.getAllUsers
 );
 

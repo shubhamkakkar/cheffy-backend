@@ -23,110 +23,118 @@ const debug = require("debug")("basket");
  * update quantity of BasketItems if plate exists in basket
  */
 exports.addItem = asyncHandler(async (req, res, next) => {
-  let contract = new ValidationContract();
+  try {
+    let contract = new ValidationContract();
 
-  contract.isRequired(
-    req.body.plates,
-    "The plates identifier code is required!"
-  );
-
-  if (!contract.isValid()) {
-    return res.status(HttpStatus.CONFLICT).send({ message: contract.errors() });
-  }
-
-  const countShippingAddress = await shippingRepository.userShippingAddressCount(
-    req.userId
-  );
-
-  if (countShippingAddress == 0) {
-    res.status(HttpStatus.OK).send({
-      message: "please add address",
-      error: true,
-    });
-  }
-  //get user basket. create on if it doesn't exists yet.
-  let basket = await repository.getOrCreateUserBasket(req.userId);
-
-  //check all plates in the request belongs to one chef else return error
-  let allPlatesBelongsToASingleChef = await repository.checkAllPlatesBelongsToASingleChef(
-    req.body.plates
-  );
-
-  if (!allPlatesBelongsToASingleChef) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message:
-        "Add to basket failed. Cannot add plates belonging to different chefs",
-      error: true,
-    });
-  }
-
-  let platesChefSameAsBasketItemChef = await repository.checkPlateChefSameAsBasketItemChef(
-    basket[0].id,
-    req.body.plates
-  );
-
-  if (!platesChefSameAsBasketItemChef) {
-    return res.status(HttpStatus.CONFLICT).send({
-      message:
-        "Add to basket failed. Cannot add plates belonging to different chefs as basket items belongs to different chef",
-      error: true,
-    });
-  }
-
-  //Check if chef of the plates in the request matches with chef of the plates in the basketItem
-
-  let item_list = req.body.plates;
-
-  let basketItemsListDetail = null;
-
-  Promise.all(
-    item_list.map(async (Item) => {
-      let basketItemPlate = await repository.getBasketItemsPlate(
-        basket[0].id,
-        Item.plateId
-      );
-
-      let item;
-      //if no plate is found in basket item, add it to basket item.
-      if (!basketItemPlate) {
-        let body = basketInputFilters.filter(Item);
-        //let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId:  note: req.body.note };
-        body.basketId = basket[0].id;
-        item = await repository.createBasketItem(body);
-      } else {
-        item = await basketItemPlate.increment("quantity", {
-          by: Item.quantity,
-        });
-        if (Item.note) {
-          await basketItemPlate.update({ note: Item.note });
-        }
-      }
-    })
-  ).then(async function () {
-    basketItemsListDetail = await repository.getBasketItemsDetail(basket[0].id);
-    //after finished updating or adding plate to basket item, get the basket list
-    //calculate price and send as response
-
-    const result = prepareCartResponse({
-      basketItems: basketItemsListDetail,
-      basket: basket,
-    });
-    res.status(HttpStatus.OK).send(result);
-
-    //publish create action
-    events.publish(
-      {
-        action: "create",
-        user: req.user,
-        query: req.query,
-        params: req.params,
-        payload: req.body,
-        scope: appConstants.SCOPE_USER,
-        type: "basket",
-      },
-      req
+    contract.isRequired(
+      req.body.plates,
+      "The plates identifier code is required!"
     );
-  });
+
+    if (!contract.isValid()) {
+      return res
+        .status(HttpStatus.CONFLICT)
+        .send({ message: contract.errors() });
+    }
+    const countShippingAddress = await shippingRepository.userShippingAddressCount(
+      req.userId
+    );
+
+    if (countShippingAddress == 0) {
+      res.status(HttpStatus.OK).send({
+        message: "please add address",
+        error: true,
+      });
+    }
+    //get user basket. create on if it doesn't exists yet.
+    let basket = await repository.getOrCreateUserBasket(req.userId);
+
+    //check all plates in the request belongs to one chef else return error
+    let allPlatesBelongsToASingleChef = await repository.checkAllPlatesBelongsToASingleChef(
+      req.body.plates
+    );
+
+    if (!allPlatesBelongsToASingleChef) {
+      return res.status(HttpStatus.CONFLICT).send({
+        message:
+          "Add to basket failed. Cannot add plates belonging to different chefs",
+        error: true,
+      });
+    }
+
+    let platesChefSameAsBasketItemChef = await repository.checkPlateChefSameAsBasketItemChef(
+      basket[0].id,
+      req.body.plates
+    );
+
+    if (!platesChefSameAsBasketItemChef) {
+      return res.status(HttpStatus.CONFLICT).send({
+        message:
+          "Add to basket failed. Cannot add plates belonging to different chefs as basket items belongs to different chef",
+        error: true,
+      });
+    }
+
+    //Check if chef of the plates in the request matches with chef of the plates in the basketItem
+
+    let item_list = req.body.plates;
+
+    let basketItemsListDetail = null;
+
+    Promise.all(
+      item_list.map(async (Item) => {
+        let basketItemPlate = await repository.getBasketItemsPlate(
+          basket[0].id,
+          Item.plateId
+        );
+
+        let item;
+        //if no plate is found in basket item, add it to basket item.
+        if (!basketItemPlate) {
+          let body = basketInputFilters.filter(Item);
+          //let body = { plateId: req.body.plateId, quantity: req.body.quantity, basketId:  note: req.body.note };
+          body.basketId = basket[0].id;
+          item = await repository.createBasketItem(body);
+        } else {
+          item = await basketItemPlate.increment("quantity", {
+            by: Item.quantity,
+          });
+          if (Item.note) {
+            await basketItemPlate.update({ note: Item.note });
+          }
+        }
+      })
+    ).then(async function () {
+      basketItemsListDetail = await repository.getBasketItemsDetail(
+        basket[0].id
+      );
+      //after finished updating or adding plate to basket item, get the basket list
+      //calculate price and send as response
+
+      const result = prepareCartResponse({
+        basketItems: basketItemsListDetail,
+        basket: basket[0],
+      });
+
+      //publish create action
+      events.publish(
+        {
+          action: "create",
+          user: req.user,
+          query: req.query,
+          params: req.params,
+          payload: req.body,
+          scope: appConstants.SCOPE_USER,
+          type: "basket",
+        },
+        req
+      );
+      return res.status(HttpStatus.OK).send(result);
+    });
+  } catch (error) {
+    console.log({ error });
+    return 0;
+  }
 });
 
 /**

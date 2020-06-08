@@ -166,7 +166,7 @@ exports.acceptDriverRequest = async (req, res, next) => {
       },
     });
   }
-  const acceptDriverVerification = await userRepository.acceptUserVerification(
+  const acceptDriverVerification = await userRepository.acceptUserVerificationAndDocStatusTypeToApproved(
     driverId
   );
 
@@ -202,7 +202,7 @@ exports.rejectDriverRequest = async (req, res, next) => {
     });
   }
 
-  const rejectDriverVerification = await userRepository.rejectUserVerification(
+  const rejectDriverVerification = await userRepository.rejectUserVerificationAndDocStatusTypeToApproved(
     driverId
   );
 
@@ -239,7 +239,7 @@ exports.acceptChefRequest = async (req, res, next) => {
     });
   }
 
-  const acceptChefVerification = await userRepository.acceptUserVerification(
+  const acceptChefVerification = await userRepository.acceptUserVerificationAndDocStatusTypeToApproved(
     chefId
   );
 
@@ -275,7 +275,7 @@ exports.rejectChefRequest = async (req, res, next) => {
     });
   }
 
-  const rejectChefVerification = await userRepository.rejectUserVerification(
+  const rejectChefVerification = await userRepository.rejectUserVerificationAndDocStatusTypeToApproved(
     chefId
   );
 

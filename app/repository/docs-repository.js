@@ -74,11 +74,17 @@ exports.getUserDocs = async (state, data) => {
 };
 
 exports.getUserDoc = async (userId) => {
-  const existUserDoc = await Documents.findOne({
-    where: { userId: userId },
-    include: [...chefIncludes, ...driverIncludes],
-  });
-  return existUserDoc;
+  try {
+    return await Documents.findOne({
+      where: { userId },
+      include: [...chefIncludes, ...driverIncludes],
+    });
+  } catch (error) {
+    return {
+      error: true,
+      data: error,
+    };
+  }
 };
 
 exports.getDriverDocs = async (state, data) => {
