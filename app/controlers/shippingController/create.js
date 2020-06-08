@@ -94,6 +94,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
       message: "Something went wrong, would get back to you soon",
       error,
+      file: "/shippingController/create",
     });
   }
 });
