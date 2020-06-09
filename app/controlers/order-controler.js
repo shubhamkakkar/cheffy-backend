@@ -262,7 +262,6 @@ exports.listTrackingUser = async (req, res, next) => {
   const page = req.query.page || 0;
   const pageSize = req.query.pageSize || 0;
   const query = { userId: req.userId, pagination, page, pageSize };
-
   try {
     const user_orders = await repository.listTrackingUser(query);
     return res.status(HttpStatus.OK).send({
