@@ -525,7 +525,6 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
     const deviceTokens = users
       .filter((user) => user.deviceToken)
       .map((user) => user.deviceToken);
-
     if (deviceTokens.length > 0) {
       const title = notificationConstant.ORDER_RECEIVED_TITLE;
       const body = notificationConstant.ORDER_RECEIVED_BODY;

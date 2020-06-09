@@ -92,7 +92,6 @@ exports.getAuthUserMiddleware = asyncHandler(async (req, res, next) => {
       .status(HttpStatus.NOT_FOUND)
       .send({ message: "User not found", status: HttpStatus.NOT_FOUND });
   }
-
   req.user = user;
   next();
 });
@@ -1108,19 +1107,17 @@ exports.searchPredictions = async (req, res, next) => {
  */
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
-  contract.isEmail(req.body.email, "This email is correct?");
+  const { email } = req.body;
+  contract.isEmail(email, "This email is incorrect");
 
   if (!contract.isValid()) {
-    return res
-      .status(HttpStatus.NON_AUTHORITATIVE_INFORMATION)
-      .send({
-        message: contract.errors(),
-        status: HttpStatus.NON_AUTHORITATIVE_INFORMATION,
-      })
-      .end();
+    return res.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).send({
+      message: contract.errors(),
+      status: HttpStatus.NON_AUTHORITATIVE_INFORMATION,
+    });
   }
 
-  const existUser = await User.findOne({ where: { email: req.body.email } });
+  const existUser = await User.findOne({ where: { email } });
   if (!existUser) {
     return res
       .status(HttpStatus.NOT_FOUND)
@@ -1142,7 +1139,15 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
     context: { token, user: existUser.name },
   };
 
-  mailer.sendMail(args);
+  console.log({ token });
+
+  mailer.sendMail(args, (error, info) => {
+    if (error) {
+      console.log({ mailerSendMail: error });
+    } else {
+      console.log("Message sent: %s", info.messageId);
+    }
+  });
   return res.status(HttpStatus.OK).send({
     message:
       "Congratulations, an email with verification code has been sent for reseting your password!",
@@ -1186,7 +1191,7 @@ exports.veryifyTokenforgotPassword = asyncHandler(async (req, res, next) => {
     });
   }
 
-  res.status(HttpStatus.CONFLICT).send({
+  return res.status(HttpStatus.CONFLICT).send({
     message: "Error validating token!",
     status: HttpStatus.CONFLICT,
   });
@@ -1202,11 +1207,13 @@ exports.veryifyTokenforgotPassword = asyncHandler(async (req, res, next) => {
 exports.resetPassword = asyncHandler(async (req, res, next) => {
   let contract = new ValidationContract();
   contract.isEmail(req.body.email, "This email is correct?");
-  contract.isRequired(req.body.email_token, "This email token is required?");
+  contract.isRequired(req.body.email_token, "This email token is required");
   contract.isRequired(req.body.newPassword, "This newPassword is required");
 
   if (!contract.isValid()) {
-    return res.status(HttpStatus.CONFLICT).send(contract.errors()).end();
+    return res.status(HttpStatus.CONFLICT).send({
+      message: contract.errors(),
+    });
   }
 
   const existUser = await User.findOne({ where: { email: req.body.email } });
