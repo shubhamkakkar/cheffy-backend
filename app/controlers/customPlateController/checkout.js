@@ -218,10 +218,6 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
   //create order
   let create_order = await repositoryOrder.create(payload);
 
-  console.log({
-    body: req.body,
-  });
-
   if (req.body.paymentType === PAYMENT_TYPE_COD) {
     try {
       return await checkOutCashOnDelivery(
@@ -525,12 +521,11 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
         existRecord.save();
       }
     });
-
     const users = await repository.getDeviceTokens(userIds.join());
-
     const deviceTokens = users
       .filter((user) => user.deviceToken)
       .map((user) => user.deviceToken);
+
     if (deviceTokens.length > 0) {
       const title = notificationConstant.ORDER_RECEIVED_TITLE;
       const body = notificationConstant.ORDER_RECEIVED_BODY;
@@ -539,6 +534,7 @@ exports.checkOut = asyncHandler(async (req, res, next) => {
         orderBrief: body,
         device_registration_tokens: deviceTokens,
         detail: users,
+        orderId: create_order.id,
       };
       FCM(pushnotification);
     }

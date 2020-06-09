@@ -4,22 +4,32 @@ const FCM = require("fcm-push");
 const { Notification, sequelize } = require(path.resolve("app/models/index"));
 
 /*For Notifications*/
-
-const saveNotification = (data) => {
+const saveNotification = async (data) => {
   const notifications = data.detail.map((element) => {
-    return {
+    let commonNotifactionObj = {
       timestamp: sequelize.literal("CURRENT_TIMESTAMP"),
       orderTitle: data.orderTitle,
       orderBrief: data.orderBrief,
       userId: element.userId,
       device_id: element.deviceId,
     };
+
+    if (data.orderId) {
+      commonNotifactionObj = {
+        ...commonNotifactionObj,
+        order_id: data.orderId,
+      };
+    }
+    return commonNotifactionObj;
   });
-  Notification.bulkCreate(notifications);
+  try {
+    await Notification.bulkCreate(notifications);
+  } catch (err) {
+    console.log("Something has gone wrong in saveNotification!", err);
+  }
 };
 
 module.exports = async (data) => {
-  console.log("here");
   const fcm = new FCM(fcmAPI.serverKey);
   const message = {
     registration_ids: data.device_registration_tokens, // Multiple tokens in an array
@@ -31,12 +41,13 @@ module.exports = async (data) => {
     priority: "high", // android < 8.0 requirement
     content_available: true, // ios requirement
   };
-  try {
-    const res = await fcm.send(message);
-    console.log({ res });
-  } catch (err) {
-    console.log("Something has gone wrong!", err);
-  } finally {
-    saveNotification(data);
-  }
+  saveNotification(data);
+  fcm
+    .send(message)
+    .then((res) => {
+      console.log({ res });
+    })
+    .catch((err) => {
+      console.log("Something has gone wrong!", err);
+    });
 };

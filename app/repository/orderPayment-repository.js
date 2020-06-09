@@ -5,8 +5,7 @@ const Op = Sequelize.Op;
 const { OrderPayment, User, Wallet, Promotions } = require("../models/index");
 
 exports.create = async (data) => {
-  let payment = await OrderPayment.create({ ...data });
-  return payment;
+  return await OrderPayment.create({ ...data });
 };
 
 exports.user = async (data) => {

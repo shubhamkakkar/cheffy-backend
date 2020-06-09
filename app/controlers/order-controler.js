@@ -456,27 +456,34 @@ exports.ordersReadyForDelivery = async (req, res, next) => {
  * Does left outer join of orderitems with orderdeliveries
  */
 exports.orderItemsDelivery = asyncHandler(async (req, res, next) => {
-  const userId = req.userId;
-  const pagination = paginator.paginateQuery(req);
+  try {
+    const userId = req.userId;
+    const pagination = paginator.paginateQuery(req);
 
-  const query = { user_id: userId, pagination };
-  const state_type = req.query.state_type;
+    const query = { user_id: userId, pagination };
+    const state_type = req.query.state_type;
 
-  if (state_type) {
-    query.state_type = state_type;
+    if (state_type) {
+      query.state_type = state_type;
+    }
+
+    const result = await repository.getOrderItemsWithRespectiveDelivery(query);
+
+    const message = `Here are your${
+      state_type ? ` ${state_type} ` : " "
+    }order items with respective delieveries!`;
+
+    return res.status(HttpStatus.OK).send({
+      message,
+      data: result,
+      ...paginator.paginateInfo(pagination),
+    });
+  } catch (error) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+      error,
+      message: "Internal Server Error, will get back to you shortly",
+    });
   }
-
-  const result = await repository.getOrderItemsWithRespectiveDelivery(query);
-
-  const message = `Here are your${
-    state_type ? ` ${state_type} ` : " "
-  }order items with respective delieveries!`;
-
-  res.status(HttpStatus.OK).send({
-    message,
-    data: result,
-    ...paginator.paginateInfo(pagination),
-  });
 });
 
 /**

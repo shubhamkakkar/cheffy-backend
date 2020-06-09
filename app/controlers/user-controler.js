@@ -802,8 +802,9 @@ exports.setUserPhone = asyncHandler(async (req, res, next) => {
   contract.isRequired(req.body.phone_no, "Phone Number is Required!");
 
   if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
+    return res.status(HttpStatus.BAD_REQUEST).send({
+      message: contract.errors(),
+    });
   }
 
   const existUser = req.user;
