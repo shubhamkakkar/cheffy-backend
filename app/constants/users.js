@@ -16,19 +16,19 @@ exports.STATUS_TYPES = [exports.STATUS_PENDING, exports.STATUS_VERIFIED];
 exports.minSelectFields = ['id', 'name'];
 
 //used for publicly accesible api. e.g. /api/users/:userId
-exports.publicSelectFields = [ 'id', 'name', 'imagePath'];
+exports.publicSelectFields = ['id', 'name', 'imagePath'];
 
 //for self
 //used for login session
 exports.privateSelectFields = exports.publicSelectFields.concat([
   'email', 'country_code', 'phone_no', 'restaurant_name', 'password',
   'user_type', 'verification_email_status', 'verification_phone_status', 'status',
-  'location_lat','location_lon','zoom_id','zoom_pass','skip_doc',
-  'stripe_id', 'device_id', 'createdAt', 'updatedAt'
+  'location_lat', 'location_lon', 'zoom_id', 'zoom_pass', 'skip_doc',
+  'stripe_id', 'device_id', 'createdAt', 'updatedAt', 'bio'
 ]);
 
 exports.userSelectFields = exports.publicSelectFields.concat([
-  'email', 'country_code', 'phone_no', 'location_lat', 'location_lon', 'restaurant_name', 'zoom_id', 'zoom_pass', 'skip_doc'
+  'email', 'country_code', 'phone_no', 'location_lat', 'location_lon', 'restaurant_name', 'zoom_id', 'zoom_pass', 'skip_doc', 'bio'
 ]);
 
 //don't expose to other users. use it only for internal apis
@@ -51,4 +51,4 @@ exports.phoneSelectFields = exports.privateSelectFields.concat([
 exports.adminSelectFields = exports.privateSelectFields
   .concat(exports.emailSelectFields)
   .concat(exports.phoneSelectFields)
-  .concat(['user_ip', 'password_reset_token', 'verification_email_token', 'verification_phone_token']);
+  .concat(['user_ip', 'password_reset_token', 'verification_email_token', 'verification_phone_token', 'bio']);

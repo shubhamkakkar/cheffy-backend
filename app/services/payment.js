@@ -66,8 +66,7 @@ exports.createUser = async (user, address = null) => {
     };
   }
 
-  const user_req = await stripe.customers.create(params);
-  return user_req;
+  return await stripe.customers.create(params);
 };
 
 /**
