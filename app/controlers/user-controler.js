@@ -198,21 +198,7 @@ exports.completeRegistration = require("./userController/completeRegistration")
  */
 exports.verifyEmailToken = require("./userController/verifyEmailToken")
 
-exports.checkTokenExpiration = asyncHandler(async (req, res, next) => {
-  let token = req.headers["x-access-token"];
-  if (!token) {
-    return res
-      .status(HttpStatus.BAD_REQUEST)
-      .send({ message: "Access token is not found" });
-  }
-  try {
-    let token_return = await authService.decodeToken(token);
-    res.status(HttpStatus.OK).send(token_return);
-  } catch (error) {
-    res.status(409).send({ message: "Token expired", error: error });
-    return;
-  }
-});
+exports.checkTokenExpiration = require("./userController/checkTokenExpiration")
 
 /**
  * Resends email token if user doesn't receives token in email
@@ -246,6 +232,7 @@ exports.resendEmailToken = asyncHandler(async (req, res, next) => {
   }
 
   let token = ("" + Math.random()).substring(2, 6);
+  console.log({ token })
   existUser.verification_email_token = token;
   existUser.verification_email_status = userConstants.STATUS_PENDING;
   await existUser.save();
