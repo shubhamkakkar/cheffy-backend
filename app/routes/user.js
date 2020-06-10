@@ -42,6 +42,13 @@ router.get(
   controller.getUser
 );
 
+
+router.post(
+  "/editBio",
+  authService.authorize,
+  controller.editBio
+);
+
 router.get("/details/:userId", authService.authorize, controller.getUserById);
 
 router.put(

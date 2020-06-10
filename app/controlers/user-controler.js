@@ -230,7 +230,12 @@ exports.verifyUserPhone = require("./userController/verifyUserPhone")
 /**
  * Edit user info
  */
-exports.put = require("./userController/put")
+exports.put = require("./userController/put");
+
+/**
+ * Edit user bio
+ */
+exports.editBio = require("./userController/editBio");
 /**
  * DEPRECATED use shipping address API
  * Update user location_lat and location_lon fields
