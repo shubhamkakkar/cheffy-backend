@@ -349,7 +349,7 @@ exports.getPlateSearch = async (data) => {
  */
 exports._nearHelper = ({ req }) => {
   let plateHavingQuery = {};
-  let plateOrderByQuery = [["id", "ASC"]];
+  let plateOrderByQuery = [["createdAt", "DESC"]];
   let userNearQuery = null;
   if ((req.query.near && req.user) || (req.query.lat && req.query.lon)) {
     const currentUserLocationLat = req.query.lat || req.user.location_lat;
@@ -364,7 +364,7 @@ exports._nearHelper = ({ req }) => {
       req.query.radiusUnit || shippingAddressConstants.DISTANCE_MILES;
     const multiplier =
       shippingAddressConstants.radiusDistanceUnitHaversineMap[
-        radiusDistanceUnit
+      radiusDistanceUnit
       ];
 
     const roundDigit = 2;
@@ -406,7 +406,6 @@ exports.searchPlates = async ({ req, query, pagination }) => {
   const whereQuery = {};
 
   debug("query", query);
-
   //exact field value queries
   if (query.keyword) {
     const keyword = regexpService.escape(query.keyword);
@@ -468,7 +467,7 @@ exports.searchPlates = async ({ req, query, pagination }) => {
     const sortType = sortCategoryMaps[query.sortCategory];
 
     if (sortType === "delivery_time") {
-      plateOrderByQuery = [["delivery_time", "ASC"]];
+      plateOrderByQuery = [["delivery_time", "DESC"]];
     }
   }
 
@@ -547,7 +546,6 @@ exports.searchPlates = async ({ req, query, pagination }) => {
   if (query.dietary) {
     dietWhereQUery.name = query.dietary;
   }
-  console.log(plateOrderByQuery);
 
   const queryOptions = {
     where: whereQuery,
@@ -564,7 +562,7 @@ exports.searchPlates = async ({ req, query, pagination }) => {
           {
             model: ShippingAddress,
             as: "address",
-            required: true, //can't list plates if no address to pick order available
+            required: false,
           },
           {
             model: AggregateReview,

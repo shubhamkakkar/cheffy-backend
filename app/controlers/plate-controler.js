@@ -252,11 +252,6 @@ exports.list = asyncHandler(async (req, res, next) => {
   };
   const plates = await repository.searchPlates(query);
 
-  res.status(HttpStatus.OK).send({
-    message: "Plates",
-    ...paginator.paginateInfo(query),
-    data: plates,
-  });
 
   //publish search action
   events.publish(
@@ -271,6 +266,11 @@ exports.list = asyncHandler(async (req, res, next) => {
     },
     req
   );
+  return res.status(HttpStatus.OK).send({
+    message: "Plates",
+    ...paginator.paginateInfo(query),
+    data: plates,
+  });
 });
 
 /**

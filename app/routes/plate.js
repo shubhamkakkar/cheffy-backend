@@ -30,7 +30,7 @@ const router = express.Router();
 router.post(
   "/",
   authService.authorize,
-  shippingController.getAuthUserShippingAddress,
+  shippingController.getAuthUserShippingAddressOptional,
   controller.create
 );
 
