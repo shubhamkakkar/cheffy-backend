@@ -81,24 +81,7 @@ exports.userResponseHelper = userResponseHelper;
  * see services/auth.js
  * Sets user in express req object
  */
-<<<<<<< HEAD
-exports.getAuthUserMiddleware = asyncHandler(async (req, res, next) => {
-  const user = await User.findByPk(req.userId, {
-    attributes: userConstants.privateSelectFields,
-    //raw: true
-  });
-
-  if (!user) {
-    return res
-      .status(HttpStatus.NOT_FOUND)
-      .send({ message: "User not found", status: HttpStatus.NOT_FOUND });
-  }
-  req.user = user;
-  next();
-});
-=======
 exports.getAuthUserMiddleware = require("./userController/getAuthUserMiddleware");
->>>>>>> master
 
 /**
  * Middleware
