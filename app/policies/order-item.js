@@ -1,7 +1,7 @@
 'use strict';
 
 
-const  path = require('path');
+const path = require('path');
 const utils = require(path.resolve('./server/utils'));
 const middlewares = require(path.resolve('./server/middlewares'));
 
@@ -34,7 +34,7 @@ exports.isOrderItemChef = (req, orderItem) => {
 };
 
 
-exports.isOwnerMiddleware = () => {
+exports.isOwnerMiddleware = (req, res, next) => {
   return [
     middlewares.authorization((req) => {
       return exports.isOwner(req);
@@ -53,7 +53,7 @@ exports.isOrderItemChefMiddleware = () => {
 //checks if user or chef of an order
 exports.orderItemViewPolicyMiddleware = () => {
   return [
-    middlewares.authorization((req) => {      
+    middlewares.authorization((req) => {
       return exports.isOwner(req) || exports.isOrderItemChef(req);
     })
   ];

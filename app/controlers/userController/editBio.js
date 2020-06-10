@@ -47,7 +47,8 @@ module.exports = asyncHandler(async (req, res, next) => {
 
         } else {
             return res.status(HttpStatus.BAD_REQUEST).send({
-                message: "Can not set bio to empty string",
+                message:
+                    "Can not set bio to empty string",
             });
         }
     } catch (error) {

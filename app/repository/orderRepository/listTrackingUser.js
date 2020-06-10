@@ -24,7 +24,7 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
       "shipping_fee",
       "order_total",
     ],
-    order: [["id", "DESC"]],
+    order: [['createdAt', 'ASC']],
     include: [
       {
         model: OrderItem,
@@ -133,27 +133,48 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
       // },
     ],
   });
-  const order = JSON.parse(JSON.stringify(response));
-  order.forEach((val, key) => {
+  // const order = JSON.parse(JSON.stringify(response));
+  // order.forEach((val, key) => {
+  //   if (val && val.OrderItem && Object.keys(val.OrderItem).length > 0) {
+  //     const orderItem = val.OrderItem;
+  //     if (orderItem) {
+  //       const { item_type, chef_location, deliveryType } = orderItem;
+  //       order[key].item_type = item_type;
+  //       order[key].chef_location = chef_location;
+  //       order[key].deliveryType = deliveryType;
+  //       order[key].plate = orderItem.plate;
+  //       delete order[key].OrderItem;
+  //     }
+  //     // if (val.OrderItems.length > 0) {
+  //     // 	val.OrderItems.forEach((inVal, inKey) => {
+  //     // 		if (inVal.plate && inVal.plate.chef) {
+  //     // 			order[key].OrderItems[inKey].chef_name =
+  //     // 				inVal.plate.chef.name;
+  //     // 		}
+  //     // 	});
+  //     // }
+  //   }
+  // });
+
+  let order = JSON.parse(JSON.stringify(response));
+  let modifiedOrder = await Promise.all(order.map(async (val, key) => {
     if (val && val.OrderItem && Object.keys(val.OrderItem).length > 0) {
       const orderItem = val.OrderItem;
-      if (orderItem) {
-        const { item_type, chef_location, deliveryType } = orderItem;
-        order[key].item_type = item_type;
-        order[key].chef_location = chef_location;
-        order[key].deliveryType = deliveryType;
-        order[key].plate = orderItem.plate;
-        delete order[key].OrderItem;
+      const newVal = val
+      delete newVal.OrderItem;
+
+      newVal.plate = orderItem.plate
+      newVal.item_type = orderItem.item_type
+      newVal.deliveryType = orderItem.deliveryType
+
+      const loc = await require("./userLocation").userLocation(orderItem.chef_id);
+      if (loc) {
+        newVal.chef_location = `${loc.addressLine1}, ${loc.addressLine2}, ${loc.city}-${loc.state} / ${loc.zipCode}`
       }
-      // if (val.OrderItems.length > 0) {
-      // 	val.OrderItems.forEach((inVal, inKey) => {
-      // 		if (inVal.plate && inVal.plate.chef) {
-      // 			order[key].OrderItems[inKey].chef_name =
-      // 				inVal.plate.chef.name;
-      // 		}
-      // 	});
-      // }
+
+      return newVal
     }
-  });
-  return order;
+  }))
+  modifiedOrder = modifiedOrder.filter(Boolean)
+  return modifiedOrder;
 };

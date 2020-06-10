@@ -527,6 +527,8 @@ exports.createBankAccount = asyncHandler(async (req, res, next) => {
   try {
     const existUser = req.user;
     if (!existUser.stripe_id) {
+      // https://github.com/SihyunC/bookish-octo-winner/commit/858c333f77439de7b6d375b3b586cada6b05fd81
+      // alternative there, but jimmy n I talked over this process, not adding this.
       return res.status(HttpStatus.BAD_REQUEST).send({
         message: "User must have a stripe account before adding a bank account",
       });
