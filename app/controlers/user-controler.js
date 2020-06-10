@@ -81,21 +81,7 @@ exports.userResponseHelper = userResponseHelper;
  * see services/auth.js
  * Sets user in express req object
  */
-exports.getAuthUserMiddleware = asyncHandler(async (req, res, next) => {
-  const user = await User.findByPk(req.userId, {
-    attributes: userConstants.privateSelectFields,
-    //raw: true
-  });
-
-  if (!user) {
-    return res
-      .status(HttpStatus.NOT_FOUND)
-      .send({ message: "User not found", status: HttpStatus.NOT_FOUND });
-  }
-
-  req.user = user;
-  next();
-});
+exports.getAuthUserMiddleware = require("./userController/getAuthUserMiddleware");
 
 /**
  * Middleware
@@ -797,6 +783,7 @@ exports.changePassword = asyncHandler(async (req, res, next) => {
  * Sends sms token to phone for verification process
  */
 exports.setUserPhone = asyncHandler(async (req, res, next) => {
+  // try {
   let contract = new ValidationContract();
   contract.isRequired(req.body.country_code, "Country Code is Required!");
   contract.isRequired(req.body.phone_no, "Phone Number is Required!");
@@ -813,23 +800,28 @@ exports.setUserPhone = asyncHandler(async (req, res, next) => {
   existUser.verification_phone_token = code;
   existUser.country_code = req.body.country_code;
   existUser.phone_no = req.body.phone_no;
-  try {
-    await existUser.save();
-  } catch (err) {}
+  await existUser.save();
 
   let phone = req.body.country_code + req.body.phone_no;
 
   if (phone === null && phone === "" && phone === undefined) {
-    res.status(HttpStatus.OK).send({
+    return res.status(HttpStatus.OK).send({
       message: "error when registering: phone not found",
       status: HttpStatus.OK,
     });
-    return 0;
   }
 
   const retorno = await phoneService.sendMessage(phone, code);
-
-  res.status(HttpStatus.OK).send(retorno);
+  return res.status(HttpStatus.OK).send({
+    retorno,
+  });
+  // } catch (error) {
+  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+  //       message: "Something went wrong. we will get back to you shortly",
+  //       error,
+  //       file: "/user-contoller/setUserPhone"
+  //   });
+  // }
 });
 
 /**
@@ -863,43 +855,51 @@ exports.setZoomCredentials = asyncHandler(async (req, res, next) => {
  * Verify user phone. User sends sms_token in request
  */
 exports.verifyUserPhone = asyncHandler(async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isRequired(
-    req.body.sms_token,
-    "SMS code is required! field: sms_token"
-  );
+  try {
+    let contract = new ValidationContract();
+    contract.isRequired(
+      req.body.sms_token,
+      "SMS code is required! field: sms_token"
+    );
 
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
+    if (!contract.isValid()) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        message: contract.errors(),
+      });
+    }
 
-  const existUser = req.user;
+    const existUser = req.user;
 
-  if (existUser.verification_phone_status === userConstants.STATUS_VERIFIED) {
+    if (existUser.verification_phone_status === userConstants.STATUS_VERIFIED) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        message: "Phone Already Verified!",
+        status: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    const isVerified = await userRepository.validatePhone(
+      existUser.id,
+      req.body.sms_token
+    );
+
+    if (isVerified) {
+      return res.status(HttpStatus.OK).send({
+        message: "Congratulations, phone successfully verified!",
+        status: HttpStatus.OK,
+      });
+    }
+
     return res.status(HttpStatus.BAD_REQUEST).send({
-      message: "Phone Already Verified!",
+      message: "Failed verifying phone. Please try re-sending sms token again",
       status: HttpStatus.BAD_REQUEST,
     });
-  }
-
-  const isVerified = await userRepository.validatePhone(
-    existUser.id,
-    req.body.sms_token
-  );
-
-  if (isVerified) {
-    res.status(HttpStatus.OK).send({
-      message: "Congratulations, phone successfully verified!",
-      status: HttpStatus.OK,
+  } catch (error) {
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+      message: "Something went wrong. we will get back to you shortly",
+      error,
+      file: "/user-contoller/setUserPhone",
     });
-    return 0;
   }
-
-  res.status(HttpStatus.BAD_REQUEST).send({
-    message: "Failed verifying phone. Please try re-sending sms token again",
-    status: HttpStatus.BAD_REQUEST,
-  });
 });
 
 /**

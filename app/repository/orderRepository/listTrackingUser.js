@@ -27,31 +27,6 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
     order: [["id", "DESC"]],
     include: [
       {
-        model: OrderPayment,
-        attributes: [
-          "id",
-          "amount",
-          "client_secret",
-          "customer",
-          "payment_method",
-          "status",
-        ],
-      },
-      {
-        model: ShippingAddress,
-        attributes: [
-          "id",
-          "addressLine1",
-          "addressLine2",
-          "city",
-          "state",
-          "zipCode",
-          "lat",
-          "lon",
-        ],
-        as: "shipping",
-      },
-      {
         model: OrderItem,
         attributes: [
           "id",
@@ -125,6 +100,31 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
           },
         ],
       },
+      {
+        model: OrderPayment,
+        attributes: [
+          "id",
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: ShippingAddress,
+        attributes: [
+          "id",
+          "addressLine1",
+          "addressLine2",
+          "city",
+          "state",
+          "zipCode",
+          "lat",
+          "lon",
+        ],
+        as: "shipping",
+      },
       // {
       // 	model: OrderDelivery,
       // 	as: 'order_delivery',
@@ -138,8 +138,12 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
     if (val && val.OrderItem && Object.keys(val.OrderItem).length > 0) {
       const orderItem = val.OrderItem;
       if (orderItem) {
-        delete order[key].OrderItem;
+        const { item_type, chef_location, deliveryType } = orderItem;
+        order[key].item_type = item_type;
+        order[key].chef_location = chef_location;
+        order[key].deliveryType = deliveryType;
         order[key].plate = orderItem.plate;
+        delete order[key].OrderItem;
       }
       // if (val.OrderItems.length > 0) {
       // 	val.OrderItems.forEach((inVal, inKey) => {

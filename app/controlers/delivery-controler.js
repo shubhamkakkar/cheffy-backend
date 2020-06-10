@@ -75,13 +75,10 @@ exports.list = asyncHandler(async (req, res, next) => {
     user.user_type !== userConstants.USER_TYPE_DRIVER &&
     user.user_type !== userConstants.USER_TYPE_CHEF
   ) {
-    return res
-      .status(HttpStatus.CONFLICT)
-      .send({
-        message: "Only drivers and cheffs can have deliveries",
-        error: true,
-      })
-      .end();
+    return res.status(HttpStatus.CONFLICT).send({
+      message: "Only drivers and cheffs can have deliveries",
+      error: true,
+    });
   }
 
   let deliveries = await deliveryRepository.getOrderDeliveriesByUserId(user.id);
@@ -95,8 +92,10 @@ exports.list = asyncHandler(async (req, res, next) => {
 
   let payload = {};
 
-  (payload.message = "Here are your orders!"), (payload.data = deliveries);
-  res.status(HttpStatus.OK).send(payload);
+  return res.status(HttpStatus.OK).send({
+    message: "Here are your orders!",
+    data: deliveries,
+  });
 });
 
 exports.calculateDeliveryTime = async (req, res, next) => {

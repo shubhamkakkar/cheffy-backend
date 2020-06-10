@@ -373,11 +373,10 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
     });
 
     if (!customer) {
-      res.status(HttpStatus.FORBIDDEN).send({
+      return res.status(HttpStatus.FORBIDDEN).send({
         message: "User does not exist in our records",
         data: null,
       });
-      return 0;
     }
 
     if (customer.verification_email_status !== userConstants.STATUS_VERIFIED) {
@@ -409,11 +408,6 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
 
     const userResponse = userResponseHelper({ user: customer });
 
-    res.status(200).send({
-      token: token,
-      data: { userResponse, user_doc: !!doc },
-    });
-
     //publish create action
     events.publish(
       {
@@ -426,10 +420,15 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
       },
       req
     );
+    return res.status(200).send({
+      token: token,
+      data: { userResponse, user_doc: !!doc },
+    });
   } catch (error) {
-    return res.send(500).send({
+    return res.status(500).send({
       message: "server is bussy. please try after some time",
       data: null,
+      error,
     });
   }
 });
