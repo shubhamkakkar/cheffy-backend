@@ -93,7 +93,6 @@ exports.addNewCard = asyncHandler(async (req, res) => {
     user = await userRepository.saveStripeinfo(user.id, stripeNewUser);
   }
 
-  console.log({ user });
 
   const stripeNewCard = await paymentService.createCard(
     user,
