@@ -183,158 +183,20 @@ let historyMock = `{
 }`;
 res.status(HttpStatus.OK).send(JSON.parse(historyMock));
 }*/
-
 exports.getUser = require("./userController/getUser")
-
 //Instead of getting the user data based on access token ,
 //get the user details based on the userID passed as params
 exports.getUserById = require("./userController/getUserById")
 /**
  * Complete user registration
  */
-exports.completeRegistration = asyncHandler(async (req, res, next) => {
-  let { device_id } = req.body;
-
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, "This email is correct?");
-  contract.isRequired(req.body.name, "Name is required!");
-  contract.isRequired(req.body.password, "User password is required!");
-  contract.isRequired(req.body.user_type, "User type is required!");
-
-  if (req.body.user_type === userConstants.USER_TYPE_CHEF) {
-    contract.isRequired(
-      req.body.restaurant_name,
-      "Restaurant name is required!"
-    );
-  }
-
-  if (!contract.isValid()) {
-    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-  }
-
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-
-  //Check if address is present
-  if (req.body.addressLine1 || req.body.addressLine2) {
-    const shippingAddresses = await existUser.getAddress();
-    const shippingAddress = shippingAddresses[0];
-
-    if (req.body.addressLine1) {
-      shippingAddress.addressLine1 = req.body.addressLine1;
-    }
-
-    if (req.body.addressLine2) {
-      shippingAddress.addressLine2 = req.body.addressLine2;
-    }
-
-    await shippingAddress.save();
-  }
-
-  if (!existUser) {
-    return res.status(HttpStatus.BAD_REQUEST).send({
-      message: `E-Mail not found, email: ${req.body.email}`,
-      status: HttpStatus.BAD_REQUEST,
-    });
-  }
-  debug("existing user", existUser.get({ plain: true }));
-
-  debug("email status: ", existUser.verification_email_status);
-  if (existUser.verification_email_status !== userConstants.STATUS_VERIFIED) {
-    return res.status(HttpStatus.UNAUTHORIZED).send({
-      message: "Token code not verified!",
-      status: HttpStatus.UNAUTHORIZED,
-    });
-  }
-
-  existUser.name = req.body.name;
-  existUser.user_type = req.body.user_type;
-  existUser.password = bcrypt.hashSync(
-    req.body.password,
-    bcrypt.genSaltSync(10)
-  );
-  existUser.skip_doc = req.body.skip_doc;
-
-  existUser.promotionalContent = req.body.promotionalContent;
-
-  /*if (existUser.user_type === userConstants.USER_TYPE_DRIVER && existUser.isNewRecord) {
-		await driverAPI.createDriver({
-			name: existUser.name,
-			email: existUser.email,
-		});
-	}*/
-
-  if (existUser.user_type === userConstants.USER_TYPE_CHEF) {
-    existUser.restaurant_name = req.body.restaurant_name;
-  }
-
-  // generate token
-  const token = await authService.generateToken({
-    id: existUser.id,
-    email: existUser.email,
-  });
-
-  // save token in user auth_token field.
-  // for tracking logout
-  existUser.auth_token = token;
-  device_id ? (existUser.device_id = device_id) : null;
-
-  await existUser.save();
-
-  const userResponse = userResponseHelper({ user: existUser });
-
-  res.status(HttpStatus.CREATED).send({
-    message: `Congratulations, successfully created ${req.body.user_type} type user!`,
-    status: HttpStatus.CREATED,
-    result: userResponse,
-    token: token,
-  });
-});
-
+exports.completeRegistration = require("./userController/completeRegistration")
 /**
  * Verify email Token
  * This controller should be called when email token has been sent
  * and user sends email token with email in request
  */
-exports.verifyEmailToken = asyncHandler(async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, "Email is correct?");
-  contract.isRequired(req.body.email_token, "This email token is required!");
-
-  if (!contract.isValid()) {
-    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-  }
-
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-
-  if (!existUser) {
-    return res
-      .status(HttpStatus.BAD_REQUEST)
-      .send({ message: `User not found by email: ${req.body.email}` });
-  }
-
-  if (existUser.verification_email_status === userConstants.STATUS_VERIFIED) {
-    return res.status(HttpStatus.BAD_REQUEST).send({
-      message: "Email Already Verified!",
-      status: HttpStatus.BAD_REQUEST,
-    });
-  }
-
-  if (req.body.email_token === existUser.verification_email_token) {
-    existUser.verification_email_status = userConstants.STATUS_VERIFIED;
-    existUser.verification_email_token = "";
-    await existUser.save();
-
-    return res.status(HttpStatus.OK).send({
-      message: "Congratulations, Email successfully verified!",
-      status: HttpStatus.OK,
-    });
-  }
-
-  res.status(HttpStatus.UNAUTHORIZED).send({
-    message: "Token code not verified!",
-    status: HttpStatus.UNAUTHORIZED,
-  });
-});
+exports.verifyEmailToken = require("./userController/verifyEmailToken")
 
 exports.checkTokenExpiration = asyncHandler(async (req, res, next) => {
   let token = req.headers["x-access-token"];
@@ -367,11 +229,10 @@ exports.resendEmailToken = asyncHandler(async (req, res, next) => {
   const existUser = await User.findOne({ where: { email: req.body.email } });
 
   if (!existUser) {
-    res.status(HttpStatus.OK).send({
+    return res.status(HttpStatus.OK).send({
       message: `User not found by email: ${req.body.email}`,
       status: HttpStatus.OK,
     });
-    return 0;
   }
 
   let template = "welcome/welcome";
