@@ -203,311 +203,34 @@ exports.checkTokenExpiration = require("./userController/checkTokenExpiration")
 /**
  * Resends email token if user doesn't receives token in email
  */
-exports.resendEmailToken = asyncHandler(async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, "This email is correct?");
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
-
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-
-  if (!existUser) {
-    return res.status(HttpStatus.OK).send({
-      message: `User not found by email: ${req.body.email}`,
-      status: HttpStatus.OK,
-    });
-  }
-
-  let template = "welcome/welcome";
-
-  if (
-    req.body.template !== undefined ||
-    req.body.template !== null ||
-    req.body.template !== ""
-  ) {
-    template = "forget/forgot";
-  }
-
-  let token = ("" + Math.random()).substring(2, 6);
-  console.log({ token })
-  existUser.verification_email_token = token;
-  existUser.verification_email_status = userConstants.STATUS_PENDING;
-  await existUser.save();
-
-  let args = {
-    to: existUser.email,
-    from: "Cheffy contact@cheffy.com",
-    replyTo: "contact@cheffy.com",
-    subject: `Email Token`,
-    template,
-    context: { token, user: existUser.name },
-  };
-  mailer.sendMail(args);
-  res.status(HttpStatus.OK).send({
-    message: "Congratulations, an email with verification code has been sent!",
-    status: HttpStatus.OK,
-  });
-  return 0;
-});
+exports.resendEmailToken = require("./userController/resendEmailToken")
 
 /**
  * Change password
  * user needs to send current password as well
  */
-exports.changePassword = asyncHandler(async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isRequired(
-    req.body.password,
-    "Old password is required. field: password"
-  );
-  contract.isRequired(
-    req.body.newPassword,
-    "New password is required. field: newPassword"
-  );
-
-  if (!contract.isValid()) {
-    return res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-  }
-
-  const existUser = req.user;
-
-  let result = await bcrypt.compare(req.body.password, existUser.password);
-
-  if (!result) {
-    return res
-      .status(HttpStatus.FORBIDDEN)
-      .send({ message: "Incorrect current Password", data: null });
-  }
-
-  existUser.password = bcrypt.hashSync(
-    req.body.newPassword,
-    bcrypt.genSaltSync(10)
-  );
-  await existUser.save();
-
-  res.status(HttpStatus.OK).send({
-    message: "Password Changed Successfully",
-  });
-});
+exports.changePassword = require("./userController/changePassword")
 
 /**
  * Sets phone_no and country_code in user.
  * Sends sms token to phone for verification process
  */
-exports.setUserPhone = asyncHandler(async (req, res, next) => {
-  // try {
-  let contract = new ValidationContract();
-  contract.isRequired(req.body.country_code, "Country Code is Required!");
-  contract.isRequired(req.body.phone_no, "Phone Number is Required!");
-
-  if (!contract.isValid()) {
-    return res.status(HttpStatus.BAD_REQUEST).send({
-      message: contract.errors(),
-    });
-  }
-
-  const existUser = req.user;
-
-  const code = ("" + Math.random()).substring(2, 6);
-  existUser.verification_phone_token = code;
-  existUser.country_code = req.body.country_code;
-  existUser.phone_no = req.body.phone_no;
-  await existUser.save();
-
-  let phone = req.body.country_code + req.body.phone_no;
-
-  if (phone === null && phone === "" && phone === undefined) {
-    return res.status(HttpStatus.OK).send({
-      message: "error when registering: phone not found",
-      status: HttpStatus.OK,
-    });
-  }
-
-  const retorno = await phoneService.sendMessage(phone, code);
-  return res.status(HttpStatus.OK).send({
-    retorno,
-  });
-  // } catch (error) {
-  //     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-  //       message: "Something went wrong. we will get back to you shortly",
-  //       error,
-  //       file: "/user-contoller/setUserPhone"
-  //   });
-  // }
-});
+exports.setUserPhone = require("./userController/setUserPhone")
 
 /**
  * Sets zoom_id and zoom_pass in user.
  */
-exports.setZoomCredentials = asyncHandler(async (req, res, next) => {
-  let contract = new ValidationContract();
-  contract.isRequired(req.body.zoom_id, "Zoom Id is Required!");
-  contract.isRequired(req.body.zoom_pass, "Zoom Password is Required!");
-
-  if (!contract.isValid()) {
-    res.status(HttpStatus.BAD_REQUEST).send(contract.errors()).end();
-    return 0;
-  }
-
-  const user = req.user;
-
-  const updates = userInputFilter.updateFields.filter(req.body);
-
-  try {
-    await user.update(updates);
-  } catch (err) { }
-
-  res.status(HttpStatus.OK).send({
-    message: "zoom credentials saved",
-    status: HttpStatus.OK,
-  });
-});
+exports.setZoomCredentials = require("./userController/setZoomCredentials")
 
 /**
  * Verify user phone. User sends sms_token in request
  */
-exports.verifyUserPhone = asyncHandler(async (req, res, next) => {
-  try {
-    let contract = new ValidationContract();
-    contract.isRequired(
-      req.body.sms_token,
-      "SMS code is required! field: sms_token"
-    );
-
-    if (!contract.isValid()) {
-      return res.status(HttpStatus.BAD_REQUEST).send({
-        message: contract.errors(),
-      });
-    }
-
-    const existUser = req.user;
-
-    if (existUser.verification_phone_status === userConstants.STATUS_VERIFIED) {
-      return res.status(HttpStatus.BAD_REQUEST).send({
-        message: "Phone Already Verified!",
-        status: HttpStatus.BAD_REQUEST,
-      });
-    }
-
-    const isVerified = await userRepository.validatePhone(
-      existUser.id,
-      req.body.sms_token
-    );
-
-    if (isVerified) {
-      return res.status(HttpStatus.OK).send({
-        message: "Congratulations, phone successfully verified!",
-        status: HttpStatus.OK,
-      });
-    }
-
-    return res.status(HttpStatus.BAD_REQUEST).send({
-      message: "Failed verifying phone. Please try re-sending sms token again",
-      status: HttpStatus.BAD_REQUEST,
-    });
-  } catch (error) {
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
-      message: "Something went wrong. we will get back to you shortly",
-      error,
-      file: "/user-contoller/setUserPhone",
-    });
-  }
-});
+exports.verifyUserPhone = require("./userController/verifyUserPhone")
 
 /**
  * Edit user info
  */
-exports.put = asyncHandler(async (req, res, next) => {
-  //for accepting form-data as well
-  const body = req.body || {};
-  const { password } = body;
-  const existUser = await User.findOne({ where: { id: req.userId } });
-
-  if (!existUser) {
-    return res.status(HttpStatus.NOT_FOUND).send({
-      message: "error when updating: user not found",
-      status: HttpStatus.NOT_FOUND,
-    });
-  }
-
-  const prevPhone = existUser.phone_no;
-  const prevEmail = existUser.email;
-
-  const updates = userInputFilter.updateFields.filter(req.body, "form-data");
-
-  if (req.files && req.files["profile_photo"]) {
-    updates.imagePath = req.files["profile_photo"][0].url;
-  }
-
-  //need to send verification email when email change
-  if (req.body.email && prevEmail !== req.body.email) {
-    debug("email changed");
-    let pass = ("" + Math.random()).substring(2, 6);
-    updates.verification_email_token = pass;
-    updates.verification_email_status = userConstants.STATUS_PENDING;
-  }
-
-  //need to send verification sms when phone change
-  if (req.body.phone_no && prevPhone !== req.body.phone_no) {
-    debug("phone changed");
-    let pass = ("" + Math.random()).substring(2, 6);
-    updates.verification_phone_token = pass;
-    updates.verification_email_status = userConstants.STATUS_PENDING;
-  }
-
-  /*existUser.name = req.body.name || existUser.name;
-    existUser.email = req.body.email || existUser.email;
-    existUser.country_code = req.body.country_code || existUser.country_code;
-    existUser.phone_no = req.body.phone_no || existUser.phone_no;
-    existUser.restaurant_name = req.body.restaurant_name || existUser.restaurant_name;
-    existUser.location = req.body.location  || existUser.location;
-    existUser.imagePath = req.body.image_path || existUser.imagePath;*/
-  password ? (updates.password = await generateHash(password)) : null;
-
-  await existUser.update(updates);
-
-  //Check if address is present
-  if (req.body.addressLine1 || req.body.addressLine2) {
-    const shippingAddresses = await existUser.getAddress();
-    const shippingAddress = shippingAddresses[0];
-
-    if (req.body.addressLine1) {
-      shippingAddress.addressLine1 = req.body.addressLine1;
-    }
-
-    if (req.body.addressLine2) {
-      shippingAddress.addressLine2 = req.body.addressLine2;
-    }
-
-    await shippingAddress.save();
-  }
-
-  const user = await User.findOne({
-    where: { id: req.userId },
-    attributes: userConstants.privateSelectFields,
-  });
-  const userResponse = userResponseHelper({ user });
-
-  res.status(HttpStatus.OK).send({
-    message: "Profile successfully updated!",
-    data: userResponse,
-  });
-
-  //only send email/phone sms after request complete
-
-  if (req.body.email && prevEmail !== req.body.email) {
-    await sendMail({ req, pass: existUser.verification_email_token });
-  }
-
-  if (req.body.phone_no && prevPhone !== req.body.phone_no) {
-    let phone = existUser.country_code + existUser.phone_no;
-    await phoneService.sendMessage(phone, existUser.verification_phone_token);
-  }
-});
-
+exports.put = require("./userController/put")
 /**
  * DEPRECATED use shipping address API
  * Update user location_lat and location_lon fields
