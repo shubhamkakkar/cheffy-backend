@@ -73,7 +73,7 @@ function userResponseHelper({ user }) {
   return userResponse;
 }
 
-exports.userResponseHelper = userResponseHelper;
+exports.userResponseHelper = require("./userController/helper/userResponseHelper");
 
 /**
  * Middleware
@@ -95,418 +95,100 @@ exports.getAuthUserIfPresentMiddleware = require("./userController/getAuthUserIf
  * Get params user by userId from route. for e.g /order/list/:userId
  * Sets paramUser in express req object
  */
-exports.getUserByUserIdParamMiddleware = asyncHandler(
-  async (req, res, next, userId) => {
-    if (!userId) {
-      return res.status(HttpStatus.BAD_REQUEST).send({
-        message: "Not userId params set in request",
-        status: HttpStatus.BAD_REQUEST,
-      });
-    }
+exports.getUserByUserIdParamMiddleware = require("./userController/getUserByUserIdParamMiddleware");
 
-    const user = await User.findByPk(userId, {
-      attributes: userConstants.privateSelectFields,
-    });
+exports.dummy = require("./userController/dummy");
 
-    if (!user) {
-      return res.status(HttpStatus.NOT_FOUND).send({
-        message: "User not found",
-        status: HttpStatus.NOT_FOUND,
-      });
-    }
+exports.create = require("./userController/create");
 
-    req.paramUser = user;
-    next();
-  }
-);
+exports.getChefOrDriverBalance = require("./userController/getChefOrDriverBalance");
 
-exports.dummy = async (req, res, next) => {
-  const category = await repositoryCategory.createCategory({
-    name: "Dummy",
-    description: "Dummy category",
-    url: "#",
-  });
-  let ingred, images, kitchen, receipt, full_data;
-  for (let i = 0; i < plates.length; i++) {
-    full_data = plates[i];
-    full_data.userId = 1;
-
-    if (full_data.ingredients) {
-      ingred = full_data.ingredients;
-      delete full_data.ingredients;
-    }
-
-    if (full_data.images) {
-      images = full_data.images;
-      delete full_data.images;
-    }
-
-    if (full_data.kitchen_images) {
-      kitchen = full_data.kitchen_images;
-      delete full_data.kitchen_images;
-    }
-
-    if (full_data.receipt_images) {
-      receipt = full_data.receipt_images;
-      delete full_data.receipt_images;
-    }
-
-    full_data.categoryId = category.id;
-
-    let plate = await Plates.create({ ...full_data });
-    let ingred_create, images_create, kitchen_create, receipt_create;
-
-    if (ingred) {
-      let ingred_data = [];
-      ingred.forEach((elem) => {
-        elem.plateId = plate.id;
-        ingred_data.push(elem);
-      });
-      ingred_create = await repository.createIngredient(ingred_data);
-    }
-
-    if (images) {
-      let images_data = [];
-      images.forEach((elem) => {
-        elem.plateId = plate.id;
-        images_data.push(elem);
-      });
-      images_create = await repository.createPlateImage(images_data);
-    }
-
-    if (kitchen) {
-      let kitchen_data = [];
-      kitchen.forEach((elem) => {
-        elem.plateId = plate.id;
-        kitchen_data.push(elem);
-      });
-      kitchen_create = await repository.createKitchenImage(kitchen_data);
-    }
-
-    if (receipt) {
-      let receipt_data = [];
-      receipt.forEach((elem) => {
-        elem.plateId = plate.id;
-        receipt_data.push(elem);
-      });
-      receipt_create = await repository.createReceiptImage(receipt_data);
-    }
-  }
-
-  res.status(HttpStatus.OK).send({
-    message: "Plates are being created",
-    status: HttpStatus.OK,
-  });
-};
-
-exports.create = asyncHandler(async (req, res, next) => {
-  let payload = {};
-
-  let contract = new ValidationContract();
-  contract.isEmail(req.body.email, "Invalid email");
-  contract.isRequired(req.body.email, "Email is required");
-
-  if (!contract.isValid()) {
-    return res
-      .status(HttpStatus.BAD_REQUEST)
-      .send({
-        message: contract.errors(),
-        status: HttpStatus.BAD_REQUEST,
-      })
-      .end();
-  }
-
-  const existUser = await User.findOne({ where: { email: req.body.email } });
-
-  if (existUser && existUser.verification_email_status === "pending") {
-    const doc = await Documents.findOne({
-      where: { userId: existUser.id },
-    });
-    let pass = ("" + Math.random()).substring(2, 6);
-    existUser.verification_email_token = pass;
-    await existUser.save();
-
-    const { id, email, verification_email_status, password } = existUser;
-
-    res.status(HttpStatus.OK).send({
-      message: "Email Token Re-sent!",
-      status: HttpStatus.OK,
-      result: {
-        id,
-        email,
-        verification_email_status,
-        password_generated: !!password,
-        user_doc: !!doc,
-      },
-    });
-
-    await sendMail({ req, pass });
-
-    //publish create action
-    return events.publish(
-      {
-        action: "email-token-resend",
-        user: existUser.get({}),
-        query: req.query,
-        //registration can be by any user so scope is all
-        scope: appConstants.SCOPE_ALL,
-        type: "user",
-      },
-      req
-    );
-  }
-
-  if (existUser && existUser.id) {
-    const doc = await Documents.findOne({
-      where: { userId: existUser.id },
-    });
-    res.status(HttpStatus.OK).send({
-      message: "Already registered user",
-      result: {
-        user_type: existUser.user_type,
-        verification_email_status: existUser.verification_email_status,
-        password_generated: !!existUser.password,
-        user_doc: !!doc,
-      },
-      status: HttpStatus.OK,
-    });
-    return 0;
-  }
-
-  let full_data = req.body;
-  const user = await User.create({ ...full_data });
-  let pass = ("" + Math.random()).substring(2, 6);
-  user.verification_email_token = pass;
-  await user.save();
-
-  const newuser = await User.findOne({
-    where: { id: user.id },
-    attributes: userConstants.privateSelectFields,
-  });
-
-  // payload.token = token;
-  payload.result = newuser;
-
-  payload.status = HttpStatus.CREATED;
-  res.status(payload.status).send(payload);
-
-  //send email after sending response
-  await sendMail({ req, pass });
-
-  //publish create action
-  events.publish(
-    {
-      action: "create",
-      user: newuser.get({}),
-      query: req.query,
-      //registration can be by any user so scope is all
-      scope: appConstants.SCOPE_ALL,
-      type: "user",
-    },
-    req
-  );
-});
-
-exports.getChefBalance = asyncHandler(async (req, res, next) => {
-  let wallet = await Wallet.findOne({
-    where: { userId: req.userId },
-    include: [
-      {
-        model: User,
-        as: "user",
-        attributes: ["id", "name", "email", "user_type"],
-      },
-    ],
-  });
-
-  if (!wallet) {
-    res
-      .status(HttpStatus.NOT_FOUND)
-      .send({ message: "Unable to find wallet for this user" });
-  }
-  res.status(HttpStatus.OK).send(wallet);
-});
-
-exports.getDriverBalance = asyncHandler(async (req, res, next) => {
-  let wallet = await Wallet.findOne({
-    where: { userId: req.userId },
-    include: [
-      {
-        model: User,
-        as: "user",
-        attributes: ["id", "name", "email", "user_type"],
-      },
-    ],
-  });
-  if (!wallet) {
-    res
-      .status(HttpStatus.NOT_FOUND)
-      .send({ message: "Unable to find wallet for this user" });
-  }
-  res.status(HttpStatus.OK).send(wallet);
-});
-
-exports.getUserBalanceHistory = asyncHandler(async (req, res, next) => {
-  const order_items = await OrderItem.findAll({
-    where: {
-      [Op.and]: [
-        { chef_id: req.userId },
-        {
-          createdAt: {
-            [Op.between]: [req.params.from, req.params.to],
-          },
-        },
-      ],
-    },
-  });
-
-  const user = req.user;
-  const userResponse = userResponseHelper({ user });
-
-  let total = 0;
-
-  let balance_history = [];
-
-  let prev_bal = 0;
-
-  if (order_items !== null && order_items.length > 0) {
-    order_items.map((elem) => {
-      let hist = {};
-      hist.date = elem.updatedAt;
-      hist.balance = prev_bal + parseFloat(elem.amount * elem.quantity);
-      prev_bal = hist.balance;
-      balance_history.push(hist);
-    });
-
-    total = order_items.reduce(function (prevVal, elem) {
-      return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
-    }, 0);
-  }
-
-  res.status(HttpStatus.OK).send({
-    user: userResponse,
-    balance_history: balance_history,
-    total: total,
-  });
-});
-
+exports.getUserBalanceHistory = require("./userController/getUserBalanceHistory")
 /*exports.getUserBalanceHistory = async (req, res, next) => {
-  // const token_return = await authService.decodeToken(req.headers['x-access-token'])
-  // const existUser = await User.findByPk(token_return.id, {
-  //   attributes: [ 'id', 'name', 'email', 'location', 'user_type', 'verification_email_status', 'verification_phone_status' ],
-  //   include: [
-  //     {
-  //       model: Wallet,
-  //       attributes: [ 'id', 'state_type' ],
-  //       include: [
-  //         {
-  //           model: OrderItem,
-  //           attributes: [ 'id', 'plate_id', 'name', 'amount', 'quantity', 'chef_payment' ],
-  //           where: { chef_payment: false }
-  //         }
-  //       ]
-  //     }
-  //   ]
-  // });
-  // if (!existUser) {
-  //   res.status(HttpStatus.CONFLICT).send({ message: 'Failed to access user info!', error: true });
-  //   return 0;
-  // }
+// const token_return = await authService.decodeToken(req.headers['x-access-token'])
+// const existUser = await User.findByPk(token_return.id, {
+//   attributes: [ 'id', 'name', 'email', 'location', 'user_type', 'verification_email_status', 'verification_phone_status' ],
+//   include: [
+//     {
+//       model: Wallet,
+//       attributes: [ 'id', 'state_type' ],
+//       include: [
+//         {
+//           model: OrderItem,
+//           attributes: [ 'id', 'plate_id', 'name', 'amount', 'quantity', 'chef_payment' ],
+//           where: { chef_payment: false }
+//         }
+//       ]
+//     }
+//   ]
+// });
+// if (!existUser) {
+//   res.status(HttpStatus.CONFLICT).send({ message: 'Failed to access user info!', error: true });
+//   return 0;
+// }
 
-  // let datar = JSON.stringify(existUser);
-  // datar = JSON.parse(datar);
-  // let total = datar['Wallet']['OrderItems']
-  // total = total.reduce( function( prevVal, elem ) {
-  //   return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
-  // }, 0 );
-  // datar.Wallet.total = total;
-  // res.status(HttpStatus.OK).send(datar);
-  let historyMock = `{
-    "id": 4,
-    "name": "Demo user",
-    "email": "user@example.com",
-    "location": "38.912373, -77.198436",
-    "user_type": "chef",
-    "verification_email_status": "verified",
-    "verification_phone_status": "verified",
-    "Wallet": {
-      "id": 1,
-      "state_type": "open",
-      "OrderItems": [
-        {
-          "id": 9,
-          "plate_id": 8,
-          "name": "X-Bacon 8",
-          "amount": 10,
-          "quantity": 2,
-          "chef_payment": 0
-        },
-        {
-          "id": 10,
-          "plate_id": 8,
-          "name": "X-Bacon 8",
-          "amount": 10,
-          "quantity": 2,
-          "chef_payment": 0
-        }
-      ],
-      "balance_history":[
-        {
-          "date":"2019-08-06",
-          "balance":20.0
-        },
-        {
-          "date":"2019-08-05",
-          "balance":20.0
-        },
-        {
-          "date":"2019-08-04",
-          "balance":20.0
-        }
-      ],
-      "total": 40
-    }
-  }`;
-  res.status(HttpStatus.OK).send(JSON.parse(historyMock));
+// let datar = JSON.stringify(existUser);
+// datar = JSON.parse(datar);
+// let total = datar['Wallet']['OrderItems']
+// total = total.reduce( function( prevVal, elem ) {
+//   return parseFloat(prevVal) + parseFloat(elem.amount * elem.quantity);
+// }, 0 );
+// datar.Wallet.total = total;
+// res.status(HttpStatus.OK).send(datar);
+let historyMock = `{
+  "id": 4,
+  "name": "Demo user",
+  "email": "user@example.com",
+  "location": "38.912373, -77.198436",
+  "user_type": "chef",
+  "verification_email_status": "verified",
+  "verification_phone_status": "verified",
+  "Wallet": {
+    "id": 1,
+    "state_type": "open",
+    "OrderItems": [
+      {
+        "id": 9,
+        "plate_id": 8,
+        "name": "X-Bacon 8",
+        "amount": 10,
+        "quantity": 2,
+        "chef_payment": 0
+      },
+      {
+        "id": 10,
+        "plate_id": 8,
+        "name": "X-Bacon 8",
+        "amount": 10,
+        "quantity": 2,
+        "chef_payment": 0
+      }
+    ],
+    "balance_history":[
+      {
+        "date":"2019-08-06",
+        "balance":20.0
+      },
+      {
+        "date":"2019-08-05",
+        "balance":20.0
+      },
+      {
+        "date":"2019-08-04",
+        "balance":20.0
+      }
+    ],
+    "total": 40
+  }
+}`;
+res.status(HttpStatus.OK).send(JSON.parse(historyMock));
 }*/
 
-exports.getUser = asyncHandler(async (req, res, next) => {
-  const user = req.user;
-  const shippingAddresses = await user.getAddress();
-  const userResponse = userResponseHelper({ user });
-  userResponse.address = shippingAddresses;
-  res.status(HttpStatus.OK).send({
-    message: "SUCCESS",
-    data: userResponse,
-  });
-});
+exports.getUser = require("./userController/getUser")
 
 //Instead of getting the user data based on access token ,
 //get the user details based on the userID passed as params
-exports.getUserById = asyncHandler(async (req, res, next) => {
-  const user = await User.findByPk(req.params.userId, {
-    attributes: userConstants.privateSelectFields,
-  });
-
-  if (!user) {
-    return res
-      .status(HttpStatus.NOT_FOUND)
-      .send({ message: "User not found", status: HttpStatus.NOT_FOUND });
-  }
-  const shippingAddresses = await user.getAddress();
-  const userResponse = userResponseHelper({ user });
-  if (userConstants.USER_TYPE_CHEF === user.user_type) {
-    let rating = await repositoryRating.getRatingofChef(req.params.userId);
-    let aggregate_rating = rating.rating + "(" + rating.userCount + ")";
-    userResponse.rating = rating;
-    userResponse.aggregate_rating = aggregate_rating;
-  }
-  userResponse.address = shippingAddresses;
-  res.status(HttpStatus.OK).send({
-    message: "SUCCESS",
-    data: userResponse,
-  });
-});
+exports.getUserById = require("./userController/getUserById")
 /**
  * Complete user registration
  */
@@ -828,7 +510,7 @@ exports.setZoomCredentials = asyncHandler(async (req, res, next) => {
 
   try {
     await user.update(updates);
-  } catch (err) {}
+  } catch (err) { }
 
   res.status(HttpStatus.OK).send({
     message: "zoom credentials saved",

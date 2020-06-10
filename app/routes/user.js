@@ -122,14 +122,14 @@ router.get(
   "/chef/balance",
   authService.authorize,
   controller.getAuthUserMiddleware,
-  controller.getChefBalance
+  controller.getChefOrDriverBalance
 );
 // router.get('/balance/history/?:from:to', authService.authorize, controller.getUserBalanceHistory);
 router.get(
   "/driver/balance",
   authService.authorize,
   controller.getAuthUserMiddleware,
-  controller.getDriverBalance
+  controller.getChefOrDriverBalance
 );
 
 // Message module
