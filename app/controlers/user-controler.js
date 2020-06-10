@@ -88,22 +88,7 @@ exports.getAuthUserMiddleware = require("./userController/getAuthUserMiddleware"
  * Get currently authenticated user by userId decoded from jsonwebtoken, if token is valid and it contains the userId.
  * This should not send back NOT_FOUND response, it is used as optional middleware
  */
-exports.getAuthUserIfPresentMiddleware = asyncHandler(
-  async (req, res, next) => {
-    if (!req.userId) return next();
-
-    const user = await User.findByPk(req.userId, {
-      attributes: userConstants.privateSelectFields,
-    });
-
-    if (!user) {
-      return next();
-    }
-
-    req.user = user;
-    next();
-  }
-);
+exports.getAuthUserIfPresentMiddleware = require("./userController/getAuthUserIfPresentMiddleware");
 
 /**
  * Middleware
