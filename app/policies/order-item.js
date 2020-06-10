@@ -1,10 +1,4 @@
 'use strict';
-
-
-const path = require('path');
-const utils = require(path.resolve('./server/utils'));
-const middlewares = require(path.resolve('./server/middlewares'));
-
 const path = require("path");
 const utils = require(path.resolve("./server/utils"));
 const middlewares = require(path.resolve("./server/middlewares"));
