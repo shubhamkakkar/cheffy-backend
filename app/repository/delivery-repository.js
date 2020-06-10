@@ -1,461 +1,447 @@
-'use strict';
-const path = require('path');
+"use strict";
+const path = require("path");
 const {
-	sequelize,
-	Plates,
-	/*Review,*/
-	PlateImage,
-	Order,
-	ShippingAddress,
-	OrderPayment,
-	OrderItem,
-	OrderDelivery,
-	User,
-	DriverCancellation,
-} = require('../models/index');
+  sequelize,
+  Plates,
+  /*Review,*/
+  PlateImage,
+  Order,
+  ShippingAddress,
+  OrderPayment,
+  OrderItem,
+  OrderDelivery,
+  User,
+  DriverCancellation,
+} = require("../models/index");
 const orderDeliveryConstants = require(path.resolve(
-	'app/constants/order-delivery'
+  "app/constants/order-delivery"
 ));
-const userConstants = require(path.resolve('app/constants/users'));
-const Sequelize = require('sequelize');
+const userConstants = require(path.resolve("app/constants/users"));
+const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
 
 exports.getById = async (orderDeliveryId) => {
-	return await OrderDelivery.findByPk(orderDeliveryId);
+  return await OrderDelivery.findByPk(orderDeliveryId);
 };
 
 //TODO waiting OrderDelivey to be implemented
 exports.createOrderDelivery = async (data) => {
-	try {
-		const order = await OrderDelivery.create(data);
-		return order;
-	} catch (e) {
-		console.log(e);
-		throw e;
-	}
+  try {
+    const order = await OrderDelivery.create(data);
+    return order;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
 };
 
 //TODO waiting OrderDelivey to be implemented
 exports.edit = async (data, driver) => {
-	// try {
-	//     const order = await OrderDelivery.create({...data});
-	//     return order;
-	//   } catch (e) {
-	//     console.log(e)
-	//     throw e;
-	//   }
+  // try {
+  //     const order = await OrderDelivery.create({...data});
+  //     return order;
+  //   } catch (e) {
+  //     console.log(e)
+  //     throw e;
+  //   }
 };
 
 //TODO waiting OrderDelivey to be implemented
 exports.getOrderDeliveriesByUserId = async (data, driver) => {
-	let order = await Order.findAll({
-		where: { userId: data },
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: OrderPayment,
-				attributes: [
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-							},
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				required: true,
-				as: 'order_delivery',
-				attributes: ['id', 'state_type'],
-				where: {
-					[Op.or]: [
-						{
-							state_type:
-								orderDeliveryConstants.STATE_TYPE_APPROVED,
-						},
-						{
-							state_type:
-								orderDeliveryConstants.STATE_TYPE_DELIVERED,
-						},
-					],
-				},
-			},
-		],
-	});
-
-	return order;
+  return await Order.findAll({
+    where: { userId: data },
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: [
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+              },
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        attributes: ["id", "state_type"],
+        where: {
+          [Op.or]: [
+            {
+              state_type: orderDeliveryConstants.STATE_TYPE_APPROVED,
+            },
+            {
+              state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
+            },
+          ],
+        },
+      },
+    ],
+  });
 };
 //TODO waiting OrderDelivey to be implemented
 exports.getOrderDeliveriesPendingByUserId = async (data, driver) => {
-	let order = await Order.findAll({
-		where: { userId: data },
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: OrderPayment,
-				attributes: [
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-							},
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				as: 'order_delivery',
-				required: true,
-				attributes: ['id'],
-				where: {
-					state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
-				},
-			},
-		],
-	});
+  let order = await Order.findAll({
+    where: { userId: data },
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: [
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+              },
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        as: "order_delivery",
+        required: true,
+        attributes: ["id"],
+        where: {
+          state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+        },
+      },
+    ],
+  });
 
-	return order;
+  return order;
 };
 
 exports.getCompletedDeliveriesByUser = async ({ user_id, pagination }) => {
-	let order = await Order.findAll({
-		where: { userId: user_id },
-		...pagination,
-		attributes: [
-			'id',
-			'basketId',
-			'userId',
-			'shippingId',
-			'state_type',
-			'promoCode',
-			'total_items',
-			'shipping_fee',
-			'order_total',
-			'createdAt',
-			'updatedAt',
-		],
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: OrderPayment,
-				attributes: [
-					'id',
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-								attributes: userConstants.userSelectFields,
-								include: [
-									{ model: ShippingAddress, as: 'address' },
-								],
-							},
+  let order = await Order.findAll({
+    where: { userId: user_id },
+    ...pagination,
+    attributes: [
+      "id",
+      "basketId",
+      "userId",
+      "shippingId",
+      "state_type",
+      "promoCode",
+      "total_items",
+      "shipping_fee",
+      "order_total",
+      "createdAt",
+      "updatedAt",
+    ],
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: [
+          "id",
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+                attributes: userConstants.userSelectFields,
+                include: [{ model: ShippingAddress, as: "address" }],
+              },
 
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				required: true,
-				as: 'order_delivery',
-				where: {
-					state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
-				},
-			},
-		],
-	});
-	return order;
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        where: {
+          state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
+        },
+      },
+    ],
+  });
+  return order;
 };
 
 exports.getPendingDeliveriesByUser = async (data) => {
-	let order = await Order.findAll({
-		where: { userId: data },
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: OrderPayment,
-				attributes: [
-					'id',
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: ShippingAddress,
-				as: 'shipping',
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-								attributes: userConstants.userSelectFields,
-								include: [
-									{ model: ShippingAddress, as: 'address' },
-								],
-							},
+  let order = await Order.findAll({
+    where: { userId: data },
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: [
+          "id",
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: ShippingAddress,
+        as: "shipping",
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+                attributes: userConstants.userSelectFields,
+                include: [{ model: ShippingAddress, as: "address" }],
+              },
 
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				required: true,
-				as: 'order_delivery',
-				where: {
-					state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
-				},
-			},
-		],
-	});
-	return order;
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        where: {
+          state_type: orderDeliveryConstants.STATE_TYPE_PENDING,
+        },
+      },
+    ],
+  });
+  return order;
 };
 
 exports.getApprovedDeliveriesByUser = async (data) => {
-	let order = await Order.findAll({
-		where: { userId: data },
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: OrderPayment,
-				attributes: [
-					'id',
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: ShippingAddress,
-				as: 'shipping',
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-								attributes: userConstants.userSelectFields,
-								include: [
-									{ model: ShippingAddress, as: 'address' },
-								],
-							},
+  let order = await Order.findAll({
+    where: { userId: data },
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: OrderPayment,
+        attributes: [
+          "id",
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: ShippingAddress,
+        as: "shipping",
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+                attributes: userConstants.userSelectFields,
+                include: [{ model: ShippingAddress, as: "address" }],
+              },
 
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				required: true,
-				as: 'order_delivery',
-				where: {
-					state_type: orderDeliveryConstants.STATE_TYPE_APPROVED,
-				},
-			},
-		],
-	});
-	return order;
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        where: {
+          state_type: orderDeliveryConstants.STATE_TYPE_APPROVED,
+        },
+      },
+    ],
+  });
+  return order;
 };
 
 exports.getPendingDeliveriesByDriver = async (driverId, data, limit) => {
-	try {
-		let cancelledOrders = await DriverCancellation.findAll({
-			where: { driverId: driverId, isDelivered: 0 },
-		});
+  try {
+    let cancelledOrders = await DriverCancellation.findAll({
+      where: { driverId: driverId, isDelivered: 0 },
+    });
 
-		cancelledOrders = JSON.parse(JSON.stringify(cancelledOrders));
+    cancelledOrders = JSON.parse(JSON.stringify(cancelledOrders));
 
-		const orderIds = cancelledOrders.map(
-			(cancelledOrder) => cancelledOrder.orderId
-		);
+    const orderIds = cancelledOrders.map(
+      (cancelledOrder) => cancelledOrder.orderId
+    );
 
-		// Don't include the cancelled order
-		let orders = await Order.findAll({
-			where: {
-				'$order_delivery.orderId$': null,
-				id: { [Op.notIn]: orderIds },
-			},
-			order: [['id', 'DESC']],
-			include: [
-				{
-					model: ShippingAddress,
-					as: 'shipping',
-				},
-				{
-					model: OrderItem,
-					where: { deliveryType: data.deliveryType },
-					include: [
-						{
-							model: Plates,
-							as: 'plate',
-							include: [
-								{
-									model: User,
-									as: 'chef',
-									attributes: userConstants.userSelectFields,
-									include: [
-										{ model: ShippingAddress, as: 'address' },
-									],
-								},
-								{
-									model: PlateImage,
-								},
-							],
-						},
-					],
-				},
-				{
-					model: OrderDelivery,
-					as: 'order_delivery',
-				},
-			],
-		});
+    // Don't include the cancelled order
+    let orders = await Order.findAll({
+      where: {
+        "$order_delivery.orderId$": null,
+        id: { [Op.notIn]: orderIds },
+      },
+      order: [["id", "DESC"]],
+      include: [
+        {
+          model: ShippingAddress,
+          as: "shipping",
+        },
+        {
+          model: OrderItem,
+          where: { deliveryType: data.deliveryType },
+          include: [
+            {
+              model: Plates,
+              as: "plate",
+              include: [
+                {
+                  model: User,
+                  as: "chef",
+                  attributes: userConstants.userSelectFields,
+                  include: [{ model: ShippingAddress, as: "address" }],
+                },
+                {
+                  model: PlateImage,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: OrderDelivery,
+          as: "order_delivery",
+        },
+      ],
+    });
 
-		orders = JSON.parse(JSON.stringify(orders));
+    orders = JSON.parse(JSON.stringify(orders));
 
+    for (var i = 0; i < orders.length; i++) {
+      const order = orders[i];
+      if (order.OrderItems[0].plate !== null) {
+        const chef = order.OrderItems[0].plate.chef;
+        order.OrderItems.forEach((orderItem) => {
+          delete orderItem.plate.chef;
+        });
+        order.chef = chef;
+      }
+    }
 
-		for (var i = 0; i < orders.length; i++) {
-			const order = orders[i];
-			if (order.OrderItems[0].plate !== null) {
-				const chef = order.OrderItems[0].plate.chef;
-				order.OrderItems.forEach((orderItem) => {
-					delete orderItem.plate.chef;
-				});
-				order.chef = chef;
-			}
-		}
+    if (!limit) {
+      limit = 1;
+    }
 
-		if (!limit) {
-			limit = 1;
-		}
-
-		return orders.slice(0, limit);
-	}
-	catch (error) {
-		console.log(error);
-		throw error;
-	}
+    return orders.slice(0, limit);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 };
 
 //TODO waiting OrderDelivey to be implemented
 exports.getByIdDetails = async (data) => {
-	try {
-		let deliveryId = parseInt(data);
+  try {
+    let deliveryId = parseInt(data);
 
-		let mainSQL = `SELECT
+    let mainSQL = `SELECT
                         o.id,
                         o.basketId,
                         o.state_type,
@@ -476,23 +462,23 @@ exports.getByIdDetails = async (data) => {
                         inner join ShippingAddresses s
                         on(o.shippingId = s.id) where o.id = ${deliveryId}`;
 
-		mainSQL = mainSQL.replace(/"/g, '`');
-		let returnMainSQL = await sequelize.query(mainSQL, {
-			type: sequelize.QueryTypes.SELECT,
-			nest: true,
-		});
+    mainSQL = mainSQL.replace(/"/g, "`");
+    let returnMainSQL = await sequelize.query(mainSQL, {
+      type: sequelize.QueryTypes.SELECT,
+      nest: true,
+    });
 
-		let deliveryDetails;
+    let deliveryDetails;
 
-		if (returnMainSQL) {
-			if (returnMainSQL.length > 0) {
-				console.log(JSON.stringify(returnMainSQL));
+    if (returnMainSQL) {
+      if (returnMainSQL.length > 0) {
+        console.log(JSON.stringify(returnMainSQL));
 
-				deliveryDetails = returnMainSQL[0];
-				let shippingLat = deliveryDetails.shipping_address.lat;
-				let shippingLong = deliveryDetails.shipping_address.lon;
+        deliveryDetails = returnMainSQL[0];
+        let shippingLat = deliveryDetails.shipping_address.lat;
+        let shippingLong = deliveryDetails.shipping_address.lon;
 
-				let chefAddressSQL = `
+        let chefAddressSQL = `
                       SELECT
                       od.id,
                       od.orderId,
@@ -516,19 +502,19 @@ exports.getByIdDetails = async (data) => {
 
                     where od.id = ${deliveryId}`;
 
-				let retornoChef = await sequelize.query(chefAddressSQL, {
-					type: sequelize.QueryTypes.SELECT,
-					nest: true,
-				});
+        let retornoChef = await sequelize.query(chefAddressSQL, {
+          type: sequelize.QueryTypes.SELECT,
+          nest: true,
+        });
 
-				if (retornoChef) {
-					if (retornoChef.length > 0) {
-						console.log(JSON.stringify(retornoChef));
-						deliveryDetails.pickup_addresses = retornoChef;
-					}
-				}
-				let orderId = retornoChef[0].orderId;
-				let orderItemsSQL = `SELECT
+        if (retornoChef) {
+          if (retornoChef.length > 0) {
+            console.log(JSON.stringify(retornoChef));
+            deliveryDetails.pickup_addresses = retornoChef;
+          }
+        }
+        let orderId = retornoChef[0].orderId;
+        let orderItemsSQL = `SELECT
                                       p.userId as chefId,
                                         u.name as chefName,
                                         oi.*
@@ -543,194 +529,190 @@ exports.getByIdDetails = async (data) => {
 
                                     where oi.orderId = ${orderId}`;
 
-				let resultOrderItemsSQL = await sequelize.query(orderItemsSQL, {
-					type: sequelize.QueryTypes.SELECT,
-					nest: true,
-				});
+        let resultOrderItemsSQL = await sequelize.query(orderItemsSQL, {
+          type: sequelize.QueryTypes.SELECT,
+          nest: true,
+        });
 
-				if (resultOrderItemsSQL) {
-					if (resultOrderItemsSQL.length > 0) {
-						console.log(JSON.stringify(resultOrderItemsSQL));
-						deliveryDetails.order_items = resultOrderItemsSQL;
-					}
-				}
-				return returnMainSQL[0];
-			}
-		} else {
-			return false;
-		}
-		return deliveryDetails;
-	} catch (e) {
-		console.log(e);
-		throw e;
-	}
+        if (resultOrderItemsSQL) {
+          if (resultOrderItemsSQL.length > 0) {
+            console.log(JSON.stringify(resultOrderItemsSQL));
+            deliveryDetails.order_items = resultOrderItemsSQL;
+          }
+        }
+        return returnMainSQL[0];
+      }
+    } else {
+      return false;
+    }
+    return deliveryDetails;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
 };
 
 exports.getApprovedDeliveriesByDriver = async (data) => {
-	let orders = await Order.findAll({
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: User,
-				as: 'user',
-				attributes: userConstants.userSelectFields,
-			},
-			{
-				model: OrderPayment,
-				attributes: [
-					'id',
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: ShippingAddress,
-				as: 'shipping',
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-								attributes: userConstants.userSelectFields,
-								include: [
-									{ model: ShippingAddress, as: 'address' },
-								],
-							},
+  let orders = await Order.findAll({
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: User,
+        as: "user",
+        attributes: userConstants.userSelectFields,
+      },
+      {
+        model: OrderPayment,
+        attributes: [
+          "id",
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: ShippingAddress,
+        as: "shipping",
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+                attributes: userConstants.userSelectFields,
+                include: [{ model: ShippingAddress, as: "address" }],
+              },
 
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				required: true,
-				as: 'order_delivery',
-				where: {
-					state_type: [
-						orderDeliveryConstants.STATE_TYPE_APPROVED,
-						orderDeliveryConstants.STATE_TYPE_PICKED_UP,
-					],
-					driverId: data,
-				},
-			},
-		],
-	});
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        where: {
+          state_type: [
+            orderDeliveryConstants.STATE_TYPE_APPROVED,
+            orderDeliveryConstants.STATE_TYPE_PICKED_UP,
+          ],
+          driverId: data,
+        },
+      },
+    ],
+  });
 
-	orders = JSON.parse(JSON.stringify(orders));
+  orders = JSON.parse(JSON.stringify(orders));
 
-	for (var i = 0; i < orders.length; i++) {
-		const order = orders[i];
-		if (order.OrderItems[0].plate !== null) {
-			const chef = order.OrderItems[0].plate.chef;
-			order.OrderItems.forEach((orderItem) => {
-				delete orderItem.plate.chef;
-			});
-			order.chef = chef;
-		}
-	}
+  for (var i = 0; i < orders.length; i++) {
+    const order = orders[i];
+    if (order.OrderItems[0].plate !== null) {
+      const chef = order.OrderItems[0].plate.chef;
+      order.OrderItems.forEach((orderItem) => {
+        delete orderItem.plate.chef;
+      });
+      order.chef = chef;
+    }
+  }
 
-	return orders;
+  return orders;
 };
 
 exports.getCompleteDeliveriesByDriver = async (data) => {
-	let orders = await Order.findAll({
-		order: [['id', 'DESC']],
-		include: [
-			{
-				model: User,
-				as: 'user',
-				attributes: userConstants.userSelectFields,
-			},
-			{
-				model: OrderPayment,
-				attributes: [
-					'id',
-					'amount',
-					'client_secret',
-					'customer',
-					'payment_method',
-					'status',
-				],
-			},
-			{
-				model: ShippingAddress,
-				as: 'shipping',
-			},
-			{
-				model: OrderItem,
-				attributes: [
-					'plate_id',
-					'chef_location',
-					'name',
-					'description',
-					'amount',
-					'quantity',
-				],
-				include: [
-					{
-						model: Plates,
-						as: 'plate',
-						include: [
-							{
-								model: User,
-								as: 'chef',
-								attributes: userConstants.userSelectFields,
-								include: [
-									{ model: ShippingAddress, as: 'address' },
-								],
-							},
+  let orders = await Order.findAll({
+    order: [["id", "DESC"]],
+    include: [
+      {
+        model: User,
+        as: "user",
+        attributes: userConstants.userSelectFields,
+      },
+      {
+        model: OrderPayment,
+        attributes: [
+          "id",
+          "amount",
+          "client_secret",
+          "customer",
+          "payment_method",
+          "status",
+        ],
+      },
+      {
+        model: ShippingAddress,
+        as: "shipping",
+      },
+      {
+        model: OrderItem,
+        attributes: [
+          "plate_id",
+          "chef_location",
+          "name",
+          "description",
+          "amount",
+          "quantity",
+        ],
+        include: [
+          {
+            model: Plates,
+            as: "plate",
+            include: [
+              {
+                model: User,
+                as: "chef",
+                attributes: userConstants.userSelectFields,
+                include: [{ model: ShippingAddress, as: "address" }],
+              },
 
-							{
-								model: PlateImage,
-							},
-						],
-					},
-				],
-			},
-			{
-				model: OrderDelivery,
-				required: true,
-				as: 'order_delivery',
-				where: {
-					state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
-					driverId: data,
-				},
-			},
-		],
-	});
+              {
+                model: PlateImage,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: OrderDelivery,
+        required: true,
+        as: "order_delivery",
+        where: {
+          state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
+          driverId: data,
+        },
+      },
+    ],
+  });
 
-	orders = JSON.parse(JSON.stringify(orders));
+  orders = JSON.parse(JSON.stringify(orders));
 
-	for (var i = 0; i < orders.length; i++) {
-		const order = orders[i];
-		if (order.OrderItems[0].plate !== null) {
-			const chef = order.OrderItems[0].plate.chef;
-			order.OrderItems.forEach((orderItem) => {
-				delete orderItem.plate.chef;
-			});
-			order.chef = chef;
-		}
-	}
+  for (var i = 0; i < orders.length; i++) {
+    const order = orders[i];
+    if (order.OrderItems[0].plate !== null) {
+      const chef = order.OrderItems[0].plate.chef;
+      order.OrderItems.forEach((orderItem) => {
+        delete orderItem.plate.chef;
+      });
+      order.chef = chef;
+    }
+  }
 
-	return orders;
+  return orders;
 };
