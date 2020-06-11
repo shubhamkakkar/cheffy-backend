@@ -10,6 +10,7 @@ const {
 const path = require("path");
 const userConstants = require(path.resolve("app/constants/users"));
 const orderItemConstants = require(path.resolve("app/constants/order-item"));
+const { Op } = require("sequelize")
 /**
  * Main Table: OrderItems
  * Get chef orders
@@ -23,7 +24,13 @@ exports.getChefOrders = async ({
   page,
   pageSize,
 }) => {
-  const whereQuery = { chef_id };
+  const whereQuery = {
+    chef_id,
+    state_type: {
+      [Op.notLike]: "%" + orderItemConstants.STATE_TYPE_CANCELED
+    }
+  };
+
   if (state_type) {
     whereQuery.state_type = state_type;
   }
