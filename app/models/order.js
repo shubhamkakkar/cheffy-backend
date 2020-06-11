@@ -63,10 +63,12 @@ module.exports = (sequelize, DataTypes) => {
     });
     Order.hasOne(models.OrderPayment);
     Order.hasOne(models.OrderItem);
-    // Order.belongsTo(models.OrderDelivery, {
-    //   foreignKey: "orderDeliveryId",
-    //   as: "order_delivery",
-    // });
+    Order.hasOne(models.OrderDelivery
+      , {
+        foreignKey: "id",
+        as: "order_delivery",
+      }
+    );
     Order.hasMany(models.Transactions);
   };
   return Order;
