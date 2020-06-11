@@ -37,9 +37,9 @@ function distance(lat1, lon1, lat2, lon2) {
   var a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   var d = R * c;
   if (d > 1) return Math.round(d) + "km";
@@ -221,7 +221,7 @@ exports.userOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 
   const message = `Here are your${
     state_type ? ` ${state_type} ` : " "
-  }order deliveries!`;
+    }order deliveries!`;
 
   res.status(HttpStatus.OK).send({
     message,
@@ -248,7 +248,7 @@ exports.chefOrderItemDeliveries = asyncHandler(async (req, res, next) => {
 
   const message = `Here are your${
     state_type ? ` ${state_type} ` : " "
-  }orders deliveries!`;
+    }orders deliveries!`;
 
   res.status(HttpStatus.OK).send({
     message,
@@ -470,7 +470,7 @@ exports.orderItemsDelivery = asyncHandler(async (req, res, next) => {
 
     const message = `Here are your${
       state_type ? ` ${state_type} ` : " "
-    }order items with respective delieveries!`;
+      }order items with respective delieveries!`;
 
     return res.status(HttpStatus.OK).send({
       message,
