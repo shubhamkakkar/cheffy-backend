@@ -23,6 +23,7 @@ exports.listTrackingUser = async ({ userId, pagination, page, pageSize }) => {
       "total_items",
       "shipping_fee",
       "order_total",
+      "createdAt"
     ],
     order: [['createdAt', 'ASC']],
     include: [
