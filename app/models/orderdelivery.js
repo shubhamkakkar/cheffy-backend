@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       //set if delivery_type is order_item
-      orderItemID: {
+      orderItemId: {
         allowNull: true,
         type: DataTypes.INTEGER,
         references: {
@@ -99,6 +99,10 @@ module.exports = (sequelize, DataTypes) => {
       as: "Driver",
     });
     OrderDelivery.belongsTo(models.User, { foreignKey: "userId" });
+
+    OrderDelivery.hasMany(models.OrderItem, {
+      foreignKey: "orderItemID",
+    })
   };
 
   return OrderDelivery;

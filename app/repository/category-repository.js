@@ -1,5 +1,5 @@
 'use strict';
-const { PlateCategory,Review, Plates, ShippingAddress, Ingredient, PlateImage, KitchenImage, ReceiptImage, User } = require('../models/index');
+const { PlateCategory, Review, Plates, ShippingAddress, Ingredient, PlateImage, KitchenImage, ReceiptImage, User } = require('../models/index');
 
 exports.findExist = async (data) => {
   const existCategory = await PlateCategory.findOne({ where: { name: data } });
@@ -15,9 +15,9 @@ exports.createCategory = async (data) => {
   return category;
 }
 
-exports.listCategories = async ({pagination}) => {
-  const query = {...pagination};
-  const categories = await PlateCategory.findAll(query);
+exports.listCategories = async () => {
+  // const query = {...pagination};
+  const categories = await PlateCategory.findAll();
   return categories;
 }
 

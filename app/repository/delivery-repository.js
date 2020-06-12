@@ -227,6 +227,14 @@ exports.getCompletedDeliveriesByUser = async ({ user_id, pagination }) => {
         model: OrderDelivery,
         required: true,
         as: "order_delivery",
+        attributes: [
+          "id", "rating", "driverId", "pickup_time",
+          "dropoff_time", "createdAt", "updatedAt", "has_review",
+          'state_type', "orderId", "order_delivery_type", "userId"
+          , "delivery_type"
+          , "deletedAt"
+          , "is_driver_bonus_added"
+          , "is_driver_commission_added", "orderItemID"],
         where: {
           state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
         },

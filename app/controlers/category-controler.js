@@ -69,15 +69,15 @@ exports.getCategory = asyncHandler(async (req, res, next) => {
 });
 
 exports.list = asyncHandler(async (req, res, next) => {
-	const pagination = paginator.paginateQuery(req);
-	const query = { pagination };
+	// const pagination = paginator.paginateQuery(req);
+	// const query = { pagination };
 
-	const categories = await repository.listCategories(query);
-	
+	const categories = await repository.listCategories();
+
 	res.status(HttpStatus.OK).send({
 		message: "Categories!",
 		data: categories,
-		...paginator.paginateInfo(pagination)
+		// ...paginator.paginateInfo(pagination)
 	});
 });
 
