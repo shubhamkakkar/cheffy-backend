@@ -395,6 +395,7 @@ exports.getPendingDeliveriesByDriver = async (driverId, data, limit) => {
         {
           model: OrderItem,
           where: { deliveryType: data.deliveryType },
+          attributes: ["id"],
           include: [
             {
               model: Plates,
@@ -424,10 +425,11 @@ exports.getPendingDeliveriesByDriver = async (driverId, data, limit) => {
 
     for (var i = 0; i < orders.length; i++) {
       const order = orders[i];
-      if (order.OrderItems[0].plate !== null) {
-        const chef = order.OrderItems[0].plate.chef;
-        order.OrderItems.forEach((orderItem) => {
-          delete orderItem.plate.chef;
+      console.log({ order })
+      if (order.OrderItem.plate !== null) {
+        const chef = order.OrderItem[0].plate.chef;
+        order.OrderItem.forEach((item) => {
+          delete item.plate.chef;
         });
         order.chef = chef;
       }

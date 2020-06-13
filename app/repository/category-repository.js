@@ -29,3 +29,7 @@ exports.editCategory = async (id, data) => {
   await category.save();*/
   return await category.update(data);
 }
+
+exports.deleteCategory = async (id) => {
+  return await PlateCategory.destroy({ where: { id } });
+}

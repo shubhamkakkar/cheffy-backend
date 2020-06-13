@@ -22,6 +22,14 @@ router.post(
   controller.create
 );
 
+router.delete(
+  "/:id",
+  authService.authorize,
+  userController.getAuthUserMiddleware,
+  // categoryPolicies.isOwnerMiddleware(),
+  controller.delete
+);
+
 router.put(
   "/edit/:categoryId",
   authService.authorize,

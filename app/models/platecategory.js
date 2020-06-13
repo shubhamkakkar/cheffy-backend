@@ -18,9 +18,8 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
   }, {});
-  PlateCategory.associate = function(models) {
-    PlateCategory.belongsTo(models.User, {foreignKey: 'userId'});
-    //PlateCategory.hasMany(models.Plates)
+  PlateCategory.associate = function (models) {
+    PlateCategory.belongsTo(models.User, { foreignKey: 'userId' });
   };
   return PlateCategory;
 };

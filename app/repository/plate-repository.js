@@ -88,6 +88,9 @@ exports.getPlateById = async (id) => {
   return await Plates.findByPk(id);
 };
 
+
+
+
 exports.findPlate = async (data) => {
   try {
     const existPlate = await Plates.findByPk(data, {
@@ -764,3 +767,12 @@ exports.deletePlate = async (plateId) => {
   //Delete the plate
   await Plates.destroy({ where: { id: plateId } });
 };
+
+
+exports.countPlateByCategoryId = async (categoryId) => {
+  return await Plates.count({
+    where: {
+      categoryId
+    }
+  });
+}

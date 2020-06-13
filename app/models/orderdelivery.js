@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       //set if delivery_type is order_item
-      orderItemId: {
+      orderItemID: {
         allowNull: true,
         type: DataTypes.INTEGER,
         references: {
