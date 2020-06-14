@@ -1,6 +1,12 @@
 "use strict";
 const path = require("path");
-const paymentConfig = require(path.resolve("config/payment"));
+const HttpStatus = require('http-status-codes');
+const paymentConfig = require(path.resolve('config/payment'));
+const paymentConfig = require(path.resolve('config/payment'));
+const ValidationContract = require('../services/validator');
+
+
+
 
 const stripe = require("stripe")("sk_test_M5Hmfwb5Xb8ZD1lmedG3dmXD003y6owZ8D");
 const paypal = require("paypal-rest-sdk");
@@ -406,3 +412,34 @@ exports.payPalConnection = async () =>
     client_secret:
       "ELJGz7y4lKWoRVPdrnxfqUt0NOvFucR9w6_6iGkNVFn7HyBL0QCSYDqwRLrBCPIoOnlHzfSAoAD8EN9f",
   });
+
+exports.paymentIntent = async (req, res, next) => {
+  const { amount, currency } = req.body;
+  console.log("dodo duck")
+
+  let contract = new ValidationContract();
+  contract.isRequired(amount, "amount is required")
+  contract.isRequired(currency, "currency is required")
+  if (!contract.isValid()) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message: contract.errors()
+    });
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: 1099,
+      currency: 'sgd',
+    });
+    const clientSecret = paymentIntent.client_secret
+
+    return res.send({
+      clientSecret
+    })
+  } catch ({ message }) {
+    return res.status(HttpStatus.CONFLICT).send({
+      message
+    });
+  }
+}
+

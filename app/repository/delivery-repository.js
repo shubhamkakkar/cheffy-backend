@@ -1,5 +1,5 @@
-"use strict";
-const path = require("path");
+'use strict';
+const path = require('path');
 const {
   sequelize,
   Plates,
@@ -11,13 +11,16 @@ const {
   OrderItem,
   OrderDelivery,
   User,
+  CustomPlateOrder,
+  CustomPlateImage,
+  CustomPlate,
   DriverCancellation,
-} = require("../models/index");
+} = require('../models/index');
 const orderDeliveryConstants = require(path.resolve(
-  "app/constants/order-delivery"
+  'app/constants/order-delivery'
 ));
-const userConstants = require(path.resolve("app/constants/users"));
-const Sequelize = require("sequelize");
+const userConstants = require(path.resolve('app/constants/users'));
+const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
 exports.getById = async (orderDeliveryId) => {
@@ -383,64 +386,97 @@ exports.getPendingDeliveriesByDriver = async (driverId, data, limit) => {
     // Don't include the cancelled order
     let orders = await Order.findAll({
       where: {
-        "$order_delivery.orderId$": null,
-        id: { [Op.notIn]: orderIds },
+        id: orderIds,
       },
-      order: [["id", "DESC"]],
+      order: [['createdAt', 'ASC']],
       include: [
         {
           model: ShippingAddress,
-          as: "shipping",
+          as: 'shipping',
         },
         {
           model: OrderItem,
           where: { deliveryType: data.deliveryType },
-          attributes: ["id"],
+          attributes: [
+            'id',
+            'plate_id',
+            'customPlateId',
+            'item_type',
+            'user_id',
+            'chef_id',
+            'chef_location',
+            'name',
+            'description',
+            'amount',
+            'quantity',
+            'deliveryType',
+          ],
           include: [
             {
               model: Plates,
-              as: "plate",
+              as: 'plate',
               include: [
-                {
-                  model: User,
-                  as: "chef",
-                  attributes: userConstants.userSelectFields,
-                  include: [{ model: ShippingAddress, as: "address" }],
-                },
                 {
                   model: PlateImage,
                 },
+                {
+                  model: User,
+                  as: 'chef',
+                  attributes: [
+                    'id',
+                    'name',
+                    'email',
+                    'restaurant_name',
+                    'location_lat',
+                    'location_lon',
+                    'user_type',
+                    'imagePath'
+                  ]
+                },
               ],
             },
+            {
+              model: CustomPlateOrder,
+              as: 'custom_plate_order',
+              include: [
+                {
+                  model: CustomPlate,
+                  as: 'custom_plate',
+                  include: [
+                    {
+                      model: CustomPlateImage,
+                    },
+                  ],
+                },
+              ],
+            }
           ],
-        },
-        {
-          model: OrderDelivery,
-          as: "order_delivery",
-        },
+        }
       ],
     });
 
     orders = JSON.parse(JSON.stringify(orders));
+    // console.log(orders.length)
 
-    for (var i = 0; i < orders.length; i++) {
-      const order = orders[i];
-      console.log({ order })
-      if (order.OrderItem.plate !== null) {
-        const chef = order.OrderItem[0].plate.chef;
-        order.OrderItem.forEach((item) => {
-          delete item.plate.chef;
-        });
-        order.chef = chef;
-      }
-    }
+
+    // for (var i = 0; i < orders.length; i++) {
+    // 	const order = orders[i];
+    // 	if (order.OrderItems[0].plate !== null) {
+    // 		const chef = order.OrderItems[0].plate.chef;
+    // 		order.OrderItems.forEach((orderItem) => {
+    // 			delete orderItem.plate.chef;
+    // 		});
+    // 		order.chef = chef;
+    // 	}
+    // }
 
     if (!limit) {
       limit = 1;
     }
 
     return orders.slice(0, limit);
-  } catch (error) {
+  }
+  catch (error) {
     console.log(error);
     throw error;
   }
@@ -563,8 +599,27 @@ exports.getByIdDetails = async (data) => {
 };
 
 exports.getApprovedDeliveriesByDriver = async (data) => {
+  let orderDelivery = await OrderDelivery.findAll({
+    where: {
+      state_type: {
+        [Op.or]: {
+          [Op.like]: "%" + orderDeliveryConstants.STATE_TYPE_APPROVED + "%",
+          [Op.like]: "%" + orderDeliveryConstants.STATE_TYPE_PICKED_UP + "%",
+        }
+      },
+      driverId: data,
+    },
+  })
+
+  orderDelivery = JSON.parse(JSON.stringify(orderDelivery));
+  const orderDeliveryIds = orderDelivery.map(({ orderId }) => orderId)
   let orders = await Order.findAll({
     order: [["id", "DESC"]],
+    where: {
+      id: {
+        [Op.in]: orderDeliveryIds
+      }
+    },
     include: [
       {
         model: User,
@@ -615,35 +670,30 @@ exports.getApprovedDeliveriesByDriver = async (data) => {
           },
         ],
       },
-      {
-        model: OrderDelivery,
-        required: true,
-        as: "order_delivery",
-        where: {
-          state_type: [
-            orderDeliveryConstants.STATE_TYPE_APPROVED,
-            orderDeliveryConstants.STATE_TYPE_PICKED_UP,
-          ],
-          driverId: data,
-        },
-      },
     ],
   });
 
   orders = JSON.parse(JSON.stringify(orders));
 
+
   for (var i = 0; i < orders.length; i++) {
     const order = orders[i];
-    if (order.OrderItems[0].plate !== null) {
-      const chef = order.OrderItems[0].plate.chef;
-      order.OrderItems.forEach((orderItem) => {
-        delete orderItem.plate.chef;
-      });
+    if (order.OrderItem.plate !== null) {
+      delete order.OrderItem.plate.chef;
       order.chef = chef;
     }
   }
 
-  return orders;
+  let temp = orders.map(res => {
+    return ({
+      ...res,
+      order_delivery: orderDelivery.find(orderDeliver => res.id == orderDeliver.orderId)
+    })
+  })
+
+
+  return temp
+
 };
 
 exports.getCompleteDeliveriesByDriver = async (data) => {

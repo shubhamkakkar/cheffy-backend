@@ -666,10 +666,16 @@ exports.getPayments = asyncHandler(async (req, res, next) => {
           "Only a Driver or Chef type user can get payments to their linked Bank Account",
       });
     }
-    const wallet = await walletRepository.getWalletData(req.user.id);
-    let total = wallet
-      ? wallet[0].dataValues.balance + wallet[0].dataValues.tip
-      : 0;
+
+    let wallet = await walletRepository.getWalletData(req.user.id);
+    wallet = JSON.parse(JSON.stringify(wallet))
+    if (!wallet.length) {
+      return res.status(HttpStatus.OK).send({
+        message:
+          "No Wallet found",
+      });
+    }
+    let total = wallet[0].balance + wallet[0].tip || 0
     if (total <= 0) {
       return res.status(HttpStatus.BAD_REQUEST).send({
         message:
@@ -680,10 +686,13 @@ exports.getPayments = asyncHandler(async (req, res, next) => {
       total,
       req.body.bankAccount
     );
-    wallet.balance = 0;
-    wallet.tip = 0;
-    await wallet.save();
-    res.status(HttpStatus.OK).send({
+    const objUpdate = {
+      tip: 0,
+      balance: 0,
+    }
+    await walletRepository.updateWallet(req.user.id, objUpdate)
+
+    return res.status(HttpStatus.OK).send({
       message:
         "Congratulations! Your wallet amount will be transferred to your bank account within 7 working days.",
       data: payout,

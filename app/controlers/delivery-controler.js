@@ -636,18 +636,15 @@ exports.getDeliveryDetails = asyncHandler(async (req, res, next) => {
     const orderDelivery = await orderDeliveryRepository.getDeliveryDetails(
       req.params.orderDeliveryId
     );
-    res.status(HttpStatus.OK).send({
+    return res.status(HttpStatus.OK).send({
       message: "Here are your orders!",
       data: orderDelivery,
     });
-    return 0;
   } catch (e) {
-    console.log(e);
-    res.status(HttpStatus.CONFLICT).send({
+    return res.status(HttpStatus.CONFLICT).send({
       message: "Fail to get your orders!",
       error: true,
     });
-    return 0;
   }
 });
 

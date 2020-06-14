@@ -10,7 +10,7 @@ const shippingController = require("../controlers/shipping-controler");
 const orderPolicies = require(path.resolve("app/policies/order"));
 const orderItemPolicies = require(path.resolve("app/policies/order-item"));
 const middlewares = require(path.resolve("server/middlewares"));
-
+const paymentController = require('../services/payment')
 router.post(
   "/",
   authService.authorize,
@@ -174,5 +174,10 @@ router.put(
   orderItemPolicies.isOrderItemChefMiddleware(),
   controller.editOrderItemDeliveryType
 );
+
+router.post("/payment-intent",
+  authService.authorize,
+  paymentController.paymentIntent
+)
 
 module.exports = router;

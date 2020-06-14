@@ -16,6 +16,7 @@ module.exports = asyncHandler(async (req, res, next) => {
           },
         ],
       },
+      attributes: ["id", "orderId", "updatedAt", "amount", "quantity",]
     });
 
     const user = req.user;

@@ -37,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
 			},
 		},
 		rating: DataTypes.DOUBLE,
+		preparing: {
+			type: DataTypes.BOOLEAN,
+			defaultValue: false,
+		}
 	});
 	Plate.associate = function (models) {
 		Plate.belongsTo(models.User, {
