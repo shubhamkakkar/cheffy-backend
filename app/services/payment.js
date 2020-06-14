@@ -2,12 +2,7 @@
 const path = require("path");
 const HttpStatus = require('http-status-codes');
 const paymentConfig = require(path.resolve('config/payment'));
-const paymentConfig = require(path.resolve('config/payment'));
 const ValidationContract = require('../services/validator');
-
-
-
-
 const stripe = require("stripe")("sk_test_M5Hmfwb5Xb8ZD1lmedG3dmXD003y6owZ8D");
 const paypal = require("paypal-rest-sdk");
 const debug = require("debug")("payment-service");
