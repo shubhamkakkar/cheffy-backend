@@ -89,7 +89,7 @@ exports.chefGetPlates = async ({ req, query, pagination }) => {
 
 	let customPlateHavingQuery = {};
 
-	let customPlateOrderByQuery = [['id', 'ASC']];
+	let customPlateOrderByQuery = [['createdAt', 'DESC']];
 
 	if (query.active) {
 		whereQuery.close_date = {
@@ -102,7 +102,6 @@ exports.chefGetPlates = async ({ req, query, pagination }) => {
 		whereQuery.name = { [Op.like]: `%${keyword}%` };
 	}
 
-	let customPlateSelectAttributes = customPlateConstants.selectFields;
 	let userNearQuery = null;
 	if ((query.near && req.user) || (req.query.lat && req.query.lon)) {
 		const currentUserLocationLat = req.query.lat || req.user.location_lat;
@@ -117,7 +116,7 @@ exports.chefGetPlates = async ({ req, query, pagination }) => {
 			req.query.radiusUnit || shippingAddressConstants.DISTANCE_MILES;
 		const multiplier =
 			shippingAddressConstants.radiusDistanceUnitHaversineMap[
-				radiusDistanceUnit
+			radiusDistanceUnit
 			];
 		debug(
 			'lat, lon, radius',
@@ -353,7 +352,7 @@ exports.getPlate = async (data) => {
 			},
 			{
 				model: User,
-				attributes:['id', 'name', 'email', 'imagePath', 'location_lat', 'location_lon'],
+				attributes: ['id', 'name', 'email', 'imagePath', 'location_lat', 'location_lon'],
 				as: 'user',
 			},
 		],

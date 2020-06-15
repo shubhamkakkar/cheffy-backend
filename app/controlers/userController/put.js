@@ -6,6 +6,7 @@ const { User } = require("../../models/index");
 const userInputFilter = require(path.resolve("app/inputfilters/user"));
 const userResponseHelper = require("./helper/userResponseHelper")
 const { generateHash } = require("../../../helpers/password");
+const debug = require("debug")("user");
 
 module.exports = asyncHandler(async (req, res, next) => {
     try {
