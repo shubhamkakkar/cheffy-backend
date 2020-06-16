@@ -599,14 +599,19 @@ exports.getByIdDetails = async (data) => {
 };
 
 exports.getApprovedDeliveriesByDriver = async (data) => {
+  console.log({
+    driverId: data,
+  })
   let orderDelivery = await OrderDelivery.findAll({
     where: {
-      state_type: {
-        [Op.or]: {
-          [Op.like]: "%" + orderDeliveryConstants.STATE_TYPE_APPROVED + "%",
-          [Op.like]: "%" + orderDeliveryConstants.STATE_TYPE_PICKED_UP + "%",
-        }
-      },
+      [Op.or]: [
+        {
+          state_type: orderDeliveryConstants.STATE_TYPE_APPROVED,
+        },
+        {
+          state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
+        },
+      ],
       driverId: data,
     },
   })
@@ -679,8 +684,8 @@ exports.getApprovedDeliveriesByDriver = async (data) => {
   for (var i = 0; i < orders.length; i++) {
     const order = orders[i];
     if (order.OrderItem.plate !== null) {
+      order.chef = order.OrderItem.plate.chef;
       delete order.OrderItem.plate.chef;
-      order.chef = chef;
     }
   }
 
