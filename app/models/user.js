@@ -82,6 +82,8 @@ module.exports = (sequelize, DataTypes) => {
           model: 'ShippingAddresses',
           keygetApprovedDeliveriesByDriver
         },
+      },
+    },
     {
       paranoid: true,
       timestamps: true,
