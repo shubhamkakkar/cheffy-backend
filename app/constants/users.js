@@ -24,7 +24,7 @@ exports.privateSelectFields = exports.publicSelectFields.concat([
   'email', 'country_code', 'phone_no', 'restaurant_name', 'password',
   'user_type', 'verification_email_status', 'verification_phone_status', 'status',
   'location_lat', 'location_lon', 'zoom_id', 'zoom_pass', 'skip_doc',
-  'stripe_id', 'device_id', 'createdAt', 'updatedAt', 'bio'
+  'stripe_id', 'device_id', 'createdAt', 'updatedAt', 'bio', "active_address"
 ]);
 
 exports.userSelectFields = exports.publicSelectFields.concat([

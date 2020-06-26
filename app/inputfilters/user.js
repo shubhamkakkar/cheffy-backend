@@ -15,7 +15,8 @@ exports.updateFields = require(path.resolve('app/inputfilters/whitelist'))(
     'zoom_id',
     'zoom_pass',
     'skip_doc',
-    'bio'
+    'bio',
+    "active_address"
   ], 'form-data');
 
 exports.locationFields = require(path.resolve('app/inputfilters/whitelist'))(

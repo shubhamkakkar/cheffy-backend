@@ -75,7 +75,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-    },
+      active_address: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'ShippingAddresses',
+          keygetApprovedDeliveriesByDriver
+        },
     {
       paranoid: true,
       timestamps: true,

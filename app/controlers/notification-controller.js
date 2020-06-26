@@ -14,7 +14,7 @@ exports.getNotifications = asyncHandler(async (req, res) => {
     page,
     perPage
   );
-  res.status(HttpStatus.OK).send({
+  return res.status(HttpStatus.OK).send({
     message: "Here are your Notifications",
     data: notifications,
   });

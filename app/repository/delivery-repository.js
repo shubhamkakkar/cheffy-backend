@@ -604,14 +604,7 @@ exports.getApprovedDeliveriesByDriver = async (data) => {
   })
   let orderDelivery = await OrderDelivery.findAll({
     where: {
-      [Op.or]: [
-        {
-          state_type: orderDeliveryConstants.STATE_TYPE_APPROVED,
-        },
-        {
-          state_type: orderDeliveryConstants.STATE_TYPE_DELIVERED,
-        },
-      ],
+      state_type: orderDeliveryConstants.STATE_TYPE_APPROVED,
       driverId: data,
     },
   })
