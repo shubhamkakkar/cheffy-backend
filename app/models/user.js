@@ -80,8 +80,8 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         references: {
           model: 'ShippingAddresses',
-          keygetApprovedDeliveriesByDriver
-        },
+          key: 'id'
+        }
       },
     },
     {
