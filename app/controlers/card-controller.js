@@ -85,26 +85,32 @@ exports.addNewCard = asyncHandler(async (req, res) => {
     cvc: req.body.cvc,
   };
 
-  if (!user.stripe_id) {
-    let stripeNewUser = await paymentService.createUser(
-      user,
-      userShippingAddress
-    );
-    user = await userRepository.saveStripeinfo(user.id, stripeNewUser);
-  }
 
-
-  const stripeNewCard = await paymentService.createCard(
+  // if (!user.stripe_id) {
+  let stripeNewUser = await paymentService.createUser(
     user,
-    card,
     userShippingAddress
   );
-  const attachedCard = await paymentService.attachPaymentMethod(
-    stripeNewCard.id,
-    user.stripe_id
-  );
+  user = await userRepository.saveStripeinfo(user.id, stripeNewUser);
+  // }
+  try {
 
-  res.status(HttpStatus.CREATED).send(attachedCard);
+    const stripeNewCard = await paymentService.createCard(
+      user,
+      card,
+      userShippingAddress
+    );
+    const attachedCard = await paymentService.attachPaymentMethod(
+      stripeNewCard.id,
+      user.stripe_id
+    );
+
+    return res.status(HttpStatus.CREATED).send(attachedCard);
+  }
+  catch (error) {
+
+    throw error
+  }
 
   /*if(err.raw.code === "incorrect_number"){
         return res.status(HttpStatus.CONFLICT).send({message:"The credit card number is incorrect"});

@@ -146,8 +146,6 @@ exports.getUserCardsList = async (stripeCustomerId, queryOptions = {}) => {
  * Creates payment Method of type card for a customer
  */
 exports.createCard = async (user, card, address = null) => {
-  console.log("createCard");
-
   debug("STRIPE Create card: ", card.cvc);
 
   let params = {
@@ -178,7 +176,6 @@ exports.createCard = async (user, card, address = null) => {
     };
   }
 
-  console.log({ params });
 
   try {
     return await stripe.paymentMethods.create(params);
