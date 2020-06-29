@@ -108,6 +108,7 @@ exports.edit = asyncHandler(async (req, res, next) => {
 		"form-data"
 	);
 
+
 	if (req.files && req.files["category_image"]) {
 		updatedPayload.url = req.files["category_image"][0].key;
 	}
