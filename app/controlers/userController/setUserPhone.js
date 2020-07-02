@@ -33,9 +33,12 @@ module.exports = asyncHandler(async (req, res, next) => {
             });
         }
 
-        const retorno = await phoneService.sendMessage(phone, code);
+        await phoneService.sendMessage(phone, code);
         return res.status(HttpStatus.OK).send({
-            retorno,
+            "status": 202,
+            "message": "SMS sent successfully!",
+            "code": 8665,
+            "moreInfo": "null"
         });
     } catch (error) {
         return res.status(HttpStatus.BAD_REQUEST).send({
